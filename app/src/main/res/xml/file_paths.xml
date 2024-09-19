@@ -1,0 +1,4 @@
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+<!--    share "/storage/emulated/0/Android/data/com.catpuppyapp.puppygit.play.pro/files"-->
+    <external-files-path name="external1" path="/" />
+</paths>

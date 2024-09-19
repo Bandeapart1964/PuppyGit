@@ -1,0 +1,376 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 6,
+    "identityHash": "51fe4ce48038636ade252d926a834eea",
+    "entities": [
+      {
+        "tableName": "repo",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `lastUpdateTime` INTEGER NOT NULL, `repoName` TEXT NOT NULL, `fullSavePath` TEXT NOT NULL, `pullRemoteName` TEXT NOT NULL, `pullRemoteUrl` TEXT NOT NULL, `pushRemoteName` TEXT NOT NULL, `pushRemoteUrl` TEXT NOT NULL, `workStatus` INTEGER NOT NULL, `branch` TEXT NOT NULL, `lastCommitHash` TEXT NOT NULL, `hasUncheckedErr` INTEGER NOT NULL, `latestUncheckedErrMsg` TEXT NOT NULL, `creditIdForClone` TEXT NOT NULL, `cloneUrl` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `createBy` INTEGER NOT NULL, `isRecursiveCloneOn` INTEGER NOT NULL, `baseStatus` INTEGER NOT NULL, `baseCreateTime` INTEGER NOT NULL, `baseUpdateTime` INTEGER NOT NULL, `baseIsDel` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdateTime",
+            "columnName": "lastUpdateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repoName",
+            "columnName": "repoName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullSavePath",
+            "columnName": "fullSavePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pullRemoteName",
+            "columnName": "pullRemoteName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pullRemoteUrl",
+            "columnName": "pullRemoteUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pushRemoteName",
+            "columnName": "pushRemoteName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pushRemoteUrl",
+            "columnName": "pushRemoteUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workStatus",
+            "columnName": "workStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "branch",
+            "columnName": "branch",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastCommitHash",
+            "columnName": "lastCommitHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasUncheckedErr",
+            "columnName": "hasUncheckedErr",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latestUncheckedErrMsg",
+            "columnName": "latestUncheckedErrMsg",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creditIdForClone",
+            "columnName": "creditIdForClone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cloneUrl",
+            "columnName": "cloneUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createBy",
+            "columnName": "createBy",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRecursiveCloneOn",
+            "columnName": "isRecursiveCloneOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseStatus",
+            "columnName": "baseStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseCreateTime",
+            "columnName": "baseCreateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseUpdateTime",
+            "columnName": "baseUpdateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseIsDel",
+            "columnName": "baseIsDel",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "error",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `msg` TEXT NOT NULL, `repoId` TEXT NOT NULL, `isChecked` INTEGER NOT NULL, `baseStatus` INTEGER NOT NULL, `baseCreateTime` INTEGER NOT NULL, `baseUpdateTime` INTEGER NOT NULL, `baseIsDel` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "msg",
+            "columnName": "msg",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repoId",
+            "columnName": "repoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isChecked",
+            "columnName": "isChecked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseStatus",
+            "columnName": "baseStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseCreateTime",
+            "columnName": "baseCreateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseUpdateTime",
+            "columnName": "baseUpdateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseIsDel",
+            "columnName": "baseIsDel",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "credit",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `creditName` TEXT NOT NULL, `value` TEXT NOT NULL, `pass` TEXT NOT NULL, `type` INTEGER NOT NULL, `baseStatus` INTEGER NOT NULL, `baseCreateTime` INTEGER NOT NULL, `baseUpdateTime` INTEGER NOT NULL, `baseIsDel` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creditName",
+            "columnName": "creditName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pass",
+            "columnName": "pass",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseStatus",
+            "columnName": "baseStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseCreateTime",
+            "columnName": "baseCreateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseUpdateTime",
+            "columnName": "baseUpdateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseIsDel",
+            "columnName": "baseIsDel",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "remote",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `remoteName` TEXT NOT NULL, `remoteUrl` TEXT NOT NULL, `isForPull` INTEGER NOT NULL, `isForPush` INTEGER NOT NULL, `creditId` TEXT NOT NULL, `repoId` TEXT NOT NULL, `baseStatus` INTEGER NOT NULL, `baseCreateTime` INTEGER NOT NULL, `baseUpdateTime` INTEGER NOT NULL, `baseIsDel` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteName",
+            "columnName": "remoteName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remoteUrl",
+            "columnName": "remoteUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isForPull",
+            "columnName": "isForPull",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isForPush",
+            "columnName": "isForPush",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creditId",
+            "columnName": "creditId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repoId",
+            "columnName": "repoId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseStatus",
+            "columnName": "baseStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseCreateTime",
+            "columnName": "baseCreateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseUpdateTime",
+            "columnName": "baseUpdateTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseFields.baseIsDel",
+            "columnName": "baseIsDel",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '51fe4ce48038636ade252d926a834eea')"
+    ]
+  }
+}
