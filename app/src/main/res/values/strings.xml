@@ -806,5 +806,7 @@
 
 <!--    eg: "Size: 2MB" -->
     <string name="size_n">Size: ph_a3f241dc_1</string>
+    <string name="report_bugs">Report Bugs</string>
+    <string name="source_code">Source Code</string>
 
 </resources>

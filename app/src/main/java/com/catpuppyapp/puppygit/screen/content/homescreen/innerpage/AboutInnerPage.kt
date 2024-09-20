@@ -38,8 +38,10 @@ import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 val authorMail = "luckyclover33xx@gmail.com"
 val authorMailLink = "mailto:$authorMail"
-val privacyPolicyLink = "https://github.com/Bandeapart1964/PuppyGit-Assets/blob/main/puppygitPro-Privacy-v2.md"
-val discussionLink = "https://github.com/Bandeapart1964/PuppyGit-Discuss/discussions"
+val privacyPolicyLink = "https://github.com/Bandeapart1964/PuppyGitPro/blob/main/PrivacyPolicy.md"
+val discussionLink = "https://github.com/Bandeapart1964/PuppyGitPro/discussions"
+val reportBugsLink = "https://github.com/Bandeapart1964/PuppyGitPro/issues/new"
+val sourceCodeLink = "https://github.com/Bandeapart1964/PuppyGitPro"
 
 var versionCode: Int = AppModel.getAppVersionCode()
 var versionName: String = AppModel.getAppVersionName()
@@ -109,6 +111,23 @@ fun AboutInnerPage(contentPadding: PaddingValues,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
+                text = stringResource(R.string.source_code),
+                style = MyStyleKt.ClickableText.style,
+                color = MyStyleKt.ClickableText.color,
+                modifier = MyStyleKt.ClickableText.modifierNoPadding.clickable {
+                    ActivityUtil.openUrl(appContext, sourceCodeLink)
+                },
+
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
                 text = stringResource(R.string.discussions),
                 style = MyStyleKt.ClickableText.style,
                 color = MyStyleKt.ClickableText.color,
@@ -119,7 +138,23 @@ fun AboutInnerPage(contentPadding: PaddingValues,
 
                 )
         }
-//        HorizontalDivider(modifier = Modifier.padding(10.dp))
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.report_bugs),
+                style = MyStyleKt.ClickableText.style,
+                color = MyStyleKt.ClickableText.color,
+                modifier = MyStyleKt.ClickableText.modifierNoPadding.clickable {
+                    ActivityUtil.openUrl(appContext, reportBugsLink)
+                },
+
+            )
+        }
         Spacer(modifier = Modifier.height(20.dp))
 
         Row(
