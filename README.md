@@ -29,11 +29,12 @@ idk how to support ssh on Android, so I didn't implement ssh yet, if you know, p
 
 
 ## screenshots
+<div>
 <img src="screenshots/cl.png" width=150 />
 <img src="screenshots/drawer.png"  width=150 />
 <img src="screenshots/editor.png" width=150 />
 <img src="screenshots/repos.png"  width=150  />
-
+</div>
 
 ## comments in codes
 this project has many chinese comments, and some comments are out-of-date or nonsense, I have no plan clean them, but if you read the codes, and you wonder know some comments meaning, try translator or ask me is ok
