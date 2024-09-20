@@ -1,4 +1,4 @@
-<img src="screenshots/banner.png"  style="zoom: 100%;" />
+<img src="screenshots/banner.png"/>
 
 
 # PuppyGit Pro
@@ -29,19 +29,14 @@ idk how to support ssh on Android, so I didn't implement ssh yet, if you know, p
 
 
 ## screenshots
-<!-- ![changelist](screenshots/cl.png "ChangeList")
-![Drawer](screenshots/drawer.png "Drawer")
-![Editor](screenshots/editor.png "Editor")
-![Repos](screenshots/repos.png "Repos") -->
-
-<img src="screenshots/cl.png"  style="zoom: 10%;" />
-<img src="screenshots/drawer.png"  style="zoom: 10%;" />
-<img src="screenshots/editor.png"  style="zoom: 10%;" />
-<img src="screenshots/repos.png"  style="zoom: 10%;" />
+<img src="screenshots/cl.png" width=150 />
+<img src="screenshots/drawer.png"  width=150 />
+<img src="screenshots/editor.png" width=150 />
+<img src="screenshots/repos.png"  width=150  />
 
 
 ## comments in codes
-this project has many chinese comments, and some comments are out-of-date or nonsense, I have no plan neat them, but if you read the codes, and you wonder know some comments meaning, try translator or ask me is ok
+this project has many chinese comments, and some comments are out-of-date or nonsense, I have no plan clean them, but if you read the codes, and you wonder know some comments meaning, try translator or ask me is ok
 
 
 ## TODO
