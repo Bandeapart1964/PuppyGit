@@ -222,7 +222,7 @@ class AppModel {
             try {
                 val editCacheKeepInDays = settings.editor.editCacheKeepInDays
                 //当设置项中启用功能时，进一步检查是否存在disable文件，不存在则启用，否则禁用，这样做是为了方便在实现设置页面前进行测试，直接把功能设为开启，然后通过创建删除disable文件控制实际是否开启，测试很方便
-                val editCacheEnable = settings.editor.editCacheEnable && !File(appModel.appDataUnderAllReposDir, FlagFileName.disableEditCache).exists()
+                val editCacheEnable = settings.editor.editCacheEnable || File(appModel.appDataUnderAllReposDir, FlagFileName.enableEditCache).exists()
 
                 EditCache.init(keepInDays = editCacheKeepInDays, cacheDirPath = editCacheDirPath, enableCache = editCacheEnable)
             }catch (e:Exception) {
@@ -239,8 +239,8 @@ class AppModel {
             //初始化SnapshotUtil，例如是否启用文件快照和内容快照之类的
             try {
                 SnapshotUtil.init(
-                    enableContentSnapshotInitValue = settings.editor.enableContentSnapshot && !File(appModel.appDataUnderAllReposDir, FlagFileName.disableContentSnapshot).exists(),
-                    enableFileSnapshotInitValue = settings.editor.enableFileSnapshot && !File(appModel.appDataUnderAllReposDir, FlagFileName.disableFileSnapshot).exists(),
+                    enableContentSnapshotInitValue = settings.editor.enableContentSnapshot || File(appModel.appDataUnderAllReposDir, FlagFileName.enableContentSnapshot).exists(),
+                    enableFileSnapshotInitValue = settings.editor.enableFileSnapshot || File(appModel.appDataUnderAllReposDir, FlagFileName.enableFileSnapshot).exists(),
                 )
             }catch (e:Exception) {
                 MyLog.e(TAG, "#$funName init SnapshotUtil err:"+e.stackTraceToString())

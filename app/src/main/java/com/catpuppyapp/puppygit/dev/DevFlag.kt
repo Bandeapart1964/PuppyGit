@@ -92,6 +92,12 @@ val bug_Editor_WrongUpdateEditColumnIdx_Fixed = false
  * 注：文件位置：仓库根目录下的PuppyGit-Data目录。
  * 注：如无特别说明，创建或修改文件后均需重启app生效。
  *
+ *
+ * flag files for debug
+ *
+ * note: all flag files under PuppyGit-Data
+ * note: create or edit flag files need restart app for effect
+ *
  */
 object FlagFileName {
     /**
@@ -105,17 +111,20 @@ object FlagFileName {
     const val enableUnTestedFeature = "enableUnTestedFeatureBoom"
 
     /**
-     * 禁用编辑缓存，仅在配置项中将编辑缓存设为启用时有效。
+     * 启用编辑缓存，存在此文件或设置项启用editcache开关开启则启用editcache。
+     * if this file exists or settings editcache switch to on, then will enable editcache
      */
-    const val disableEditCache = "EditCache-Disable"
+    const val enableEditCache = "enableEditCache"
 
     /**
-     * 禁止创建内容快照，仅在配置项对应条目设为启用时有效。
+     * 若此文件存在则启用内容快照，否则是否启用内容快照取决于settings.editor.enableContentSnapshot
+     * if this file exists then enable content snapshot, else demand on settings.editor.enableContentSnapshot
      */
-    const val disableContentSnapshot = "CtntSnap-Disable"
+    const val enableContentSnapshot = "enableContentSnapshot"
 
     /**
-     * 禁止创建文件快照，仅在配置项对应条目设为启用时有效。
+     * 若此文件存在则启用文件快照，否则是否启用文件快照取决于settings.editor.enableFileSnapshot
+     * if this file exists then enable file snapshot, else demand on settings.editor.enableFileSnapshot
      */
-    const val disableFileSnapshot = "FileSnap-Disable"
+    const val enableFileSnapshot = "enableFileSnapshot"
 }
