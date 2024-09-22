@@ -58,6 +58,10 @@ class AppModel {
             //必须先初始化libgit2，不然会报segment错误
             Libgit2.init();
 
+//            LibgitTwo.jniTestAccessExternalStorage()
+
+            //disable dirs owner validation for libgit2, make it support access /sdcard or /storage/emulated/storage
+            Libgit2.optsGitOptSetOwnerValidation(false)
 
             appModel.appContext = applicationContext;
 //            appModel.mainActivity = mainActivity  //忘了这个干嘛的了，后来反正没用了，IDE提示什么Activity内存泄漏之类的，所以就注释了
@@ -92,6 +96,10 @@ class AppModel {
             //与sd相关代码互斥，开始
             //设置repodir
             appModel.allRepoParentDir = createDirIfNonexists(externalFilesDir, Cons.defaultAllRepoParentDirName)
+            //test access external storage, passed
+//            appModel.allRepoParentDir = createDirIfNonexists(File("/sdcard"), "puppygit-repos")
+
+
             StorageDirCons.DefaultStorageDir.puppyGitRepos.fullPath = appModel.allRepoParentDir.canonicalPath
 
             //设置对用户可见的app工作目录

@@ -48,6 +48,7 @@ public class LibgitTwo {
     public static native void jniSetCredentialCbTest(long remoteCallbacks);
     public static native void jniSetCertCheck(long remoteCallbacks);
     public static native String jniLineGetContent(long linePtr);
+    public static native void jniTestAccessExternalStorage();
 
     public static String getContent(int contentLen, String content) {
         // content.length() is "chars count", not "bytes count"!

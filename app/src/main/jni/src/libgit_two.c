@@ -282,3 +282,19 @@ JNIEXPORT jstring JNICALL J_MAKE_METHOD(LibgitTwo_jniLineGetContent)(JNIEnv *env
     ALOGD("ccode: jniLineGetContent() end\n");
     return s;
 }
+
+
+JNIEXPORT void JNICALL J_MAKE_METHOD(LibgitTwo_jniTestAccessExternalStorage)(JNIEnv *env, jclass callerJavaClass)
+{
+    ALOGD("ccode: LibgitTwo_jniTestAccessExternalStorage() start\n");
+    FILE* file = fopen("/sdcard/puppygit-repos/hello.txt","w+");
+
+    if (file != NULL)
+    {
+        fputs("HELLO WORLD!\n", file);
+        fflush(file);
+        fclose(file);
+    }
+
+    ALOGD("ccode: LibgitTwo_jniTestAccessExternalStorage() end\n");
+}
