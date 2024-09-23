@@ -808,5 +808,16 @@
     <string name="size_n">Size: ph_a3f241dc_1</string>
     <string name="report_bugs">Report Bugs</string>
     <string name="source_code">Source Code</string>
+    <string name="internal_storage">Internal Storage</string>
+    <string name="trash_bin_icon_for_delete_item">Trash Bin icon for delete item</string>
+    <string name="cant_delete_internal_storage">Can\'t delete internal storage</string>
+    <string name="cross_icon_for_add_storage_path">Cross icon for add storage path</string>
+    <string name="add_storage_path">Add Storage Path</string>
+    <string name="storage_path">Storage Path</string>
+    <string name="eg_sdcard_puppygit">eg. /sdcard/PuppyGit</string>
+    <string name="choose">Choose</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="please_grant_permission_before_you_add_a_storage_path">Please Grant Permission before you add a Storage Path</string>
+    <string name="cross_icon_for_choose_folder">Cross icon for choose folder</string>
 
 </resources>

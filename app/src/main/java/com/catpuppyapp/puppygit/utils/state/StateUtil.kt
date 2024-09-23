@@ -42,6 +42,10 @@ object StateUtil {
         return rememberSaveable { mutableStateOf(initValue) }
     }
     @Composable
+    fun<T> getRememberSaveableState(initValue:()->T): MutableState<T> {
+        return rememberSaveable { mutableStateOf(initValue()) }
+    }
+    @Composable
     fun getRememberSaveableLongState(initValue:Long): MutableLongState {
         return rememberSaveable { mutableLongStateOf(initValue) }
     }
@@ -84,6 +88,10 @@ object StateUtil {
     @Composable
     fun getRememberSaveableIntState(initValue:Int):MutableIntState {
         return rememberSaveable{mutableIntStateOf(initValue)}
+    }
+    @Composable
+    fun getRememberSaveableIntState(initValue:()->Int):MutableIntState {
+        return rememberSaveable{mutableIntStateOf(initValue())}
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

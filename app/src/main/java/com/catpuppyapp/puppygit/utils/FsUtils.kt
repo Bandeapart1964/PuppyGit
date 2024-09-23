@@ -762,6 +762,16 @@ object FsUtils {
         }
     }
 
+    fun getRealPathFromUri(uri:Uri):String {
+        return try {
+            val uriPathString = uri.path.toString()
+            //eg. /storage/emulated/0/folder1/folder2
+            Environment.getExternalStorageDirectory().path+File.separator +uriPathString.substring(uriPathString.indexOf(":")+1)
+        }catch (_:Exception) {
+            ""
+        }
+    }
+
 
     object Patch {
         const val suffix = ".patch"

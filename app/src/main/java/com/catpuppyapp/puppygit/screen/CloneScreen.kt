@@ -1,6 +1,9 @@
 package com.catpuppyapp.puppygit.screen
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,8 +22,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -40,7 +46,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -56,19 +61,24 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
+import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.dev.shallowAndSingleBranchTestPassed
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper.Companion.getGitUrlType
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -98,11 +108,8 @@ fun CloneScreen(
     val appContext = LocalContext.current
     val inDarkTheme = Theme.inDarkTheme
 
-    SideEffect {
-        Msg.msgNotifyHost()
-    }
 
-    val isEditMode = StateUtil.getRememberSaveableState(initValue = false)
+    val isEditMode = repoId != null && repoId.isNotBlank() && repoId != "null"
     val repoFromDb = StateUtil.getCustomSaveableState(keyTag=stateKeyTag, keyName = "repoFromDb", initValue = RepoEntity(id = ""))
     //克隆完成后更新此变量，然后在重新渲染时直接返回。（注：因为无法在coroutine里调用naviUp()，所以才这样实现“存储完成返回上级页面”的功能）
 //    val isTimeNaviUp = rememberSaveable { mutableStateOf(false) }
@@ -232,6 +239,145 @@ fun CloneScreen(
         requireFocusTo.intValue = focusToCredentialName
     }
 
+
+    //vars of storage select begin
+    val settings = SettingsUtil.getSettingsSnapshot()
+    val storagePathList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "storagePathList") {
+        // internal storage at first( index 0 )
+//        val list = mutableListOf<String>(appContext.getString(R.string.internal_storage))
+        val list = mutableListOf<String>(allRepoParentDir.canonicalPath)
+
+        // add other paths if have
+        list.addAll(settings.storagePaths)
+
+        list
+    }
+
+    val storagePathSelectedPath = StateUtil.getRememberSaveableState {
+        settings.storagePathLastSelected.ifBlank { storagePathList.value[0] }
+    }
+
+    val storagePathSelectedIndex = StateUtil.getRememberSaveableIntState {
+        storagePathList.value.toList().indexOf(storagePathSelectedPath.value)
+    }
+
+    val showAddStoragePathDialog = StateUtil.getRememberSaveableState(false)
+
+    val storagePathForAdd = StateUtil.getRememberSaveableState("")
+
+
+    val chooseDirLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) exportSaf@{ uri ->
+        if(uri!=null) {
+            val realPath = FsUtils.getRealPathFromUri(uri)
+            if(realPath.isNotBlank()) {
+                storagePathForAdd.value = realPath
+            }
+
+            MyLog.d(TAG, "#chooseDirLauncher, uri.path=${uri.path}, realPath=$realPath")
+        }
+    }
+    //vars of  storage select end
+
+
+    if(showAddStoragePathDialog.value) {
+        ConfirmDialog(
+            title = stringResource(R.string.add_storage_path),
+            requireShowTextCompose = true,
+            textCompose = {
+                Column(modifier = Modifier
+                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .fillMaxWidth()
+                    .padding(5.dp)
+                ) {
+                    Row(modifier = Modifier.padding(bottom = 15.dp)) {
+                        Text(
+                            text = stringResource(R.string.please_grant_permission_before_you_add_a_storage_path),
+                            style = MyStyleKt.ClickableText.style,
+                            color = MyStyleKt.ClickableText.color,
+                            overflow = TextOverflow.Visible,
+                            fontWeight = FontWeight.Light,
+                            modifier = MyStyleKt.ClickableText.modifier.clickable {
+                                // grant permission for read/write external storage
+
+                            },
+                        )
+
+                    }
+
+                    Row (
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(.8f),
+                            value = storagePathForAdd.value,
+                            singleLine = true,
+
+                            onValueChange = {
+                                storagePathForAdd.value=it
+                            },
+                            label = {
+                                Text(stringResource(R.string.storage_path))
+                            },
+                            placeholder = {
+                                Text(stringResource(R.string.eg_sdcard_puppygit))
+                            }
+                        )
+
+                        IconButton(
+                            onClick = {
+                                //show folder picker
+                                chooseDirLauncher.launch(null)
+                            }
+
+                        ) {
+                            Icon(imageVector = Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.cross_icon_for_choose_folder))
+                        }
+                    }
+                }
+            },
+            okBtnText = stringResource(R.string.ok),
+            cancelBtnText = stringResource(R.string.cancel),
+            okBtnEnabled = storagePathForAdd.value.isNotBlank(),
+            onCancel = { showAddStoragePathDialog.value = false },
+        ) {
+
+            doJobThenOffLoading {
+
+                val newPath = storagePathForAdd.value
+                if(newPath.isNotBlank()) {
+                    // add to list
+                    if(!storagePathList.value.contains(newPath)) {
+                        storagePathList.value.add(newPath)
+                        val newItemIndex = storagePathList.value.size-1
+                        // select new added
+                        storagePathSelectedIndex.intValue = newItemIndex
+                        storagePathSelectedPath.value = newPath
+                        // update settings
+                        SettingsUtil.update {
+                            it.storagePaths.add(newPath)
+                            it.storagePathLastSelected = newPath
+                        }
+                    }else {
+                        storagePathSelectedPath.value = newPath
+                        storagePathSelectedIndex.intValue = storagePathList.value.indexOf(newPath)
+                        SettingsUtil.update {
+                            it.storagePathLastSelected = newPath
+                        }
+                    }
+                }
+
+                showAddStoragePathDialog.value = false
+
+            }
+
+        }
+    }
+
+
+
     val showLoadingDialog = StateUtil.getRememberSaveableState(false)
 
     val doSave:()->Unit = {
@@ -261,12 +407,21 @@ fun CloneScreen(
 
             val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
             val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+
+//            val fullSavePath = if(storagePathSelectedIndex.intValue == 0) { // internal storage
+//                allRepoParentDir.canonicalPath+ File.separator +repoNameText
+//            }else { // external storage, -1 or non-zero index, -1 only occured when edited mode, the fullpath in db but is not in list
+//                storagePathSelectedPath.value.removeSuffix(File.separator) + File.separator + repoNameText
+//            }
+
+            val fullSavePath = storagePathSelectedPath.value.removeSuffix(File.separator) + File.separator + repoNameText
+
             //如果不是编辑模式 或者 是编辑模式但用户输入的仓库名不是当前仓库已经保存的名字 则 检查仓库名和文件夹是否已经存在
-            if(!isEditMode.value || repoNameText != repoFromDb.value.repoName) {
+            if(!isEditMode || repoNameText != repoFromDb.value.repoName) {
                 //检查仓库名是否已经存在
                 val isRepoNameExist = repoDb.isRepoNameExist(repoNameText)
                 //仓库在数据库存在或者路径已经存在，则报错
-                if(isRepoNameExist || isPathExists(allRepoParentDir.canonicalPath, repoNameText)) {
+                if(isRepoNameExist || isPathExists(null, fullSavePath)) {
                     focusRepoName()
                     showRepoNameAlreadyExistsErr.value=true
                     showLoadingDialog.value=false
@@ -328,10 +483,10 @@ fun CloneScreen(
             }
 
             //这里不用判断repoFromDb.id，如果没成功更新repoFromDb为数据库中的值，那它的id会是空字符串，不会匹配到任何记录，而isEditMode为true时，会执行update操作，是按id匹配的，所以，最终不会影响任何数据，顶多就是用户输入的内容没保存上而已。
-            val repoForSave:RepoEntity = if(isEditMode.value) repoFromDb.value else RepoEntity(createBy = Cons.dbRepoCreateByClone);
+            val repoForSave:RepoEntity = if(isEditMode) repoFromDb.value else RepoEntity(createBy = Cons.dbRepoCreateByClone);
             //设置repo字段
             repoForSave.repoName = repoNameText
-            repoForSave.fullSavePath = allRepoParentDir.canonicalPath+ File.separator +repoNameText
+            repoForSave.fullSavePath = fullSavePath
             repoForSave.cloneUrl = gitUrl.value
             repoForSave.workStatus = Cons.dbRepoWorkStatusNotReadyNeedClone
             repoForSave.credentialIdForClone = credentialIdForClone
@@ -350,7 +505,7 @@ fun CloneScreen(
             }
 
             //编辑模式，更新，否则插入
-            if(isEditMode.value){
+            if(isEditMode){
                 repoDb.update(repoForSave)
             }else{
                 repoDb.insert(repoForSave)
@@ -364,6 +519,8 @@ fun CloneScreen(
             }
         }
     }
+
+
     val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
 
     val spacerPadding = 2.dp
@@ -520,6 +677,69 @@ fun CloneScreen(
                     Text(stringResource(R.string.local_repo_name_placeholder))
                 }
             )
+
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SingleSelectList(
+                    outterModifier = Modifier.fillMaxWidth(.8f),
+                    dropDownMenuModifier = Modifier.fillMaxWidth(.8f),
+                    optionsList=storagePathList.value,
+                    selectedOptionIndex=storagePathSelectedIndex.intValue,
+                    selectedOptionValue = storagePathSelectedPath.value,
+                    menuItemOnClick = { index, value ->
+                        storagePathSelectedIndex.intValue = index
+                        storagePathSelectedPath.value = value
+
+                        SettingsUtil.update {
+                            it.storagePathLastSelected = value
+                        }
+                    },
+                    menuItemTrailIcon = Icons.Filled.DeleteOutline,
+                    menuItemTrailIconDescription = stringResource(R.string.trash_bin_icon_for_delete_item),
+                    menuItemTrailIconEnable = {index, value->
+                        index!=0
+                    },
+                    menuItemTrailIconOnClick = {index, value->
+                        if(index==0) {
+                            Msg.requireShow(appContext.getString(R.string.cant_delete_internal_storage))
+                        }else {
+                            storagePathList.value.removeAt(index)
+                            val removedCurrent = index == storagePathSelectedIndex.intValue
+                            if(removedCurrent) {
+                                storagePathSelectedIndex.intValue = 0
+                                storagePathSelectedPath.value = storagePathList.value[storagePathSelectedIndex.intValue]
+                            }
+
+                            SettingsUtil.update {
+                                if(removedCurrent) {
+                                    it.storagePathLastSelected = storagePathSelectedPath.value
+                                }
+
+                                it.storagePaths.clear()
+                                val list = storagePathList.value
+                                val size = list.size
+                                if(size>1) {
+                                    //index start from 1 for exclude internal storage
+                                    it.storagePaths.addAll(list.subList(1, size))
+                                }
+                            }
+                        }
+                    }
+                )
+
+                IconButton(onClick = {
+                    showAddStoragePathDialog.value = true
+                }) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.cross_icon_for_add_storage_path))
+                }
+
+            }
+
             Spacer(modifier = Modifier.padding(spacerPadding))
 
             TextField(
@@ -855,11 +1075,10 @@ fun CloneScreen(
             loadingOn = { showLoadingDialog.value = true },
             loadingOff = { showLoadingDialog.value = false }
         ) job@{
-            if (repoId != null && repoId.isNotBlank() && repoId != "null") {  //如果是编辑模式，查询仓库信息
-                isEditMode.value = true
+            if (isEditMode) {  //如果是编辑模式，查询仓库信息
                 val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
                 val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                val repo = repoDb.getById(repoId) ?: return@job
+                val repo = repoDb.getById(repoId!!) ?: return@job
                 gitUrlType.intValue = getGitUrlType(repo.cloneUrl)  //更新下giturl type
                 gitUrl.value = repo.cloneUrl
                 repoName.value = TextFieldValue(repo.repoName)
@@ -875,6 +1094,11 @@ fun CloneScreen(
 
                 //把repo存到状态变量，保存时就不用再查询了
                 repoFromDb.value = repo
+
+                //show back repo saved path
+                val path = repo.fullSavePath
+                storagePathSelectedPath.value = File(path.substring(0, path.lastIndexOf(File.separator))).canonicalPath ?: storagePathList.value[0]
+                storagePathSelectedIndex.intValue = storagePathList.value.toList().indexOf(storagePathSelectedPath.value)
 
                 //检查是否存在credential，如果存在，设置下相关状态变量
                 val credentialIdForClone = repo.credentialIdForClone
@@ -895,7 +1119,6 @@ fun CloneScreen(
                     }
                 }
             } else {  //如果是新增模式，简单聚焦下第一个输入框，弹出键盘即可
-                isEditMode.value = false
                 //聚焦第一个输入框，算了不聚焦了，在协程里聚焦会报异常，虽然可以设置状态，然后在compose里判断，聚焦，再把状态关闭，但是，太麻烦了，而且感觉聚焦与否其实意义不大，甚至就连报错时的聚焦意义都不大，不过报错时的聚焦不需要在协程里执行也不会抛异常，所以暂且保留
                 requireFocusTo.intValue = focusToGitUrl
             }

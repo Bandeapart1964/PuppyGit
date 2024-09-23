@@ -47,12 +47,14 @@ fun getRepoNameFromGitUrl(gitUrl: String):String{
 //    return path.removeSuffix(suffix)
 //}
 
-//baseDir可以为null，若为null，相当于 File(subDir)，若baseDir为null，不要用空字符串替代，含义不同
+/**
+ *  baseDir可以为null，若为null，相当于 File(subDir)，若baseDir为null，不要用空字符串替代，含义不同
+ */
 fun isPathExists(baseDir: String?, subDir:String):Boolean {
 //    val repoDirNoSeparatorSuffix = rmPathSuffix(repoDir)
 //    val subDirNoSeparatorSuffix = rmPathSuffix(subdir)
 //    val file = File(repoDirNoSeparatorSuffix + File.separator + subDirNoSeparatorSuffix)
-    val file = File(baseDir, subDir)  //baseDir可为null，若为null，相当于File(subDir)，注意，这里该为null就为null，不要传空字符串，空字符串和null作为basedir时，行为不同
+    val file = if(baseDir!=null) File(baseDir, subDir) else File(subDir)  //baseDir可为null，若为null，相当于File(subDir)，注意，这里该为null就为null，不要传空字符串，空字符串和null作为basedir时，行为不同
     return file.exists()
 }
 
