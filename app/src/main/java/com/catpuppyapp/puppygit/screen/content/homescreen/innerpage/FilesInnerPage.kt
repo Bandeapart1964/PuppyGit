@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -131,8 +132,10 @@ fun FilesInnerPage(
     curListState:CustomStateSaveable<LazyListState>,
     filterListState:CustomStateSaveable<LazyListState>,
 
-    openDrawer:()->Unit
-
+    openDrawer:()->Unit,
+    isPasteMode:MutableState<Boolean>,
+    selectedItems:CustomStateListSaveable<FileItemDto>,
+    isFileSelectionMode:MutableState<Boolean>
 ) {
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir;
 //    val appContext = AppModel.singleInstanceHolder.appContext;
@@ -166,11 +169,7 @@ fun FilesInnerPage(
         listOf<FileItemDto>()
     }
 
-    //TODO 改成从配置文件读取Files的当前目录
-    val isFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val isPasteMode = StateUtil.getRememberSaveableState(initValue = false)
 //    val selFilePathListJsonObjStr = rememberSaveable{ mutableStateOf("{}") }  //key是文件名，所以这个列表只能存储相同目录下的文件，不同目录有可能名称冲突，但由于选择模式只能在当前目录选择，所以这个缺陷可以接受。json格式:{fileName:canonicalPath}
-    val selectedItems = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "selectedItems", initValue = listOf<FileItemDto>())
 //    val opType = remember{ mutableStateOf("") }
 //    val opCodeMove = "mv"
 //    val opCodeCopy = "cp"
@@ -273,15 +272,17 @@ fun FilesInnerPage(
             showGoToPathDialog.value = false
 
             doJobThenOffLoading {
-                val slash = File.separator
-                val repoBaseDirPath = AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath
+//                val slash = File.separator
+//                val repoBaseDirPath = AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath
 
-                val finallyPath = if(pathGoTo.value.removePrefix(slash).startsWith(repoBaseDirPath.removePrefix(slash))) { // real path，直接跳转
-                    pathGoTo.value  //如果用户输入真实路径但没以 / 开头，后面会报无效路径，问题不大且合理，不处理
-                }else {  //in app path，需要拼接上路径前缀
-                    // 拼接：repoBaseDirPath/pathGoTo
-                    repoBaseDirPath.removeSuffix(slash)+slash+pathGoTo.value.removePrefix(slash)
-                }
+//                val finallyPath = if(pathGoTo.value.removePrefix(slash).startsWith(repoBaseDirPath.removePrefix(slash))) { // real path，直接跳转
+//                    pathGoTo.value  //如果用户输入真实路径但没以 / 开头，后面会报无效路径，问题不大且合理，不处理
+//                }else {  //in app path，需要拼接上路径前缀
+//                    // 拼接：repoBaseDirPath/pathGoTo
+//                    repoBaseDirPath.removeSuffix(slash)+slash+pathGoTo.value.removePrefix(slash)
+//                }
+
+                val finallyPath = pathGoTo.value
 
                 val f = File(finallyPath)
                 if(f.canRead()) {
@@ -351,7 +352,7 @@ fun FilesInnerPage(
         stringResource(R.string.rename),
         if(proFeatureEnabled(applyPatchTestPassed)) stringResource(R.string.apply_as_patch) else "",  //应用patch，弹窗让用户选仓库，然后可对仓库应用patch
 //        这列表如果添加元素最好往头或尾加，别往中间加，不然改关联的数组可能容易改错位置
-        stringResource(R.string.copy_path),
+//        stringResource(R.string.copy_path),
         stringResource(R.string.copy_real_path),
 
 //        stringResource(R.string.export),  //改到批量操作里了
@@ -361,7 +362,7 @@ fun FilesInnerPage(
     //目录条目菜单没有open with
     val dirMenuKeyTextList = listOf(
         stringResource(R.string.rename),
-        stringResource(R.string.copy_path),
+//        stringResource(R.string.copy_path),
         stringResource(R.string.copy_real_path),
 //        stringResource(id = R.string.delete)  //改用长按菜单的删除功能了
     )
@@ -424,9 +425,9 @@ fun FilesInnerPage(
             fileFullPathForApplyAsPatch.value = item.fullPath
             showApplyAsPatchDialog.value = true
         },
-        copyPath@{
-            copyPath(it.fullPath)
-        },
+//        copyPath@{
+//            copyPath(it.fullPath)
+//        },
         copyRealPath@{
             copyRealPath(it.fullPath)
         }
@@ -446,9 +447,9 @@ fun FilesInnerPage(
     )
     val dirMenuKeyActList = listOf(
         renameFile,
-        copyPath@{
-            copyPath(it.fullPath)
-        },
+//        copyPath@{
+//            copyPath(it.fullPath)
+//        },
         copyRealPath@{
             copyRealPath(it.fullPath)
         }
@@ -486,6 +487,7 @@ fun FilesInnerPage(
             restoreListState
         }
     }
+    val breadCrumbListState = StateUtil.getRememberLazyListState()
 
     //只有当目录改变时(需要刷新页面)，才需要执行initFilesPage，选择文件之类的操作不需要执行此操作
     val initFilesPage = getInit(currentPath, currentPathFileList, currentPathBreadCrumbList,settingsSnapshot,
@@ -501,7 +503,8 @@ fun FilesInnerPage(
         filesPageQuitSelectionMode = filesPageQuitSelectionMode,
         isImportedMode = isImportMode,
         selecteItem=selecteItem,
-        filesPageRequestFromParent = filesPageRequestFromParent
+        filesPageRequestFromParent = filesPageRequestFromParent,
+
     )
 
     //back handler block start
@@ -771,7 +774,9 @@ fun FilesInnerPage(
                     // noop
                 }
             }else {
-                LazyRow(modifier = Modifier.padding(5.dp)) {
+                LazyRow(modifier = Modifier.padding(5.dp),
+                    state = breadCrumbListState
+                ) {
 //            var breadCrumbList = currentPathBreadCrumbList1
 //            if(currentPathBreadCrumbList.intValue==2) {
 //                breadCrumbList = currentPathBreadCrumbList2
@@ -812,6 +817,13 @@ fun FilesInnerPage(
                         }
                     }
                 }
+
+                //make breadCrumb always scroll to end for show current path
+                val scrollToLast = remember{
+                    derivedStateOf {
+                        UIHelper.scrollToItem(scope, breadCrumbListState, currentPathBreadCrumbList.value.size-1)
+                    }
+                }.value
             }
 
 
@@ -1142,6 +1154,22 @@ fun FilesInnerPage(
             textCompose = {
                 MySelectionContainer {
                     Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                        if(selectedItems.value.size==1) {
+                            val item = selectedItems.value[0]
+                            Row {
+                                Text(text = stringResource(R.string.name)+": "+item.name)
+                            }
+
+                            Spacer(modifier = Modifier.height(15.dp))
+
+                            Row {
+                                Text(text = stringResource(R.string.path)+": "+item.fullPath)
+                            }
+
+                            Spacer(modifier = Modifier.height(15.dp))
+
+                        }
+
                         Row {
                             Text(text = replaceStringResList(stringResource(R.string.items_n1_n2_folders_n3_files), listOf(""+details_AllCount.intValue, ""+details_FoldersCount.intValue, ""+details_FilesCount.intValue)))
                         }
@@ -1667,7 +1695,7 @@ private fun getInit(
     filesPageQuitSelectionMode:()->Unit,
     isImportedMode:MutableState<Boolean>,
     selecteItem:(FileItemDto) ->Unit,
-    filesPageRequestFromParent:MutableState<String>
+    filesPageRequestFromParent:MutableState<String>,
 //    currentPathBreadCrumbList: MutableIntState,
 //    currentPathBreadCrumbList1: SnapshotStateList<FileItemDto>,
 //    currentPathBreadCrumbList2: SnapshotStateList<FileItemDto>
@@ -1702,7 +1730,8 @@ private fun getInit(
         //最终决定currentPath值的判断
         //xxx.contains(xxxxxx)判断是为了避免用户修改json文件中的lastOpenedPath越狱访问 allRepoParentDir 之外的目录
         //如果进入过上面的parent不等于null和是否目录和存在的判断，则执行到这里，只有判断路径是否越狱的条件可能为真
-        if(!currentDir.exists() || !currentDir.isDirectory || !currentDir.canonicalPath.startsWith(repoBaseDirPath)) {  //如果当前目录不存在，将路径设置为仓库根目录
+//        if(!currentDir.exists() || !currentDir.isDirectory || !currentDir.canonicalPath.startsWith(repoBaseDirPath)) {  //如果当前目录不存在，将路径设置为仓库根目录
+        if(!currentDir.exists() || !currentDir.isDirectory) {  //如果当前目录不存在，将路径设置为仓库根目录
 //            Msg.requireShow(appContext.getString(R.string.invalid_path))  一边自己跳转到主页，一边提示无效path，产生一种主页是无效path的错觉，另人迷惑，故废弃
 
             currentFile=null  // 如果进入这个判断，currentFile已无意义，设为null，方便后面判断快速得到结果而不用继续比较path
@@ -1802,10 +1831,13 @@ private fun getInit(
 
 //        val willUpdateList = if(currentPathBreadCrumbList.intValue==1) currentPathBreadCrumbList1 else currentPathBreadCrumbList2  //初始化时更新列表1，列表2由后续点击面包屑后的onClick函数更新
         val curDirPath = currentDir.canonicalPath
-        val splitPath = getFilePathStrBasedRepoDir(curDirPath).split(File.separator)  //获得一个分割后的目录列表
+        val isInternalStoragePath = curDirPath.startsWith(repoBaseDirPath)
+//        val splitPath = (if(isInternalStoragePath) getFilePathStrBasedRepoDir(curDirPath) else curDirPath.removePrefix("/")).split(File.separator)  //获得一个分割后的目录列表
+//        val root = if(isInternalStoragePath) repoBaseDirPath else "/"
+        val splitPath = curDirPath.removePrefix("/").split(File.separator)  //获得一个分割后的目录列表
+        val root = "/"
         currentPathBreadCrumbList.value.clear()  //避免和之前的路径拼接在一起，先清空下列表
 //        if(splitPath.isNotEmpty()) {  //啥也没分割出来的话，就没必要填东西了，不过应该不会出现这种情况
-        val allRepoPath = AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath
         var lastPathName=StringBuilder()
         for(s in splitPath) {  //更新面包屑
             lastPathName.append(s).append(File.separator)  //拼接列表路径为仓库下的 完整相对路径
@@ -1815,10 +1847,11 @@ private fun getInit(
 //            pathDto.isFile=false  //面包屑肯定是目录啦，所以这个值设不设其实无所谓
 //            pathDto.isDir=true
 
-            pathDto.fullPath = File(allRepoPath, lastPathName.toString()).canonicalPath  //把仓库下完整相对路径和仓库路径拼接，得到一个绝对路径
+            pathDto.fullPath = File(root, lastPathName.toString()).canonicalPath  //把仓库下完整相对路径和仓库路径拼接，得到一个绝对路径
             pathDto.name = s
             currentPathBreadCrumbList.value.add(pathDto)
         }
+
 //        currentPathBreadCrumbList.requireRefreshView()
 //        }
 
@@ -1873,7 +1906,7 @@ private fun getBackHandler(
             filesPageQuitSelectionMode()
         }else if(getFilterMode() != 0) {
             filesPageFilterModeOff()
-        }else if (currentPath.value != allRepoParentDir.canonicalPath) { //如果在文件管理器页面且不在仓库根目录
+        }else if (currentPath.value != FsUtils.getExternalStorageRootPath()) { //如果在文件管理器页面且不在仓库根目录
             //返回上级目录
             currentPath.value = currentPath.value.substring(0, currentPath.value.lastIndexOf(File.separator))
             //刷新页面

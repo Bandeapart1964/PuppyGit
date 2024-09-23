@@ -122,14 +122,14 @@ fun FilesPageActions(
                 )
 
                 //拷贝app内相对路径
-                DropdownMenuItem(
-                    enabled = enableMenuItem,
-                    text = { Text(stringResource(R.string.copy_path)) },
-                    onClick = {
-                        requestFromParent.value = PageRequest.copyPath
-                        dropDownMenuExpendState.value = false
-                    }
-                )
+//                DropdownMenuItem(
+//                    enabled = enableMenuItem,
+//                    text = { Text(stringResource(R.string.copy_path)) },
+//                    onClick = {
+//                        requestFromParent.value = PageRequest.copyPath
+//                        dropDownMenuExpendState.value = false
+//                    }
+//                )
 
                 //拷贝真实路径， /storage/em/0/xx/x/x/x/那种，真实的路径
                 DropdownMenuItem(

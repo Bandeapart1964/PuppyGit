@@ -104,7 +104,6 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.getFilePathStrBasedRepoDir
 import com.catpuppyapp.puppygit.utils.getRequestDataByState
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
 import com.catpuppyapp.puppygit.utils.replaceStringResList
@@ -835,7 +834,8 @@ fun CommitListScreen(
                             }
                         }else {
                             //输出格式： /puppygitDataDir/patch/xxxx..xxxx，可前往Files页面通过Go To功能跳转到对应目录并选中文件
-                            savePatchPath.value = getFilePathStrBasedRepoDir(outFile.canonicalPath, returnResultStartsWithSeparator = true)
+//                            savePatchPath.value = getFilePathStrBasedRepoDir(outFile.canonicalPath, returnResultStartsWithSeparator = true)
+                            savePatchPath.value = outFile.canonicalPath
                             showSavePatchSuccessDialog.value = true
                         }
                     }

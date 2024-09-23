@@ -1017,7 +1017,8 @@ fun RepoInnerPage(
                     curRepo,
                     curRepoIndex,
                     repoDto = element,
-                    repoDtoIndex = idx
+                    repoDtoIndex = idx,
+                    goToFilesPage = goToFilesPage,
                 ) workStatusOnclick@{ clickedRepo, status ->  //这个是点击status的callback，这个status其实可以不传，因为这里的lambda能捕获到数组的元素，就是当前仓库
 
                     //把点击状态的仓库存下来

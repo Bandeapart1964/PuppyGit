@@ -820,5 +820,6 @@
     <string name="please_grant_permission_before_you_add_a_storage_path">Please Grant Permission before you add a Storage Path</string>
     <string name="cross_icon_for_choose_folder">Cross icon for choose folder</string>
     <string name="please_go_to_settings_allow_manage_storage">Please go to Settings allow manage storage</string>
+    <string name="storage">Storage</string>
 
 </resources>

@@ -59,7 +59,6 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.getFilePathStrBasedRepoDir
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
@@ -234,7 +233,8 @@ fun TextEditor(
         val sb = StringBuilder()
 
         sb.appendLine(appContext.getString(R.string.file_name)+": "+file.name).appendLine()
-            .appendLine(appContext.getString(R.string.path)+": "+ getFilePathStrBasedRepoDir(fileFullPath, returnResultStartsWithSeparator=true)).appendLine()
+//            .appendLine(appContext.getString(R.string.path)+": "+ getFilePathStrBasedRepoDir(fileFullPath, returnResultStartsWithSeparator=true)).appendLine()
+            .appendLine(appContext.getString(R.string.path)+": "+ fileFullPath).appendLine()
             .appendLine(appContext.getString(R.string.chars)+": "+charsCount).appendLine()
             .appendLine(appContext.getString(R.string.lines) +": "+linesCount).appendLine()
             .appendLine(appContext.getString(R.string.file_size)+": "+fileSize).appendLine()

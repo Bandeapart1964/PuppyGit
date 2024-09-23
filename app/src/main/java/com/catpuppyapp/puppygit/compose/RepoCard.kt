@@ -34,6 +34,7 @@ import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.cache.Cache
@@ -52,6 +53,7 @@ fun RepoCard(
     curRepoIndex: MutableIntState,
     repoDto: RepoEntity,
     repoDtoIndex:Int,
+    goToFilesPage:(path:String) -> Unit,
     workStatusOnclick:(clickedRepo:RepoEntity, status:Int)->Unit
 ) {
     val navController = AppModel.singleInstanceHolder.navController
@@ -433,6 +435,24 @@ fun RepoCard(
 
                         )
                     }
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = stringResource(R.string.storage) + ":")
+                    Text(
+                        text = FsUtils.getPathWithInternalOrExternalPrefix(fullPath = repoDto.fullSavePath),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MyStyleKt.ClickableText.style,
+                        color = MyStyleKt.ClickableText.color,
+                        modifier = MyStyleKt.ClickableText.modifier.clickable {
+                            goToFilesPage(repoDto.fullSavePath)
+                        },
+                        fontWeight = FontWeight.Light
+
+                    )
                 }
 
 

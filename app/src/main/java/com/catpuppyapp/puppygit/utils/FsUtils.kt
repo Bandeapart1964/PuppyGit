@@ -32,6 +32,13 @@ import java.util.Locale
  * source: https://github.com/maks/MGit/blob/66ec88b8a9873ba3334d2b6b213801a9e8d9d3c7/app/src/main/java/me/sheimi/android/utils/FsUtils.java
  */
 object FsUtils {
+    /**
+     * virtual path starts with Home, eg. "Home/repoabc/"
+     * real path starts with /, eg. "/storage/emulated/0/repoabc"
+     */
+    const val internalPathPrefix = "Internal:/"
+    const val externalPathPrefix = "External:/"
+
     private val TAG = "FsUtils"
     //必须和 AndroidManifest.xml 里的 provider.android:authorities 的值一样
     const val PROVIDER_AUTHORITY = "com.catpuppyapp.puppygit.play.pro.fileprovider"
@@ -89,9 +96,13 @@ object FsUtils {
 
     fun getUriForFile(context: Context, file: File):Uri {
         val uri = FileProvider.getUriForFile(
-            context, PROVIDER_AUTHORITY,
+            context,
+            PROVIDER_AUTHORITY,
             file
         )
+
+        MyLog.d(TAG, "#getUriForFile: uri='$uri'")
+
         return uri
     }
 
@@ -762,6 +773,15 @@ object FsUtils {
         }
     }
 
+    fun getExternalStorageRootPath():String{
+        return try {
+            //eg. /storage/emulated/0/folder1/folder2
+            Environment.getExternalStorageDirectory().path.removeSuffix("/")
+        }catch (_:Exception) {
+            ""
+        }
+    }
+
     fun getRealPathFromUri(uri:Uri):String {
         return try {
             val uriPathString = uri.path.toString()
@@ -772,6 +792,21 @@ object FsUtils {
         }
     }
 
+    fun getPathAfterParent(parent: String, fullPath: String): String {
+        return fullPath.removePrefix(parent+"/")
+    }
+
+    /**
+     * eg: fullPath = /storage/emulated/0/repos/abc, return External:/abc
+     * eg: fullPath = /storage/emulated/0/Android/path-to-app-internal-repos-folder/abc, return Internal:/abc
+     */
+    fun getPathWithInternalOrExternalPrefix(fullPath:String, internalStorageRoot:String=AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath, externalStorageRoot:String=FsUtils.getExternalStorageRootPath()) :String {
+        if(fullPath.startsWith(internalStorageRoot)) {
+            return internalPathPrefix+getPathAfterParent(parent=internalStorageRoot, fullPath=fullPath)
+        }else {
+            return externalPathPrefix+getPathAfterParent(parent=externalStorageRoot, fullPath=fullPath)
+        }
+    }
 
     object Patch {
         const val suffix = ".patch"

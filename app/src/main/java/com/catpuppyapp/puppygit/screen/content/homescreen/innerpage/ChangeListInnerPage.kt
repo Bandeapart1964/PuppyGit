@@ -96,7 +96,6 @@ import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.doJobWithMainContext
-import com.catpuppyapp.puppygit.utils.getFilePathStrBasedRepoDir
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.isRepoReadyAndPathExist
 import com.catpuppyapp.puppygit.utils.replaceStringResList
@@ -1978,7 +1977,8 @@ fun ChangeListInnerPage(
                         )
 
                         if(savePatchRet.success()) {
-                            savePatchPath.value = getFilePathStrBasedRepoDir(outFile.canonicalPath, returnResultStartsWithSeparator = true)
+//                            savePatchPath.value = getFilePathStrBasedRepoDir(outFile.canonicalPath, returnResultStartsWithSeparator = true)
+                            savePatchPath.value = outFile.canonicalPath
                             //之前app给savePatchPath赋值会崩溃，所以用了Cache规避，后来升级gradle解决了
 //                            Cache.set(Cache.Key.changeListInnerPage_SavePatchPath, getFilePathStrBasedRepoDir(outFile.canonicalPath, returnResultStartsWithSeparator = true))
                             showSavePatchSuccessDialog.value = true

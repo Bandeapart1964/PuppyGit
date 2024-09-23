@@ -27,9 +27,8 @@ import com.catpuppyapp.puppygit.compose.FilterTextField
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
-import com.catpuppyapp.puppygit.utils.Msg
+import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
-import com.catpuppyapp.puppygit.utils.getFilePathStrBasedRepoDir
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import java.io.File
@@ -49,7 +48,8 @@ fun EditorTitle(editorPageShowingFilePath: MutableState<String>,
 
     if(editorPageShowingFilePath.value.isNotBlank()) {
         val fileName = getFileNameFromCanonicalPath(editorPageShowingFilePath.value)
-        val filePath = getFilePathStrBasedRepoDir(editorPageShowingFilePath.value, returnResultStartsWithSeparator = true)
+//        val filePath = getFilePathStrBasedRepoDir(editorPageShowingFilePath.value, returnResultStartsWithSeparator = true)
+        val filePath = FsUtils.getPathWithInternalOrExternalPrefix(editorPageShowingFilePath.value)
 
         val filePathNoFileName = filePath.removeSuffix(fileName)  // "/"结尾的路径或者只有"/"
         //如果只剩/，就返回 /，否则把末尾的/移除
