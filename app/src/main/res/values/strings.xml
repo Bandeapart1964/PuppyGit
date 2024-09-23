@@ -28,7 +28,6 @@
     <string name="local_repo_name">Repo Name</string>
     <string name="local_repo_name_placeholder">Repo Name in Local</string>
     <string name="err_cant_get_repo_dir">Err: Can\'t get Repo Dir</string>
-    <string name="username_email">Username and Email</string>
     <string name="repo_active">Active</string>
     <string name="repo_set_active">Set Active</string>
     <string name="repo_label_remote">Remote</string>
@@ -814,7 +813,7 @@
     <string name="three_dots_icon_for_add_storage_path">Three dots icon for add storage path</string>
     <string name="add_storage_path">Add Storage Path</string>
     <string name="storage_path">Storage Path</string>
-    <string name="eg_sdcard_puppygit">eg. /sdcard/PuppyGit</string>
+    <string name="eg_storage_emulate_0_repos">eg: /storage/emulated/0/repos</string>
     <string name="choose">Choose</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="please_grant_permission_before_you_add_a_storage_path">Please Grant Permission before you add a Storage Path</string>
@@ -822,5 +821,12 @@
     <string name="please_go_to_settings_allow_manage_storage">Please go to Settings allow manage storage</string>
     <string name="storage">Storage</string>
     <string name="cant_read_path">Can\'t read path</string>
+    <string name="import_repo">Import Repo</string>
+    <string name="please_grant_permission_before_import_repo">Please grant permission before import repo</string>
+    <string name="the_path_is_a_repos_parent_dir">The Path is a Repos Parent Dir</string>
+    <string name="will_scan_repos_under_this_folder">will scan repos under this folder</string>
+    <string name="path_is_not_a_dir">path is not a dir</string>
+<!--    eg: 10 imported-->
+    <string name="n_imported">ph_a3f241dc_1 imported</string>
 
 </resources>

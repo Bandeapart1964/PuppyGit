@@ -59,7 +59,6 @@ import com.catpuppyapp.puppygit.dto.FileItemDto
 import com.catpuppyapp.puppygit.dto.FileSimpleDto
 import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.play.pro.findActivity
 import com.catpuppyapp.puppygit.screen.content.homescreen.innerpage.AboutInnerPage
 import com.catpuppyapp.puppygit.screen.content.homescreen.innerpage.ChangeListInnerPage
 import com.catpuppyapp.puppygit.screen.content.homescreen.innerpage.EditorInnerPage
@@ -82,6 +81,7 @@ import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.SimpleT
 import com.catpuppyapp.puppygit.settings.SettingsCons
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
+import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Msg
@@ -120,6 +120,7 @@ fun HomeScreen(
     val homeTopBarScrollBehavior = AppModel.singleInstanceHolder.homeTopBarScrollBehavior
 //    val appContext = AppModel.singleInstanceHolder.appContext  //这个获取不了Activity!
     val appContext = LocalContext.current  //这个能获取到
+    val activity = ActivityUtil.getCurrentActivity()
 
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir
 
@@ -171,6 +172,7 @@ fun HomeScreen(
         initValue = TextFieldValue("")
     )
     val repoPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val repoPageShowImportRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
 
     val subscriptionPageNeedRefresh = StateUtil.getRememberSaveableState(initValue = "")
 
@@ -680,7 +682,8 @@ fun HomeScreen(
                         if(currentHomeScreen.intValue == Cons.selectedItem_Repos) {
                             if(!repoPageFilterModeOn.value){
                                 RepoPageActions(navController, repoPageCurRepo, showSetGlobalGitUsernameAndEmailDialog, needRefreshRepoPage,
-                                    repoPageFilterModeOn, repoPageFilterKeyWord
+                                    repoPageFilterModeOn, repoPageFilterKeyWord,
+                                    showImportRepoDialog = repoPageShowImportRepoDialog
                                 )
                             }
                         }else if(currentHomeScreen.intValue == Cons.selectedItem_Files) {
@@ -829,7 +832,8 @@ fun HomeScreen(
                     repoPageFilterModeOn=repoPageFilterModeOn,
                     repoPageFilterKeyWord= repoPageFilterKeyWord,
                     filterListState = repoFilterListState,
-                    openDrawer = openDrawer
+                    openDrawer = openDrawer,
+                    showImportRepoDialog = repoPageShowImportRepoDialog
                 )
 
             }
@@ -1031,7 +1035,6 @@ fun HomeScreen(
 
 
             //检查是否存在intent，如果存在，则切换到导入模式
-            val activity = appContext.findActivity()
             if (activity != null) {
                 val intent = activity.intent
                 if (intent != null) {

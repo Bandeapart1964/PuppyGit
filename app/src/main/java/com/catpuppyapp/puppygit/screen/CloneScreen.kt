@@ -73,11 +73,11 @@ import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.dev.shallowAndSingleBranchTestPassed
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.play.pro.findActivity
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
+import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper.Companion.getGitUrlType
@@ -109,6 +109,7 @@ fun CloneScreen(
 
     val appContext = LocalContext.current
     val inDarkTheme = Theme.inDarkTheme
+    val activity = ActivityUtil.getCurrentActivity()
 
 
     val isEditMode = repoId != null && repoId.isNotBlank() && repoId != "null"
@@ -300,7 +301,6 @@ fun CloneScreen(
                             fontWeight = FontWeight.Light,
                             modifier = MyStyleKt.ClickableText.modifier.clickable {
                                 // grant permission for read/write external storage
-                                val activity = appContext.findActivity()
                                 if (activity == null) {
                                     Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
                                 }else {
@@ -329,7 +329,7 @@ fun CloneScreen(
                                 Text(stringResource(R.string.storage_path))
                             },
                             placeholder = {
-                                Text(stringResource(R.string.eg_sdcard_puppygit))
+                                Text(stringResource(R.string.eg_storage_emulate_0_repos))
                             }
                         )
 

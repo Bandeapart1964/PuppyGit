@@ -112,6 +112,7 @@ class Cons {
         //repo createType
         const val dbRepoCreateByClone=1
         const val dbRepoCreateByInit=2  // git init on local storage
+        const val dbRepoCreateByImport=3
 
         //repo workStatus start
         //err

@@ -4,9 +4,17 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 
 
 object ActivityUtil {
+
+    @Composable
+    fun getCurrentActivity(): Activity? {
+        val context = LocalContext.current
+        return context as? Activity
+    }
 
     //貌似必须在主线程执行此方法
     //这个不一定能显示文件是否保存的toast

@@ -3,12 +3,15 @@ package com.catpuppyapp.puppygit.screen.content.homescreen.innerpage
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,12 +22,15 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -39,12 +45,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.AskGitUsernameAndEmailDialog
 import com.catpuppyapp.puppygit.compose.BottomSheet
 import com.catpuppyapp.puppygit.compose.BottomSheetItem
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.ErrRepoCard
+import com.catpuppyapp.puppygit.compose.LoadingDialog
+import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.RepoCard
 import com.catpuppyapp.puppygit.constants.Cons
@@ -60,8 +69,10 @@ import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
+import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.ComposeHelper
+import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -73,6 +84,8 @@ import com.catpuppyapp.puppygit.utils.deleteIfFileOrDirExist
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getSecFromTime
+import com.catpuppyapp.puppygit.utils.getStoragePermission
+import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
@@ -113,7 +126,8 @@ fun RepoInnerPage(
     repoPageFilterModeOn:MutableState<Boolean>,
     repoPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
     filterListState:CustomStateSaveable<LazyListState>,
-    openDrawer:()->Unit
+    openDrawer:()->Unit,
+    showImportRepoDialog:MutableState<Boolean>
 ) {
     val appContext = AppModel.singleInstanceHolder.appContext;
     val exitApp = AppModel.singleInstanceHolder.exitApp;
@@ -125,6 +139,7 @@ fun RepoInnerPage(
     val dbContainer = AppModel.singleInstanceHolder.dbContainer;
 //    val repoDtoList = remember { mutableStateListOf<RepoEntity>() }
 
+    val activity = ActivityUtil.getCurrentActivity()
 
     //back handler block start
     val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
@@ -253,6 +268,136 @@ fun RepoInnerPage(
         )
 
     }
+
+    val importRepoPath = StateUtil.getRememberSaveableState("")
+    val isReposParentFolderForImport = StateUtil.getRememberSaveableState(false)
+    val chooseDirLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) exportSaf@{ uri ->
+        if(uri!=null) {
+            val realPath = FsUtils.getRealPathFromUri(uri)
+            if(realPath.isNotBlank()) {
+                importRepoPath.value = realPath
+            }
+
+            MyLog.d(TAG, "#chooseDirLauncher, uri.path=${uri.path}, realPath=$realPath")
+        }
+    }
+
+    if(showImportRepoDialog.value) {
+        ConfirmDialog(
+            title = stringResource(R.string.import_repo),
+            requireShowTextCompose = true,
+            textCompose = {
+                Column(modifier = Modifier
+                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .fillMaxWidth()
+                    .padding(5.dp)
+                ) {
+                    Row(modifier = Modifier.padding(bottom = 15.dp)) {
+                        Text(
+                            text = stringResource(R.string.please_grant_permission_before_import_repo),
+                            style = MyStyleKt.ClickableText.style,
+                            color = MyStyleKt.ClickableText.color,
+                            overflow = TextOverflow.Visible,
+                            fontWeight = FontWeight.Light,
+                            modifier = MyStyleKt.ClickableText.modifier.clickable {
+                                // grant permission for read/write external storage
+                                if (activity == null) {
+                                    Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
+                                } else {
+                                    activity!!.getStoragePermission()
+                                }
+                            },
+                        )
+
+                    }
+
+                    Row (
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(.8f),
+                            value = importRepoPath.value,
+                            singleLine = true,
+
+                            onValueChange = {
+                                importRepoPath.value=it
+                            },
+                            label = {
+                                Text(stringResource(R.string.path))
+                            },
+                            placeholder = {
+                                Text(stringResource(R.string.eg_storage_emulate_0_repos))
+                            }
+                        )
+
+                        IconButton(
+                            onClick = {
+                                //show folder picker
+                                chooseDirLauncher.launch(null)
+                            }
+
+                        ) {
+                            Icon(imageVector = Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.cross_icon_for_choose_folder))
+                        }
+                    }
+
+                    Spacer(Modifier.height(15.dp))
+
+                    MyCheckBox(text = stringResource(R.string.the_path_is_a_repos_parent_dir), value = isReposParentFolderForImport)
+
+                    Spacer(Modifier.height(5.dp))
+
+                    if(isReposParentFolderForImport.value) {
+                        Text(stringResource(R.string.will_scan_repos_under_this_folder), fontWeight = FontWeight.Light)
+                    }
+                }
+            },
+            okBtnText = stringResource(R.string.ok),
+            cancelBtnText = stringResource(R.string.cancel),
+            okBtnEnabled = importRepoPath.value.isNotBlank(),
+            onCancel = { showImportRepoDialog.value = false },
+        ) {
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                val newPath = importRepoPath.value
+                if(newPath.isNotBlank()) {
+                    val f = File(newPath)
+
+                    if(!f.canRead()) {
+                        Msg.requireShowLongDuration(appContext.getString(R.string.cant_read_path))
+                        return@doJobThenOffLoading
+                    }
+
+                    if(!f.isDirectory) {
+                        Msg.requireShowLongDuration(appContext.getString(R.string.path_is_not_a_dir))
+                        return@doJobThenOffLoading
+                    }
+
+
+                    showImportRepoDialog.value = false
+
+                    val importRepoResult = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=newPath, isReposParent=isReposParentFolderForImport.value)
+
+                    // show a result dialog may better?
+
+                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+
+                    if(importRepoResult.success>0) {
+                        changeStateTriggerRefreshPage(needRefreshRepoPage)
+                    }
+
+                }
+
+
+            }
+
+        }
+
+    }
+
 //    val needRefreshRepoPage = rememberSaveable { mutableStateOf(false) }
 //    val needRefreshRepoPage = rememberSaveable { mutableStateOf("") }
     val initRepoPage = getInit(dbContainer, repoList, cloningText, unknownErrWhenCloning, loadingOn, loadingOff, appContext)
@@ -892,18 +1037,22 @@ fun RepoInnerPage(
     }
 
     if(isLoading.value) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .verticalScroll(StateUtil.getRememberScrollState())
-            ,
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
 
-            ) {
-            Text(text = loadingText.value)
-        }
+//        Column(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .padding(contentPadding)
+//                .verticalScroll(StateUtil.getRememberScrollState())
+//            ,
+//            verticalArrangement = Arrangement.Center,
+//            horizontalAlignment = Alignment.CenterHorizontally,
+//
+//        ) {
+//            Text(text = loadingText.value)
+//        }
+
+        LoadingDialog(loadingText.value)
+
     }
 
     if (!isLoading.value && repoList.value.isEmpty()) {  //无仓库，显示添加按钮

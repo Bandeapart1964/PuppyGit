@@ -21,13 +21,16 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.dao.RepoDao
 import com.catpuppyapp.puppygit.data.entity.RemoteEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.git.ImportRepoResult
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.getNowInSecFormatted
 import com.catpuppyapp.puppygit.utils.getSecFromTime
+import com.catpuppyapp.puppygit.utils.getShortUUID
 import com.catpuppyapp.puppygit.utils.isRepoReadyAndPathExist
+import com.github.git24j.core.Repository
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 private val TAG = "RepoRepositoryImpl"
@@ -142,11 +145,15 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         return repoFromDb
     }
 
-    override suspend fun getAll(): List<RepoEntity> {
+    override suspend fun getAll(updateRepoInfo:Boolean): List<RepoEntity> {
         val list = dao.getAll()
-        list.forEach {
-            Libgit2Helper.updateRepoInfo(it)
+
+        if(updateRepoInfo) {
+            list.forEach {
+                Libgit2Helper.updateRepoInfo(it)
+            }
         }
+
         return list
     }
 
@@ -294,6 +301,131 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
     override suspend fun deleteByStorageDirId(storageDirId: String) {
         dao.deleteByStorageDirId(storageDirId)
+    }
+
+    override suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult {
+        val repos = getAll(updateRepoInfo = false).toMutableList()
+
+        var all = 0
+        var success=0
+        var existed = 0
+        var failed = 0
+
+
+        if(isReposParent) {
+            val subdirs = File(dir).listFiles { it -> it.isDirectory }
+            //has sub directories, try scan folder
+            if(subdirs!=null && subdirs.isNotEmpty()) {
+                subdirs.forEach { sub ->
+                    val repoExisted = repos.indexOfFirst { it.fullSavePath ==  sub.canonicalPath} != -1
+                    if(repoExisted) {
+                        all++
+                        existed++
+                    }else {
+                        val isGitRepo = Libgit2Helper.maybeIsGitRepo(sub)
+
+                        if(isGitRepo) {
+                            all++
+                            val importSuccess = importSingleRepo(sub, addRepoToThisListIfSuccess = repos)
+                            if(importSuccess) {
+                                success++
+                            }else {
+                                failed++
+                            }
+                        }
+                    }
+
+                }
+            }
+        }else {
+            all=1
+            val dirFile = File(dir)
+            // repo already exists
+            if(repos.indexOfFirst { it.fullSavePath == dirFile.canonicalPath} != -1) {
+                existed = 1
+            }else { // repo not exist, import
+                val isGitRepo = Libgit2Helper.maybeIsGitRepo(dirFile)
+                if(isGitRepo) {
+                    val importSuccess = importSingleRepo(dirFile)
+                    if(importSuccess) {
+                        success = 1
+                    }else {
+                        failed = 1
+                    }
+                }else {
+                    all=0
+                }
+            }
+        }
+
+        return ImportRepoResult(all=all, success=success, existed=existed, failed=failed)
+
+    }
+
+    private suspend fun importSingleRepo(repoDir:File, addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null):Boolean {
+        val funName = "importSingleRepo"
+
+        try {
+            // make sure repoName not exists
+            var repoName = repoDir.name
+            if(isRepoNameExist(repoName)) {
+                repoName = repoDir.name+ "_"+getShortUUID(6)
+                if(isRepoNameExist(repoName)) {
+                    repoName = repoDir.name+ "_"+getShortUUID(8)
+                    if(isRepoNameExist(repoName)) {
+                        repoName = repoDir.name+ "_"+getShortUUID(10)
+                        if(isRepoNameExist(repoName)) {
+                            repoName = repoDir.name+ "_"+getShortUUID(12)
+                            if(isRepoNameExist(repoName)) {
+                                repoName = repoDir.name+ "_"+getShortUUID(16)
+                            }
+                        }
+                    }
+                }
+            }
+
+            val repoEntity = RepoEntity()
+            val remoteEntityList = mutableListOf<RemoteEntity>()
+
+            repoEntity.repoName = repoName
+            Repository.open(repoDir.canonicalPath).use { repo->
+                repoEntity.fullSavePath = repoDir.canonicalPath
+                repoEntity.workStatus = Cons.dbRepoWorkStatusUpToDate
+                repoEntity.createBy = Cons.dbRepoCreateByImport
+
+                val remotes = Libgit2Helper.getRemoteList(repo)
+                remotes.forEach { remoteName ->
+                    val remoteEntity = RemoteEntity()
+                    remoteEntity.remoteName = remoteName
+                    remoteEntity.repoId = repoEntity.id
+                    remoteEntityList.add(remoteEntity)
+                }
+            }
+
+            val remoteDb = AppModel.singleInstanceHolder.dbContainer.remoteRepository
+            AppModel.singleInstanceHolder.dbContainer.db.withTransaction {
+                // insert repo
+                insert(repoEntity)
+
+                // insert remotes
+                remoteEntityList.forEach {remote ->
+                    remoteDb.insert(remote)
+                }
+            }
+
+            // in most case, this list is all repos list, if success, add repo into it, or dont add if is not necessary
+            try {
+                addRepoToThisListIfSuccess?.add(repoEntity)
+            }catch (addToListException:Exception) {
+                // concurrent exception, maybe, but is ok, because repo is inserted, so ignore add to list exception
+                MyLog.e(TAG, "#$funName: err when add repo to list, err=${addToListException.localizedMessage}")
+            }
+
+            return true
+        }catch (e:Exception) {
+            MyLog.e(TAG, "#$funName: import err, err=${e.localizedMessage}")
+            return false
+        }
     }
 
     /*

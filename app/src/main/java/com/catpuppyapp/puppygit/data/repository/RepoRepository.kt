@@ -17,6 +17,7 @@
 package com.catpuppyapp.puppygit.data.repository
 
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.git.ImportRepoResult
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -56,7 +57,7 @@ interface RepoRepository {
 
     suspend fun getById(id:String): RepoEntity?
 
-    suspend fun getAll(): List<RepoEntity>
+    suspend fun getAll(updateRepoInfo:Boolean = true): List<RepoEntity>
 
     suspend fun cloneDoneUpdateRepoAndCreateRemote(item: RepoEntity)
 
@@ -77,8 +78,7 @@ interface RepoRepository {
     suspend fun updateIsShallow(repoId:String, isShallow:Int)
     suspend fun getByStorageDirId(storageDirId:String): List<RepoEntity>
     suspend fun deleteByStorageDirId(storageDirId:String)
-
-
+    suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult
 
 
 }

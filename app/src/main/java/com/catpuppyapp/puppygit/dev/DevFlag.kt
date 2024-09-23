@@ -74,6 +74,7 @@ val editorLineNumFontSizeTestPassed = false  //editor行号字体大小调整（
 val editorHideOrShowLineNumTestPassed = false  //editor显示或隐藏行号（会保存，有设置项）
 val editorEnableLineSelecteModeFromMenuTestPassed = false  //editor 从菜单开启行选择模式，若隐藏行号，只能由此开启选择模式（不保存）
 
+val importRepoTestPassed = false
 /**
  * below is bug
  */

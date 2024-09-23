@@ -4408,6 +4408,16 @@ class Libgit2Helper {
             }
         }
 
+        fun maybeIsGitRepo(dir:File):Boolean {
+            if(!dir.isDirectory) {
+                return false
+            }
+
+            // if exist .git folder, maybe is a git repo
+            val dotGitFolder = File(dir, ".git")
+            return dotGitFolder.exists() && dotGitFolder.isDirectory
+        }
+
     }
 
     object CommitUtil{
