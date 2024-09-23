@@ -182,9 +182,9 @@ fun HomeScreen(
     val needRefreshFilesPage = StateUtil.getRememberSaveableState(initValue = "")
 
 
+    val filesPageIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
     val filesPageIsPasteMode = StateUtil.getRememberSaveableState(initValue = false)
     val filesPageSelectedItems = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageSelectedItems", initValue = listOf<FileItemDto>())
-    val filesPageIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
 
 
     //这个filter有点重量级，比较适合做成全局搜索之类的功能
@@ -858,9 +858,9 @@ fun HomeScreen(
                     filesPageListState,
                     filterListState = filesFilterListState,
                     openDrawer = openDrawer,
+                    isFileSelectionMode= filesPageIsFileSelectionMode,
                     isPasteMode = filesPageIsPasteMode,
                     selectedItems = filesPageSelectedItems,
-                    isFileSelectionMode= filesPageIsFileSelectionMode
                 )
             }
             else if(currentHomeScreen.intValue == Cons.selectedItem_Editor) {

@@ -1,7 +1,7 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-<!--    share "/storage/emulated/0/Android/data/com.catpuppyapp.puppygit.play.pro/files" -->
+<!--    share "/storage/emulated/0/Android/data/com.catpuppyapp.puppygit.play.pro/files" , path returned by api `context.getExternalFilesDir(null)`-->
     <external-files-path name="internal" path="/" />
 
-<!--    share "/storage/emulated/0" -->
+<!--    share "/storage/emulated/0" , path returned by api `Environment.getExternalStorageDirectory()`-->
     <external-path name="external" path="/"/>
 </paths>

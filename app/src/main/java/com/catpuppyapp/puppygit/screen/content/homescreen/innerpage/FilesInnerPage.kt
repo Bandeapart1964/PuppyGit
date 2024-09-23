@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -133,9 +132,9 @@ fun FilesInnerPage(
     filterListState:CustomStateSaveable<LazyListState>,
 
     openDrawer:()->Unit,
+    isFileSelectionMode:MutableState<Boolean>,
     isPasteMode:MutableState<Boolean>,
     selectedItems:CustomStateListSaveable<FileItemDto>,
-    isFileSelectionMode:MutableState<Boolean>
 ) {
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir;
 //    val appContext = AppModel.singleInstanceHolder.appContext;
@@ -282,6 +281,7 @@ fun FilesInnerPage(
 //                    repoBaseDirPath.removeSuffix(slash)+slash+pathGoTo.value.removePrefix(slash)
 //                }
 
+                //expect absolute path
                 val finallyPath = pathGoTo.value
 
                 val f = File(finallyPath)
@@ -289,7 +289,7 @@ fun FilesInnerPage(
                     currentPath.value = finallyPath
                     changeStateTriggerRefreshPage(needRefreshFilesPage)
                 }else {
-                    Msg.requireShow(appContext.getString(R.string.invalid_path))
+                    Msg.requireShow(appContext.getString(R.string.cant_read_path))
                 }
 
             }
@@ -1154,6 +1154,8 @@ fun FilesInnerPage(
             textCompose = {
                 MySelectionContainer {
                     Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+
+                        //when only selected 1 item, show it's name and path
                         if(selectedItems.value.size==1) {
                             val item = selectedItems.value[0]
                             Row {
@@ -1731,6 +1733,8 @@ private fun getInit(
         //xxx.contains(xxxxxx)判断是为了避免用户修改json文件中的lastOpenedPath越狱访问 allRepoParentDir 之外的目录
         //如果进入过上面的parent不等于null和是否目录和存在的判断，则执行到这里，只有判断路径是否越狱的条件可能为真
 //        if(!currentDir.exists() || !currentDir.isDirectory || !currentDir.canonicalPath.startsWith(repoBaseDirPath)) {  //如果当前目录不存在，将路径设置为仓库根目录
+
+        //because now(2024-09-23) support external path, so doesn't check startsWith repoBaseDirPath anymore
         if(!currentDir.exists() || !currentDir.isDirectory) {  //如果当前目录不存在，将路径设置为仓库根目录
 //            Msg.requireShow(appContext.getString(R.string.invalid_path))  一边自己跳转到主页，一边提示无效path，产生一种主页是无效path的错觉，另人迷惑，故废弃
 
@@ -1831,7 +1835,7 @@ private fun getInit(
 
 //        val willUpdateList = if(currentPathBreadCrumbList.intValue==1) currentPathBreadCrumbList1 else currentPathBreadCrumbList2  //初始化时更新列表1，列表2由后续点击面包屑后的onClick函数更新
         val curDirPath = currentDir.canonicalPath
-        val isInternalStoragePath = curDirPath.startsWith(repoBaseDirPath)
+//        val isInternalStoragePath = curDirPath.startsWith(repoBaseDirPath)
 //        val splitPath = (if(isInternalStoragePath) getFilePathStrBasedRepoDir(curDirPath) else curDirPath.removePrefix("/")).split(File.separator)  //获得一个分割后的目录列表
 //        val root = if(isInternalStoragePath) repoBaseDirPath else "/"
         val splitPath = curDirPath.removePrefix("/").split(File.separator)  //获得一个分割后的目录列表
@@ -1906,7 +1910,7 @@ private fun getBackHandler(
             filesPageQuitSelectionMode()
         }else if(getFilterMode() != 0) {
             filesPageFilterModeOff()
-        }else if (currentPath.value != FsUtils.getExternalStorageRootPath()) { //如果在文件管理器页面且不在仓库根目录
+        }else if (currentPath.value.startsWith(FsUtils.getExternalStorageRootPathNoEndsWithSeparator()+"/")) { //如果在文件管理器页面且不在仓库根目录
             //返回上级目录
             currentPath.value = currentPath.value.substring(0, currentPath.value.lastIndexOf(File.separator))
             //刷新页面

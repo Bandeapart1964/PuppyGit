@@ -821,5 +821,6 @@
     <string name="cross_icon_for_choose_folder">Cross icon for choose folder</string>
     <string name="please_go_to_settings_allow_manage_storage">Please go to Settings allow manage storage</string>
     <string name="storage">Storage</string>
+    <string name="cant_read_path">Can\'t read path</string>
 
 </resources>

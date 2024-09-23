@@ -773,9 +773,12 @@ object FsUtils {
         }
     }
 
-    fun getExternalStorageRootPath():String{
+    /**
+     * @return "/storage/emulated/0" or "" if has exception
+     *
+     */
+    fun getExternalStorageRootPathNoEndsWithSeparator():String{
         return try {
-            //eg. /storage/emulated/0/folder1/folder2
             Environment.getExternalStorageDirectory().path.removeSuffix("/")
         }catch (_:Exception) {
             ""
@@ -792,19 +795,22 @@ object FsUtils {
         }
     }
 
-    fun getPathAfterParent(parent: String, fullPath: String): String {
-        return fullPath.removePrefix(parent+"/")
+    /**
+     * @return eg. input parent="/abc/def", fullPath="/abc/def/123", will return "123"; if fullPath not starts with parent, will return origin `fullPath`
+     */
+    fun getPathAfterParent(parentNoEndsWithSeparator: String, fullPath: String): String {
+        return fullPath.removePrefix("$parentNoEndsWithSeparator/")
     }
 
     /**
      * eg: fullPath = /storage/emulated/0/repos/abc, return External:/abc
      * eg: fullPath = /storage/emulated/0/Android/path-to-app-internal-repos-folder/abc, return Internal:/abc
      */
-    fun getPathWithInternalOrExternalPrefix(fullPath:String, internalStorageRoot:String=AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath, externalStorageRoot:String=FsUtils.getExternalStorageRootPath()) :String {
-        if(fullPath.startsWith(internalStorageRoot)) {
-            return internalPathPrefix+getPathAfterParent(parent=internalStorageRoot, fullPath=fullPath)
+    fun getPathWithInternalOrExternalPrefix(fullPath:String, internalStorageRoot:String=AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath, externalStorageRoot:String=FsUtils.getExternalStorageRootPathNoEndsWithSeparator()) :String {
+        return if(fullPath.startsWith(internalStorageRoot)) {
+            internalPathPrefix+getPathAfterParent(parentNoEndsWithSeparator=internalStorageRoot, fullPath=fullPath)
         }else {
-            return externalPathPrefix+getPathAfterParent(parent=externalStorageRoot, fullPath=fullPath)
+            externalPathPrefix+getPathAfterParent(parentNoEndsWithSeparator=externalStorageRoot, fullPath=fullPath)
         }
     }
 
