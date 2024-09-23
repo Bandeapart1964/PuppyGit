@@ -73,6 +73,7 @@ import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.dev.shallowAndSingleBranchTestPassed
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.play.pro.findActivity
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
@@ -88,6 +89,7 @@ import com.catpuppyapp.puppygit.utils.checkFileOrFolderNameAndTryCreateFile
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getRepoNameFromGitUrl
+import com.catpuppyapp.puppygit.utils.getStoragePermission
 import com.catpuppyapp.puppygit.utils.isPathExists
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import kotlinx.coroutines.Dispatchers
@@ -298,7 +300,12 @@ fun CloneScreen(
                             fontWeight = FontWeight.Light,
                             modifier = MyStyleKt.ClickableText.modifier.clickable {
                                 // grant permission for read/write external storage
-
+                                val activity = appContext.findActivity()
+                                if (activity == null) {
+                                    Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
+                                }else {
+                                    activity!!.getStoragePermission()
+                                }
                             },
                         )
 
