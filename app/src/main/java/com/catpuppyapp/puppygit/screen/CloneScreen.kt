@@ -742,7 +742,7 @@ fun CloneScreen(
                 IconButton(onClick = {
                     showAddStoragePathDialog.value = true
                 }) {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.cross_icon_for_add_storage_path))
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.three_dots_icon_for_add_storage_path))
                 }
 
             }

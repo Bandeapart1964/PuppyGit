@@ -811,7 +811,7 @@
     <string name="internal_storage">Internal Storage</string>
     <string name="trash_bin_icon_for_delete_item">Trash Bin icon for delete item</string>
     <string name="cant_delete_internal_storage">Can\'t delete internal storage</string>
-    <string name="cross_icon_for_add_storage_path">Cross icon for add storage path</string>
+    <string name="three_dots_icon_for_add_storage_path">Three dots icon for add storage path</string>
     <string name="add_storage_path">Add Storage Path</string>
     <string name="storage_path">Storage Path</string>
     <string name="eg_sdcard_puppygit">eg. /sdcard/PuppyGit</string>
