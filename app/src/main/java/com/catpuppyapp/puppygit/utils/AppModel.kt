@@ -60,7 +60,7 @@ class AppModel {
 
 //            LibgitTwo.jniTestAccessExternalStorage()
 
-            //disable dirs owner validation for libgit2, make it support access /sdcard or /storage/emulated/storage
+            //disable dirs owner validation for libgit2, make it support access external storage path like /sdcard or /storage/emulated/storage
             Libgit2.optsGitOptSetOwnerValidation(false)
 
             appModel.appContext = applicationContext;
