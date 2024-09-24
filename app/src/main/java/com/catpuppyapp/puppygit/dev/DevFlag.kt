@@ -40,9 +40,9 @@ fun featureEnabled(featureFlag: Boolean):Boolean {
  * untested features or tested but not enough tested
  */
 //TODO 测试功能完毕后设为true
-val shallowAndSingleBranchTestPassed = false  //代表shallow clone和single branch功能是否测试通过
+val shallowAndSingleBranchTestPassed = true  //代表shallow clone和single branch功能是否测试通过
 val tagsTestPassed = false  // tags管理功能是否测试通过
-val detailsDiffTestPassed = false  //增量diff是否测试通过
+val detailsDiffTestPassed = true  //增量diff是否测试通过
 val reflogTestPassed = false  //reflog
 val stashTestPassed = false  //stash
 val editorMergeModeTestPassed = false  // editor两处：1 从cl页面进入subeditor时是否以merge mode启动；2 editor页面菜单项merge mode功能
