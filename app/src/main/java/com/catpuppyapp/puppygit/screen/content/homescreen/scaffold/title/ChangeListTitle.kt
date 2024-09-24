@@ -3,15 +3,14 @@ package com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowLeft
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -30,8 +29,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -170,8 +169,9 @@ fun ChangeListTitle(
 
             Column(modifier = Modifier
                 .fillMaxWidth(.2f)
-                .align(Alignment.CenterEnd)){
-                Icon(imageVector = if(dropDownMenuExpendState.value) Icons.Filled.ArrowDropDown else Icons.Filled.ArrowLeft,
+                .align(Alignment.CenterEnd)
+            ){
+                Icon(imageVector = if(dropDownMenuExpendState.value) Icons.Filled.ArrowDropDown else Icons.AutoMirrored.Filled.ArrowLeft,
                     contentDescription = stringResource(R.string.switch_repo),
                     tint = if(enableAction) LocalContentColor.current else UIHelper.getDisableBtnColor(inDarkTheme)
                 )

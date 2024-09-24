@@ -3,13 +3,14 @@ package com.catpuppyapp.puppygit.compose
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowLeft
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -62,19 +63,26 @@ fun<T> SingleSelectList(
         )
 
     ) {
-        Row(modifier = Modifier
-            .padding(start = 30.dp, end = 30.dp)
+        Box(modifier = Modifier
+            .padding(start = 5.dp, end = 5.dp)
             .defaultMinSize(minHeight = 50.dp)
             .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(.9f)
+                    .align(Alignment.CenterStart)
+
+            ) {
                 Text(text = menuItemFormatter(selectedOptionValue))
             }
 
-            Row {
-                Icon(imageVector = if(expandDropdownMenu.value) Icons.Filled.ArrowDropDown else Icons.Filled.ArrowLeft
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(.1f)
+                    .align(Alignment.CenterEnd)
+            ) {
+                Icon(imageVector = if(expandDropdownMenu.value) Icons.Filled.ArrowDropDown else Icons.AutoMirrored.Filled.ArrowLeft
                     , contentDescription = null
                 )
             }
