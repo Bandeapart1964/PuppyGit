@@ -56,6 +56,7 @@ import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.RepoCard
+import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -271,16 +272,6 @@ fun RepoInnerPage(
 
     val importRepoPath = StateUtil.getRememberSaveableState("")
     val isReposParentFolderForImport = StateUtil.getRememberSaveableState(false)
-    val chooseDirLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) exportSaf@{ uri ->
-        if(uri!=null) {
-            val realPath = FsUtils.getRealPathFromUri(uri)
-            if(realPath.isNotBlank()) {
-                importRepoPath.value = realPath
-            }
-
-            MyLog.d(TAG, "#chooseDirLauncher, uri.path=${uri.path}, realPath=$realPath")
-        }
-    }
 
     if(showImportRepoDialog.value) {
         ConfirmDialog(
@@ -311,38 +302,7 @@ fun RepoInnerPage(
 
                     }
 
-                    Row (
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ){
-
-                        TextField(
-                            modifier = Modifier.fillMaxWidth(.8f),
-                            value = importRepoPath.value,
-                            singleLine = true,
-
-                            onValueChange = {
-                                importRepoPath.value=it
-                            },
-                            label = {
-                                Text(stringResource(R.string.path))
-                            },
-                            placeholder = {
-                                Text(stringResource(R.string.eg_storage_emulate_0_repos))
-                            }
-                        )
-
-                        IconButton(
-                            onClick = {
-                                //show folder picker
-                                chooseDirLauncher.launch(null)
-                            }
-
-                        ) {
-                            Icon(imageVector = Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.cross_icon_for_choose_folder))
-                        }
-                    }
+                    SystemFolderChooser(path = importRepoPath)
 
                     Spacer(Modifier.height(15.dp))
 

@@ -67,6 +67,7 @@ import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
+import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -268,17 +269,6 @@ fun CloneScreen(
 
     val storagePathForAdd = StateUtil.getRememberSaveableState("")
 
-
-    val chooseDirLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) exportSaf@{ uri ->
-        if(uri!=null) {
-            val realPath = FsUtils.getRealPathFromUri(uri)
-            if(realPath.isNotBlank()) {
-                storagePathForAdd.value = realPath
-            }
-
-            MyLog.d(TAG, "#chooseDirLauncher, uri.path=${uri.path}, realPath=$realPath")
-        }
-    }
     //vars of  storage select end
 
 
@@ -308,41 +298,10 @@ fun CloneScreen(
                                 }
                             },
                         )
-
                     }
 
-                    Row (
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ){
+                    SystemFolderChooser(path = storagePathForAdd)
 
-                        TextField(
-                            modifier = Modifier.fillMaxWidth(.8f),
-                            value = storagePathForAdd.value,
-                            singleLine = true,
-
-                            onValueChange = {
-                                storagePathForAdd.value=it
-                            },
-                            label = {
-                                Text(stringResource(R.string.storage_path))
-                            },
-                            placeholder = {
-                                Text(stringResource(R.string.eg_storage_emulate_0_repos))
-                            }
-                        )
-
-                        IconButton(
-                            onClick = {
-                                //show folder picker
-                                chooseDirLauncher.launch(null)
-                            }
-
-                        ) {
-                            Icon(imageVector = Icons.Filled.MoreHoriz, contentDescription = stringResource(R.string.cross_icon_for_choose_folder))
-                        }
-                    }
                 }
             },
             okBtnText = stringResource(R.string.ok),
