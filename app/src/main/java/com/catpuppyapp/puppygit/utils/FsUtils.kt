@@ -796,10 +796,10 @@ object FsUtils {
     }
 
     /**
-     * @return eg. input parent="/abc/def", fullPath="/abc/def/123", will return "123"; if fullPath not starts with parent, will return origin `fullPath`
+     * @return eg. input parent="/abc/def", fullPath="/abc/def/123", will return "/123"; if fullPath not starts with parent, will return origin `fullPath`
      */
     fun getPathAfterParent(parentNoEndsWithSeparator: String, fullPath: String): String {
-        return fullPath.removePrefix("$parentNoEndsWithSeparator/")
+        return fullPath.removePrefix(parentNoEndsWithSeparator)
     }
 
     /**

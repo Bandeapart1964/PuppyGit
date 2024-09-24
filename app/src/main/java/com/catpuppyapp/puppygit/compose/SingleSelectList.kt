@@ -29,20 +29,21 @@ import com.catpuppyapp.puppygit.utils.state.StateUtil
 @OptIn(ExperimentalFoundationApi::class)
 @Deprecated("may crashed if use this in dialog")
 @Composable
-fun SingleSelectList(
+fun<T> SingleSelectList(
     outterModifier: Modifier = Modifier.fillMaxWidth(),
     dropDownMenuModifier:Modifier=Modifier.fillMaxWidth(),
 
-    optionsList:List<String>,
+    optionsList:List<T>,
     selectedOptionIndex:Int,
-    selectedOptionValue:String,
+    selectedOptionValue:T,
 
-    menuItemOnClick:(index:Int, value:String)->Unit = {index, value->},
+    menuItemFormatter:(value:T)->String = {value-> ""+value},
+    menuItemOnClick:(index:Int, value:T)->Unit = {index, value->},
 
     menuItemTrailIcon:ImageVector?=null,
     menuItemTrailIconDescription:String?=null,
-    menuItemTrailIconEnable:(index:Int, value:String)->Boolean = {index, value-> true},
-    menuItemTrailIconOnClick:(index:Int, value:String) ->Unit = {index, value->},
+    menuItemTrailIconEnable:(index:Int, value:T)->Boolean = {index, value-> true},
+    menuItemTrailIconOnClick:(index:Int, value:T) ->Unit = {index, value->},
 ) {
     val expandDropdownMenu = StateUtil.getRememberSaveableState(initValue = false)
 
@@ -69,7 +70,7 @@ fun SingleSelectList(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row {
-                Text(text = selectedOptionValue)
+                Text(text = menuItemFormatter(selectedOptionValue))
             }
 
             Row {
@@ -85,7 +86,7 @@ fun SingleSelectList(
             expanded = expandDropdownMenu.value,
             onDismissRequest = { expandDropdownMenu.value=false }
         ) {
-            for ((k, optext) in optionsList.toList().withIndex()) {
+            for ((index, value) in optionsList.toList().withIndex()) {
                 //忽略当前显示条目
                 //不忽略了，没必要，显示的是选中条目，一点击，展开的菜单里是所有条目，也很合理
 //            if(k == selectedOption.intValue) {
@@ -97,18 +98,18 @@ fun SingleSelectList(
                 ){
                     //列出其余条目
                     DropdownMenuItem(
-                        text = { Text(if(selectedOptionIndex == k ) "*$optext" else optext) },
+                        text = { Text(if(selectedOptionIndex == index) "*${menuItemFormatter(value)}" else menuItemFormatter(value)) },
                         onClick ={
                             expandDropdownMenu.value=false
 
-                            menuItemOnClick(k, optext)
+                            menuItemOnClick(index, value)
                         },
                         trailingIcon = {
                             if(menuItemTrailIcon!=null) {
                                 IconButton(
-                                    enabled = menuItemTrailIconEnable(k, optext),
+                                    enabled = menuItemTrailIconEnable(index, value),
                                     onClick = {
-                                        menuItemTrailIconOnClick(k, optext)
+                                        menuItemTrailIconOnClick(index, value)
                                     }
                                 ) {
                                     Icon(
