@@ -4437,6 +4437,21 @@ class Libgit2Helper {
 //            return dotGitFolder.exists() && dotGitFolder.isDirectory
         }
 
+        fun renameBranch(repo: Repository, branchShortName:String, newName:String, force: Boolean):Ret<Unit?> {
+            try {
+                val branch = resolveBranch(repo, branchShortName, Branch.BranchType.LOCAL)
+                if(branch!=null) {
+                    Branch.move(branch, newName, force)
+                    return Ret.createSuccess(null)
+                }else {
+                    return Ret.createError(null, "resolve branch failed!")
+                }
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#renameBranch err: ${e.stackTraceToString()}")
+                return Ret.createError(null, e.localizedMessage ?: "rename branch err")
+            }
+        }
+
     }
 
     object CommitUtil{

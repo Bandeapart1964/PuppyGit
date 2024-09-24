@@ -14,16 +14,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CenterFocusWeak
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,7 +34,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -71,6 +73,7 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.branchListPagePublishBranchTestPassed
+import com.catpuppyapp.puppygit.dev.branchRenameTestPassed
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.rebaseTestPassed
@@ -885,6 +888,90 @@ fun BranchListScreen(
     }
 
 
+    val showRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val nameForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val forceForRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val errMsgForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    if(showRenameDialog.value) {
+        val curItem = curObjInPage.value
+
+        ConfirmDialog(
+            title = stringResource(R.string.rename),
+            requireShowTextCompose = true,
+            textCompose = {
+                Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                    TextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                        ,
+                        value = nameForRenameDialog.value,
+                        singleLine = true,
+                        isError = errMsgForRenameDialog.value.isNotBlank(),
+                        supportingText = {
+                            if (errMsgForRenameDialog.value.isNotBlank()) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = errMsgForRenameDialog.value,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        trailingIcon = {
+                            if (errMsgForRenameDialog.value.isNotBlank()) {
+                                Icon(imageVector=Icons.Filled.Error,
+                                    contentDescription=null,
+                                    tint = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        onValueChange = {
+                            nameForRenameDialog.value = it
+
+                            // clear err msg
+                            errMsgForRenameDialog.value = ""
+                        },
+                        label = {
+                            Text(stringResource(R.string.new_name))
+                        }
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    MyCheckBox(text = stringResource(R.string.overwrite_if_exist), value = forceForRenameDialog)
+                }
+            },
+            okBtnText = stringResource(R.string.ok),
+            cancelBtnText = stringResource(R.string.cancel),
+            okBtnEnabled = nameForRenameDialog.value != curItem.shortName,
+            onCancel = {showRenameDialog.value = false}
+        ) {
+            val newName = nameForRenameDialog.value
+            val branchShortName = curItem.shortName
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.renaming)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        val renameRet = Libgit2Helper.renameBranch(repo, branchShortName, newName, forceForRenameDialog.value)
+                        if(renameRet.hasError()) {
+                            errMsgForRenameDialog.value = renameRet.msg
+                            return@doJobThenOffLoading
+                        }
+
+                        showRenameDialog.value=false
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    val errmsg = e.localizedMessage ?: "rename branch err"
+                    Msg.requireShowLongDuration(errmsg)
+                    createAndInsertError(curRepo.value.id, "err: rename branch '${curObjInPage.value.shortName}' to ${nameForRenameDialog.value} failed, err is $errmsg")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+        }
+    }
+
+
+
     //filter相关，开始
     val filterKeyword = StateUtil.getCustomSaveableState(
         keyTag = stateKeyTag,
@@ -1349,6 +1436,15 @@ fun BranchListScreen(
 
                     showDetailsDialog.value = true
                 }
+
+                if(curObjInPage.value.type == Branch.BranchType.LOCAL && proFeatureEnabled(branchRenameTestPassed)) {
+                    BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.rename)) {
+                        nameForRenameDialog.value = curObjInPage.value.shortName
+                        forceForRenameDialog.value= false
+                        showRenameDialog.value = true
+                    }
+                }
+
                 BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.delete), textColor = MyStyleKt.TextColor.danger,
                     //只能删除非当前分支，不过如果是detached，所有分支都能删。这个不做检测了，因为就算界面出了问题，用户针对当前分支执行了删除操作，libgit2也会抛异常，所以还是不会被执行。
                     enabled = curObjInPage.value.shortName != repoCurrentActiveBranchOrShortDetachedHashForShown.value

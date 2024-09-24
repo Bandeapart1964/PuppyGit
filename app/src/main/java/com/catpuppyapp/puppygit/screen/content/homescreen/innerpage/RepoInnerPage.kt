@@ -78,6 +78,7 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.RepoStatusUtil
 import com.catpuppyapp.puppygit.utils.boolToDbInt
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
+import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.deleteIfFileOrDirExist
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
@@ -852,23 +853,30 @@ fun RepoInnerPage(
             val repoId = curRepo.id
 
             doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.renaming)) {
-                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-                if(strHasIllegalChars(newName)) {
-                    errMsgForRenameDialog.value = appContext.getString(R.string.name_has_illegal_chars)
-                    return@doJobThenOffLoading
+                try {
+                    val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                    if(strHasIllegalChars(newName)) {
+                        errMsgForRenameDialog.value = appContext.getString(R.string.name_has_illegal_chars)
+                        return@doJobThenOffLoading
+                    }
+
+                    if(repoDb.isRepoNameExist(newName)) {
+                        errMsgForRenameDialog.value = appContext.getString(R.string.name_already_exists)
+                        return@doJobThenOffLoading
+                    }
+
+                    showRenameDialog.value = false
+
+                    repoDb.updateRepoName(repoId, newName)
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    val errmsg = e.localizedMessage ?: "rename repo err"
+                    Msg.requireShowLongDuration(errmsg)
+                    createAndInsertError(curRepo.id, "err: rename repo '${curRepo.repoName}' to ${repoNameForRenameDialog.value} failed, err is $errmsg")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefreshRepoPage)
                 }
-
-                if(repoDb.isRepoNameExist(newName)) {
-                    errMsgForRenameDialog.value = appContext.getString(R.string.name_already_exists)
-                    return@doJobThenOffLoading
-                }
-
-                showRenameDialog.value = false
-
-                repoDb.updateRepoName(repoId, newName)
-
-                Msg.requireShow(appContext.getString(R.string.success))
-                changeStateTriggerRefreshPage(needRefreshRepoPage)
             }
         }
     }
