@@ -58,10 +58,10 @@ import project to Android Studio, then build, thats all.
 
 ## Security
 For reduce risk of password leak, Your passwords of git repos(e.g. github) are encrypted saved in PuppyGit's database on your device, the password of password encryptor is not open source for security reason, if you want build PuppyGit by yourself, you should update the password and version properly:
-    - update `EncryptorImpl.kt`, set your password encryptor, or simple use default encryptor
-    - set your encryptor version and password in `PassEncryptHelper.kt`, the password must enough to long and better don't make it be public
+- update `EncryptorImpl.kt`, set your password encryptor, or simple use default encryptor
+- set your encryptor version and password in `PassEncryptHelper.kt`, the password must enough to long and better don't make it be public
 
-`note: you should not change the passwords of old versions of password encryptors, if changed, when you upgrade app will can't decrypt the passwords encrypted by encryptor with old passwords, then all saved passwords on user device will be invalid, users must re-set passwords of credentials to right passwords and save them again.`
+note: you should not change the passwords of old versions of password encryptors, if changed, when you upgrade app will can't decrypt the passwords encrypted by encryptor with old passwords, then all saved passwords on user device will be invalid, users must re-set passwords of credentials to right passwords and save them again.
 
 
 ## Help translate
