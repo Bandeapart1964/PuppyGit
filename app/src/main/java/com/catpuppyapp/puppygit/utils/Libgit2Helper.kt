@@ -1322,8 +1322,14 @@ class Libgit2Helper {
             return if(line.newLineNum<0) line.oldLineNum else line.newLineNum
         }
 
-        fun getRepoGitDirEndsWithSlash(repo:Repository):String {
-            return repo.itemPath(Repository.Item.GITDIR)?:""
+        /**
+         * return .git folder, no ends with slash
+         * note: sometimes a folder meaning regular .git folder, but is not named .git,
+         *  so, should NOT simple concat "repoPath/.git" as repos .git path
+         */
+        fun getRepoGitDirPathNoEndsWithSlash(repo:Repository):String {
+            // I am not sure, but in my tests, this api always ends with "/" even in windows
+            return repo.itemPath(Repository.Item.GITDIR)?.removeSuffix("/") ?: ""
         }
 
         //检查仓库是否是shallowed，实现机制就是：检查 .git 目录是否有 shallow 文件
@@ -2115,7 +2121,8 @@ class Libgit2Helper {
             downloadTags: Remote.AutotagOptionT = Remote.AutotagOptionT.UNSPECIFIED,  // auto，更新已有；all 下载所有；None严格遵循refspec list不自动附加tag相关refspec；unspecified，默认值，遵循配置文件
         ) {
             var repoIsShallow = isRepoShallow(repo)
-            val repoGitDirPath = repo.workdir().pathString + File.separator + ".git"
+//            val repoGitDirPath = repo.workdir().pathString + File.separator + ".git"
+            val repoGitDirPath = getRepoGitDirPathNoEndsWithSlash(repo)
             val shallowFile = File(repoGitDirPath, "shallow")
 
             for(remoteAndCredentials in remoteList) {
@@ -3282,14 +3289,11 @@ class Libgit2Helper {
             val commit = resolveCommitByHash(repo, commitOidStr)?:return CommitDto()
 
             val repoIsShallow = isRepoShallow(repo)
-            val shallowOidList = ShallowManage.getShallowOidList(repo.workdir().toString()+File.separator+".git")
+//            val shallowOidList = ShallowManage.getShallowOidList(repo.workdir().toString()+File.separator+".git")
+            val shallowOidList = ShallowManage.getShallowOidList(getRepoGitDirPathNoEndsWithSlash(repo))
 
             val allTagList = getAllTags(repo)
             return createCommitDto(commitOid, allBranchList, allTagList, commit, repoId, repoIsShallow, shallowOidList)
-        }
-
-        fun getRepoDotGitDirPathNoEndSlash(repo:Repository) :String {
-            return repo.workdir().toString()+File.separator+".git"
         }
 
         //返回值 (nextOid, CommitDtoList)，nextOid就是CommitDtoList列表里最后一个元素之后的Oid，用来实现加载更多，如果不存在下一个元素，则是null，意味着已经遍历到提交树的最初提交了
@@ -3309,7 +3313,8 @@ class Libgit2Helper {
             val allBranchList = getBranchList(repo)
 
             val repoIsShallow = isRepoShallow(repo)
-            val shallowOidList = ShallowManage.getShallowOidList(repo.workdir().toString()+File.separator+".git")
+//            val shallowOidList = ShallowManage.getShallowOidList(repo.workdir().toString()+File.separator+".git")
+            val shallowOidList = ShallowManage.getShallowOidList(getRepoGitDirPathNoEndsWithSlash(repo))
 
             val allTagList = getAllTags(repo)
 
@@ -3994,7 +3999,7 @@ class Libgit2Helper {
          * 获取cherry pick target hash，用来查询提交信息之类的
          */
         fun getCherryPickHeadHash(repo: Repository):String {
-            val file = File(getRepoDotGitDirPathNoEndSlash(repo), "CHERRY_PICK_HEAD")
+            val file = File(getRepoGitDirPathNoEndsWithSlash(repo), "CHERRY_PICK_HEAD")
             //文件不存在返回空
             if(!file.exists()) {
                 return ""
@@ -4408,14 +4413,28 @@ class Libgit2Helper {
             }
         }
 
-        fun maybeIsGitRepo(dir:File):Boolean {
-            if(!dir.isDirectory) {
+
+        fun isGitRepo(dir:File):Boolean {
+            try {
+                // should use Repository.open() check dir is or not a repo, if open success, is a repo, else not.
+                // shouldn't use check dir/.git folder exists or not for determine folder is repo or not
+                // because when a repo is a submodule, maybe it will haven't .git folder, but has .git file,
+                // the .git file include a relative path to ".git" folder(maybe is not named .git folder, but meant same)
+                // and the repoFullPath should be .git files folder
+                Repository.open(dir.canonicalPath).use {}
+                return true
+            }catch (e:Exception) {
                 return false
             }
 
-            // if exist .git folder, maybe is a git repo
-            val dotGitFolder = File(dir, ".git")
-            return dotGitFolder.exists() && dotGitFolder.isDirectory
+//         under codes only is not reliable, if .git is a file, it will return false, but the dir maybe is a git repo though
+//            if(!dir.isDirectory) {
+//                return false
+//            }
+//
+//            // if exist .git folder, maybe is a git repo
+//            val dotGitFolder = File(dir, ".git")
+//            return dotGitFolder.exists() && dotGitFolder.isDirectory
         }
 
     }
@@ -4507,7 +4526,7 @@ class Libgit2Helper {
          */
         fun saveRepoCurBranchNameOrDetached(repo:Repository) {
             val name = if(repo.headDetached()) detachedHead else repo.head()?.name()
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(Libgit2Helper.getRepoGitDirEndsWithSlash(repo)).canonicalPath
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
             val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
             if(!file.exists()) {
                 file.createNewFile()
@@ -4521,7 +4540,7 @@ class Libgit2Helper {
          * 获取启动rebase之前的分支名
          */
         fun getRebaseBeforeName(repo:Repository):String? {
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(Libgit2Helper.getRepoGitDirEndsWithSlash(repo)).canonicalPath
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
             val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
             if(!file.exists()) {
                 return null

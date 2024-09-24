@@ -322,7 +322,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                         all++
                         existed++
                     }else {
-                        val isGitRepo = Libgit2Helper.maybeIsGitRepo(sub)
+                        val isGitRepo = Libgit2Helper.isGitRepo(sub)
 
                         if(isGitRepo) {
                             all++
@@ -344,7 +344,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
             if(repos.indexOfFirst { it.fullSavePath == dirFile.canonicalPath} != -1) {
                 existed = 1
             }else { // repo not exist, import
-                val isGitRepo = Libgit2Helper.maybeIsGitRepo(dirFile)
+                val isGitRepo = Libgit2Helper.isGitRepo(dirFile)
                 if(isGitRepo) {
                     val importSuccess = importSingleRepo(dirFile)
                     if(importSuccess) {
