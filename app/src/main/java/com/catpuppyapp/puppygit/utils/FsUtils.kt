@@ -41,7 +41,7 @@ object FsUtils {
 
     private val TAG = "FsUtils"
     //必须和 AndroidManifest.xml 里的 provider.android:authorities 的值一样
-    const val PROVIDER_AUTHORITY = "com.catpuppyapp.puppygit.play.pro.fileprovider"
+//    const val PROVIDER_AUTHORITY = "com.catpuppyapp.puppygit.play.pro.fileprovider"
 
     private val appContext = AppModel.singleInstanceHolder.appContext
 
@@ -94,10 +94,18 @@ object FsUtils {
         return getMimeType(getUriForFile(context, file).toString())
     }
 
+    /**
+     * get authority for gen uri for file
+     * note: the value must same as provider.android:authorities in AndroidManifest.xml
+     */
+    fun getAuthorityOfUri(context: Context):String {
+        return AppModel.getAppPackageName(context) + ".provider"
+    }
+
     fun getUriForFile(context: Context, file: File):Uri {
         val uri = FileProvider.getUriForFile(
             context,
-            PROVIDER_AUTHORITY,
+            getAuthorityOfUri(context),
             file
         )
 
