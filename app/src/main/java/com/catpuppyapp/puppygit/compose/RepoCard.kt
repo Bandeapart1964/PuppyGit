@@ -447,7 +447,13 @@ fun RepoCard(
                         overflow = TextOverflow.Ellipsis,
                         style = MyStyleKt.ClickableText.style,
                         color = MyStyleKt.ClickableText.color,
-                        modifier = MyStyleKt.ClickableText.modifier.clickable {
+                        modifier = MyStyleKt.ClickableText.modifier.combinedClickable(
+                            onLongClick = { // long press will copy path
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                clipboardManager.setText(AnnotatedString(repoDto.fullSavePath))
+                                Msg.requireShow(appContext.getString(R.string.copied))
+                            }
+                        ) {  // on click
                             goToFilesPage(repoDto.fullSavePath)
                         },
                         fontWeight = FontWeight.Light

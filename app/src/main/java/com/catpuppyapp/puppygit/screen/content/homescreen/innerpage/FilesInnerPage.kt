@@ -288,7 +288,7 @@ fun FilesInnerPage(
                 if(f.canRead()) {
                     currentPath.value = finallyPath
                     changeStateTriggerRefreshPage(needRefreshFilesPage)
-                }else {
+                }else { // can't read path: usually by path non-exists or no permission to read
                     Msg.requireShow(appContext.getString(R.string.cant_read_path))
                 }
 
