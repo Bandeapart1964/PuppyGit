@@ -30,6 +30,7 @@ import com.catpuppyapp.puppygit.utils.getNowInSecFormatted
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.getShortUUID
 import com.catpuppyapp.puppygit.utils.isRepoReadyAndPathExist
+import com.catpuppyapp.puppygit.utils.strHasIllegalChars
 import com.github.git24j.core.Repository
 import kotlinx.coroutines.flow.Flow
 import java.io.File
@@ -427,6 +428,15 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
             return false
         }
     }
+
+    override suspend fun isGoodRepoName(name: String): Boolean {
+        return !strHasIllegalChars(name) && !isRepoNameExist(name)
+    }
+
+    override suspend fun updateRepoName(repoId:String, name: String) {
+        dao.updateRepoName(repoId, name)
+    }
+
 
     /*
         suspend fun exampleWithTransaction(){

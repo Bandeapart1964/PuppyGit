@@ -80,5 +80,12 @@ interface RepoRepository {
     suspend fun deleteByStorageDirId(storageDirId:String)
     suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult
 
+    /**
+     * if reponame has illegal chars or exists in repo, return false, else return true
+     */
+    suspend fun isGoodRepoName(name:String):Boolean
+
+    suspend fun updateRepoName(repoId:String, name: String)
+
 
 }

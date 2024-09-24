@@ -95,4 +95,8 @@ interface RepoDao {
     @Query("update repo set isShallow = :isShallow where id = :repoId")
     suspend fun updateIsShallow(repoId:String, isShallow:Int)
 
+
+    @Query("update repo set repoName = :name where id = :repoId")
+    suspend fun updateRepoName(repoId:String, name: String)
+
 }

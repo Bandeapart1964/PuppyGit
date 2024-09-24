@@ -68,6 +68,11 @@ val dontUpdateHeadWhenCheckoutTestPassed = false
 val createRemoteTestPassed = false
 
 val branchListPagePublishBranchTestPassed = false
+val branchRenameTestPassed = false
+
+val repoRenameTestPassed = false
+
+val importReposFromFilesTestPassed = false
 
 val editorFontSizeTestPassed = false  //editor字体大小调整（会保存，有设置项）
 val editorLineNumFontSizeTestPassed = false  //editor行号字体大小调整（会保存，有设置项）

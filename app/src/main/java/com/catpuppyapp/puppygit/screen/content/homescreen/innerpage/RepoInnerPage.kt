@@ -3,8 +3,6 @@ package com.catpuppyapp.puppygit.screen.content.homescreen.innerpage
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -22,11 +20,10 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -61,7 +58,9 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
+import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.reflogTestPassed
+import com.catpuppyapp.puppygit.dev.repoRenameTestPassed
 import com.catpuppyapp.puppygit.dev.stashTestPassed
 import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
@@ -73,7 +72,6 @@ import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.ComposeHelper
-import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -91,6 +89,7 @@ import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.strHasIllegalChars
 import com.github.git24j.core.Clone
 import com.github.git24j.core.Remote
 import com.github.git24j.core.Repository
@@ -798,6 +797,83 @@ fun RepoInnerPage(
 
     }
 
+    val showRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val repoNameForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val errMsgForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    if(showRenameDialog.value) {
+        val curRepo = curRepo.value
+
+        ConfirmDialog(
+            title = stringResource(R.string.rename_repo),
+            requireShowTextCompose = true,
+            textCompose = {
+                Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                    TextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                        ,
+                        value = repoNameForRenameDialog.value,
+                        singleLine = true,
+                        isError = errMsgForRenameDialog.value.isNotBlank(),
+                        supportingText = {
+                            if (errMsgForRenameDialog.value.isNotBlank()) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = errMsgForRenameDialog.value,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        trailingIcon = {
+                            if (errMsgForRenameDialog.value.isNotBlank()) {
+                                Icon(imageVector=Icons.Filled.Error,
+                                    contentDescription=null,
+                                    tint = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                        onValueChange = {
+                            repoNameForRenameDialog.value = it
+
+                            // clear err msg
+                            errMsgForRenameDialog.value = ""
+                        },
+                        label = {
+                            Text(stringResource(R.string.new_name))
+                        }
+                    )
+                }
+            },
+            okBtnText = stringResource(R.string.ok),
+            cancelBtnText = stringResource(R.string.cancel),
+            okBtnEnabled = repoNameForRenameDialog.value != curRepo.repoName,
+            onCancel = {showRenameDialog.value = false}
+        ) {
+            val newName = repoNameForRenameDialog.value
+            val repoId = curRepo.id
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.renaming)) {
+                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                if(strHasIllegalChars(newName)) {
+                    errMsgForRenameDialog.value = appContext.getString(R.string.name_has_illegal_chars)
+                    return@doJobThenOffLoading
+                }
+
+                if(repoDb.isRepoNameExist(newName)) {
+                    errMsgForRenameDialog.value = appContext.getString(R.string.name_already_exists)
+                    return@doJobThenOffLoading
+                }
+
+                showRenameDialog.value = false
+
+                repoDb.updateRepoName(repoId, newName)
+
+                Msg.requireShow(appContext.getString(R.string.success))
+                changeStateTriggerRefreshPage(needRefreshRepoPage)
+            }
+        }
+    }
+
+
     val showUnshallowDialog = StateUtil.getRememberSaveableState(initValue = false)
     if(showUnshallowDialog.value) {
         ConfirmDialog(
@@ -990,6 +1066,12 @@ fun RepoInnerPage(
                 }
             }
 
+            if(proFeatureEnabled(repoRenameTestPassed)) {
+                BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.rename)) {
+                    repoNameForRenameDialog.value = curRepo.value.repoName
+                    showRenameDialog.value = true
+                }
+            }
             BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.delete), textColor = MyStyleKt.TextColor.danger) {
                 requireDelRepo(curRepo.value)
             }

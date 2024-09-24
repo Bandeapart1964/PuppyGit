@@ -829,5 +829,9 @@
 <!--    eg: 10 imported-->
     <string name="n_imported">ph_a3f241dc_1 imported</string>
     <string name="three_dots_icon_for_choose_folder">Three dots icon for choose folder</string>
+    <string name="rename_repo">Rename Repo</string>
+    <string name="new_name">New Name</string>
+    <string name="name_has_illegal_chars">name has illegal chars</string>
+    <string name="renaming">Renaming</string>
 
 </resources>
