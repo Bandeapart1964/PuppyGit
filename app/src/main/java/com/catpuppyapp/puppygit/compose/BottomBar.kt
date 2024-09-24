@@ -160,6 +160,11 @@ fun BottomBar(
                                     continue
                                 }
 
+                                // ignore blank item
+                                if(text.isBlank()) {
+                                    continue
+                                }
+
                                 DropdownMenuItem(
                                     enabled = moreItemEnableList[idx](),
                                     text = { Text(text) },

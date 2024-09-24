@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.catpuppyapp.puppygit.compose.ApplyPatchDialog
@@ -63,19 +64,24 @@ import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.CreateFileOrFolderDialog
 import com.catpuppyapp.puppygit.compose.FileListItem
 import com.catpuppyapp.puppygit.compose.LoadingText
+import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
+import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dev.applyPatchTestPassed
+import com.catpuppyapp.puppygit.dev.importReposFromFilesTestPassed
 import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dto.FileItemDto
 import com.catpuppyapp.puppygit.etc.Ret
+import com.catpuppyapp.puppygit.git.ImportRepoResult
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.AppSettings
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
+import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
@@ -93,6 +99,7 @@ import com.catpuppyapp.puppygit.utils.getFilePathUnderParent
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.getShortUUID
+import com.catpuppyapp.puppygit.utils.getStoragePermission
 import com.catpuppyapp.puppygit.utils.isPathExists
 import com.catpuppyapp.puppygit.utils.mime.MimeType
 import com.catpuppyapp.puppygit.utils.mime.guessFromFileName
@@ -143,6 +150,7 @@ fun FilesInnerPage(
     val haptic = AppModel.singleInstanceHolder.haptic
 
     val scope = rememberCoroutineScope()
+    val activity = ActivityUtil.getCurrentActivity()
 
 
     val settingsSnapshot = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
@@ -1138,6 +1146,85 @@ fun FilesInnerPage(
         }
     }
 
+    val showImportAsRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val isReposParentFolderForImport = StateUtil.getRememberSaveableState(initValue = false)
+    if(showImportAsRepoDialog.value) {
+        val selctedDirs = selectedItems.value.filter { it.isDir }
+
+        if(selctedDirs.isEmpty()) {
+            showImportAsRepoDialog.value = false
+            Msg.requireShow(stringResource(R.string.no_dir_selected))
+        }else {
+            ConfirmDialog(
+                title = stringResource(R.string.import_repo),
+                requireShowTextCompose = true,
+                textCompose = {
+                    Column(modifier = Modifier
+                        .verticalScroll(StateUtil.getRememberScrollState())
+                        .fillMaxWidth()
+                        .padding(5.dp)
+                    ) {
+                        Row(modifier = Modifier.padding(bottom = 15.dp)) {
+                            Text(
+                                text = stringResource(R.string.please_grant_permission_before_import_repo),
+                                style = MyStyleKt.ClickableText.style,
+                                color = MyStyleKt.ClickableText.color,
+                                overflow = TextOverflow.Visible,
+                                fontWeight = FontWeight.Light,
+                                modifier = MyStyleKt.ClickableText.modifier.clickable {
+                                    // grant permission for read/write external storage
+                                    if (activity == null) {
+                                        Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
+                                    } else {
+                                        activity!!.getStoragePermission()
+                                    }
+                                },
+                            )
+
+                        }
+
+                        Spacer(Modifier.height(15.dp))
+
+                        MyCheckBox(text = stringResource(R.string.paths_are_repo_parent_dir), value = isReposParentFolderForImport)
+
+                        Spacer(Modifier.height(5.dp))
+
+                        if(isReposParentFolderForImport.value) {
+                            Text(stringResource(R.string.will_scan_repos_under_folders), fontWeight = FontWeight.Light)
+                        }
+                    }
+                },
+                okBtnText = stringResource(R.string.ok),
+                cancelBtnText = stringResource(R.string.cancel),
+                okBtnEnabled = selctedDirs.isNotEmpty(),
+                onCancel = { showImportAsRepoDialog.value = false },
+            ) {
+                doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                    val importRepoResult = ImportRepoResult()
+                    try {
+                        selctedDirs.forEach {
+                            val result = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=it.fullPath, isReposParent=isReposParentFolderForImport.value)
+                            importRepoResult.all += result.all
+                            importRepoResult.success += result.success
+                            importRepoResult.failed += result.failed
+                            importRepoResult.existed += result.existed
+                        }
+
+                        showImportAsRepoDialog.value = false
+
+                        Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+                    }catch (e:Exception) {
+                        //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
+                        MyLog.e(TAG, "import repo from repoPage err: importRepoResult=$importRepoResult, err="+e.localizedMessage)
+                        Msg.requireShowLongDuration(e.localizedMessage ?: "import repo err")
+                    }finally {
+                        // because import doesn't change Files page, so need not do anything yet
+                    }
+                }
+
+            }
+        }
+    }
 
     val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
     val details_ItemsSize = StateUtil.getRememberSaveableLongState(initValue = 0L)  // this is not items count, is file size. this size is a recursive count
@@ -1239,6 +1326,7 @@ fun FilesInnerPage(
             stringResource(R.string.export),
             stringResource(id = R.string.remove_from_git),  //列表显示顺序就是这里的排序，上到下
             stringResource(id = R.string.details),
+            if(proFeatureEnabled(importReposFromFilesTestPassed)) stringResource(id = R.string.import_as_repo) else "",  // empty string will be ignore when display menu items
         )
         val selectionModeMoreItemOnClickList = listOf(
             export@{
@@ -1277,11 +1365,17 @@ fun FilesInnerPage(
 
                 showDetailsDialog.value = true
             },
+
+            importAsRepo@{
+                isReposParentFolderForImport.value = false
+                showImportAsRepoDialog.value = true
+            }
         )
         val selectionModeMoreItemEnableList = listOf(
             {getSelectedFilesCount()>0}, //是否启用export
             {getSelectedFilesCount()>0}, //是否启用remove from git
             {getSelectedFilesCount()>0}, //是否启用details
+            {selectedItems.value.indexOfFirst{it.isDir} != -1}  //enable import as repo. (if has dirs in selected items, then enable else disbale)
         )
 
         if(!isLoading.value) {

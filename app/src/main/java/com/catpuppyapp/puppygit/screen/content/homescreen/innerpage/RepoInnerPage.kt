@@ -322,36 +322,45 @@ fun RepoInnerPage(
         ) {
 
             doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
-                val newPath = importRepoPath.value
-                if(newPath.isNotBlank()) {
-                    val f = File(newPath)
+                try {
+                    val newPath = importRepoPath.value
 
-                    if(!f.canRead()) {
-                        Msg.requireShowLongDuration(appContext.getString(R.string.cant_read_path))
-                        return@doJobThenOffLoading
+                    if(newPath.isNotBlank()) {
+                        val f = File(newPath)
+
+                        if(!f.canRead()) {
+                            Msg.requireShowLongDuration(appContext.getString(R.string.cant_read_path))
+                            return@doJobThenOffLoading
+                        }
+
+                        if(!f.isDirectory) {
+                            Msg.requireShowLongDuration(appContext.getString(R.string.path_is_not_a_dir))
+                            return@doJobThenOffLoading
+                        }
+
+
+                        showImportRepoDialog.value = false
+
+                        val importRepoResult = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=newPath, isReposParent=isReposParentFolderForImport.value)
+
+                        // show a result dialog may better?
+
+                        Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+
+                    }else {
+                        Msg.requireShow(appContext.getString(R.string.invalid_path))
                     }
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "import repo from repoPage err: "+e.localizedMessage)
+                    Msg.requireShowLongDuration(e.localizedMessage ?: "import repo err")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefreshRepoPage)
 
-                    if(!f.isDirectory) {
-                        Msg.requireShowLongDuration(appContext.getString(R.string.path_is_not_a_dir))
-                        return@doJobThenOffLoading
-                    }
-
-
-                    showImportRepoDialog.value = false
-
-                    val importRepoResult = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=newPath, isReposParent=isReposParentFolderForImport.value)
-
-                    // show a result dialog may better?
-
-                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
-
-                    if(importRepoResult.success>0) {
-                        changeStateTriggerRefreshPage(needRefreshRepoPage)
-                    }
-
+                    //这个判断可能不准
+//                    if(importRepoResult.success>0) {
+//                        changeStateTriggerRefreshPage(needRefreshRepoPage)
+//                    }
                 }
-
-
             }
 
         }
