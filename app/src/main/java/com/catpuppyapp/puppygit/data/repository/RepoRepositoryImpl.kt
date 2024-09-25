@@ -307,55 +307,60 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
     override suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult {
         val repos = getAll(updateRepoInfo = false).toMutableList()
 
-        var all = 0
-        var success=0
-        var existed = 0
-        var failed = 0
+        var all = 0  // count of all repos found. btw: this is not all subdirs count under dir, this only mean how many git repos found, it may less than subdirs under dir
+        var success=0  // count of success imported
+        var existed = 0  // count of already exists in db, need not import
+        var failed = 0  // count of import failed (target is a repo, but import err)
 
 
-        if(isReposParent) {
+        if(isReposParent) {  // scan repos under this folder(only scan top level, won't do recursive), in this case may found many repos
             val subdirs = File(dir).listFiles { it -> it.isDirectory }
             //has sub directories, try scan folder
             if(subdirs!=null && subdirs.isNotEmpty()) {
                 subdirs.forEach { sub ->
-                    val repoExisted = repos.indexOfFirst { it.fullSavePath ==  sub.canonicalPath} != -1
-                    if(repoExisted) {
-                        all++
-                        existed++
-                    }else {
-                        val isGitRepo = Libgit2Helper.isGitRepo(sub)
-
-                        if(isGitRepo) {
+                    try {
+                        Repository.open(sub.canonicalPath).use { repo->
                             all++
-                            val importSuccess = importSingleRepo(sub, addRepoToThisListIfSuccess = repos)
-                            if(importSuccess) {
-                                success++
+
+                            val repoWorkDirPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+                            if(repos.indexOfFirst {it.fullSavePath == repoWorkDirPath} != -1) {
+                                existed++
                             }else {
-                                failed++
+                                val importSuccess = importSingleRepo(repo, repoWorkDirPath, initRepoName = sub.name, addRepoToThisListIfSuccess = repos)
+                                if(importSuccess) {
+                                    success++
+                                }else {
+                                    failed++
+                                }
                             }
                         }
+                    }catch (_:Exception) {
+                        // not a repo yet
                     }
 
                 }
             }
-        }else {
-            all=1
+        }else {  //try open this folder as repo, in this case most only can be has 1 repo
             val dirFile = File(dir)
-            // repo already exists
-            if(repos.indexOfFirst { it.fullSavePath == dirFile.canonicalPath} != -1) {
-                existed = 1
-            }else { // repo not exist, import
-                val isGitRepo = Libgit2Helper.isGitRepo(dirFile)
-                if(isGitRepo) {
-                    val importSuccess = importSingleRepo(dirFile)
-                    if(importSuccess) {
-                        success = 1
-                    }else {
-                        failed = 1
+
+            try {
+                Repository.open(dirFile.canonicalPath).use {repo ->
+                    all=1
+
+                    val repoWorkdirPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+                    if(repos.indexOfFirst {it.fullSavePath == repoWorkdirPath} != -1) {  // repo already exists
+                        existed = 1
+                    }else { // repo not exist, import
+                        val importSuccess = importSingleRepo(repo, repoWorkdirPath, initRepoName = dirFile.name)
+                        if(importSuccess) {
+                            success = 1
+                        }else {
+                            failed = 1
+                        }
                     }
-                }else {
-                    all=0
                 }
+            }catch (_:Exception) {
+                // not a repo yet
             }
         }
 
@@ -363,22 +368,22 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
     }
 
-    private suspend fun importSingleRepo(repoDir:File, addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null):Boolean {
+    private suspend fun importSingleRepo(repo:Repository, repoWorkDirPath:String, initRepoName:String, addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null):Boolean {
         val funName = "importSingleRepo"
 
         try {
             // make sure repoName not exists
-            var repoName = repoDir.name
+            var repoName = initRepoName
             if(isRepoNameExist(repoName)) {
-                repoName = repoDir.name+ "_"+getShortUUID(6)
+                repoName = initRepoName+ "_"+getShortUUID(6)
                 if(isRepoNameExist(repoName)) {
-                    repoName = repoDir.name+ "_"+getShortUUID(8)
+                    repoName = initRepoName+ "_"+getShortUUID(8)
                     if(isRepoNameExist(repoName)) {
-                        repoName = repoDir.name+ "_"+getShortUUID(10)
+                        repoName = initRepoName+ "_"+getShortUUID(10)
                         if(isRepoNameExist(repoName)) {
-                            repoName = repoDir.name+ "_"+getShortUUID(12)
+                            repoName = initRepoName+ "_"+getShortUUID(12)
                             if(isRepoNameExist(repoName)) {
-                                repoName = repoDir.name+ "_"+getShortUUID(16)
+                                repoName = initRepoName+ "_"+getShortUUID(16)
                             }
                         }
                     }
@@ -389,18 +394,17 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
             val remoteEntityList = mutableListOf<RemoteEntity>()
 
             repoEntity.repoName = repoName
-            Repository.open(repoDir.canonicalPath).use { repo->
-                repoEntity.fullSavePath = repoDir.canonicalPath
-                repoEntity.workStatus = Cons.dbRepoWorkStatusUpToDate
-                repoEntity.createBy = Cons.dbRepoCreateByImport
+//                repoEntity.fullSavePath = repoDir.canonicalPath // bad, cause "repo/.git" and "repo", both can open as repo, and is same repo, but difference path
+            repoEntity.fullSavePath = repoWorkDirPath
+            repoEntity.workStatus = Cons.dbRepoWorkStatusUpToDate
+            repoEntity.createBy = Cons.dbRepoCreateByImport
 
-                val remotes = Libgit2Helper.getRemoteList(repo)
-                remotes.forEach { remoteName ->
-                    val remoteEntity = RemoteEntity()
-                    remoteEntity.remoteName = remoteName
-                    remoteEntity.repoId = repoEntity.id
-                    remoteEntityList.add(remoteEntity)
-                }
+            val remotes = Libgit2Helper.getRemoteList(repo)
+            remotes.forEach { remoteName ->
+                val remoteEntity = RemoteEntity()
+                remoteEntity.remoteName = remoteName
+                remoteEntity.repoId = repoEntity.id
+                remoteEntityList.add(remoteEntity)
             }
 
             val remoteDb = AppModel.singleInstanceHolder.dbContainer.remoteRepository

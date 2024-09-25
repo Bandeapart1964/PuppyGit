@@ -3650,12 +3650,12 @@ class Libgit2Helper {
         }
 
         //参数是git仓库下任意路径，可以用这个方法来判断指定目录是否是一个git仓库，是就返回仓库引用，否则返回null
-        fun findRepoByPath(underGitRepoPath:String) :Repository? {
+        fun findRepoByPath(underGitRepoPath:String, cellingDir:String = FsUtils.getExternalStorageRootPathNoEndsWithSeparator()) :Repository? {
             //最后一个参数是用系统分隔符(linux 是 :, windows可能是 ;)分隔的目录列表，搜索如果遇到上限目录就会停止
             try {  // 如果找到，返回仓库引用，否则返回null
 
                 //可正常处理submodule（子模块），如果入参是一个子模块下的路径，会返回子模块的仓库引用而不是父的。（因此用在remove from git功能时，不会用父仓库移除子模块下的文件。）
-                return Repository.openExt(underGitRepoPath, null,AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath)
+                return Repository.openExt(underGitRepoPath, null, cellingDir)
 
             }catch (e:Exception) {
                 MyLog.e(TAG, "#findRepoByPath(): err: ${e.stackTraceToString()}")
@@ -4450,6 +4450,10 @@ class Libgit2Helper {
                 MyLog.e(TAG, "#renameBranch err: ${e.stackTraceToString()}")
                 return Ret.createError(null, e.localizedMessage ?: "rename branch err")
             }
+        }
+
+        fun getRepoWorkdirNoEndsWithSlash(repo: Repository): String {
+            return repo.workdir().toString().removeSuffix("/")
         }
 
     }
