@@ -46,6 +46,7 @@ PuppyGit Pro is A Git Client for Android, Open Source and No Ads and Free to use
 - support more encoding for Editor(now only supported utf8)
 - support submodules
 - view commit history as a interactable tree
+- view history of file(plan: add menu item in Files page single item menu, and Editor page top bar menu. if file is not in a git repo, show a toast)
 
 
 ## About ssh
