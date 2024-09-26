@@ -114,6 +114,22 @@ fun FilesPageActions(
             ) {
                 DropdownMenuItem(
                     enabled = enableMenuItem,
+                    text = { Text(stringResource(R.string.internal_storage)) },
+                    onClick = {
+                        requestFromParent.value = PageRequest.goToInternalStorage
+                        dropDownMenuExpendState.value = false
+                    }
+                )
+                DropdownMenuItem(
+                    enabled = enableMenuItem,
+                    text = { Text(stringResource(R.string.external_storage)) },
+                    onClick = {
+                        requestFromParent.value = PageRequest.goToExternalStorage
+                        dropDownMenuExpendState.value = false
+                    }
+                )
+                DropdownMenuItem(
+                    enabled = enableMenuItem,
                     text = { Text(stringResource(R.string.go_to)) },
                     onClick = {
                         requestFromParent.value = PageRequest.goToPath

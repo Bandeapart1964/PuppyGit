@@ -367,7 +367,7 @@ class AppModel {
     @OptIn(ExperimentalMaterial3Api::class)
     lateinit var homeTopBarScrollBehavior: TopAppBarScrollBehavior
 
-    lateinit var allRepoParentDir: File
+    lateinit var allRepoParentDir: File  // this is internal storage, early version doesn't support clone repo to external path, so this name not indicate this path is internal path, but actually it is
     lateinit var exitApp: ()->Unit
     lateinit var externalFilesDir: File
     lateinit var externalCacheDir: File

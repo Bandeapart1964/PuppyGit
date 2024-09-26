@@ -33,8 +33,7 @@ import java.util.Locale
  */
 object FsUtils {
     /**
-     * virtual path starts with Home, eg. "Home/repoabc/"
-     * real path starts with /, eg. "/storage/emulated/0/repoabc"
+     * internal and external storage path prefix
      */
     const val internalPathPrefix = "Internal:/"
     const val externalPathPrefix = "External:/"
@@ -782,6 +781,13 @@ object FsUtils {
     }
 
     /**
+     * @return root path of app internal storage
+     */
+    fun getInternalStorageRootPathNoEndsWithSeparator():String {
+        return AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath
+    }
+
+    /**
      * @return "/storage/emulated/0" or "" if has exception
      *
      */
@@ -806,20 +812,28 @@ object FsUtils {
     /**
      * @return eg. input parent="/abc/def", fullPath="/abc/def/123", will return "/123"; if fullPath not starts with parent, will return origin `fullPath`
      */
-    fun getPathAfterParent(parentNoEndsWithSeparator: String, fullPath: String): String {
-        return fullPath.removePrefix(parentNoEndsWithSeparator)
+    fun getPathAfterParent(parent: String, fullPath: String): String {
+        return fullPath.removePrefix(parent)
     }
 
     /**
      * eg: fullPath = /storage/emulated/0/repos/abc, return External:/abc
      * eg: fullPath = /storage/emulated/0/Android/path-to-app-internal-repos-folder/abc, return Internal:/abc
      */
-    fun getPathWithInternalOrExternalPrefix(fullPath:String, internalStorageRoot:String=AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath, externalStorageRoot:String=FsUtils.getExternalStorageRootPathNoEndsWithSeparator()) :String {
-        return if(fullPath.startsWith(internalStorageRoot)) {
-            internalPathPrefix+getPathAfterParent(parentNoEndsWithSeparator=internalStorageRoot, fullPath=fullPath)
+    fun getPathWithInternalOrExternalPrefix(fullPath:String, internalStorageRoot:String=FsUtils.getInternalStorageRootPathNoEndsWithSeparator(), externalStorageRoot:String=FsUtils.getExternalStorageRootPathNoEndsWithSeparator()) :String {
+        return if(fullPath.startsWith(internalStorageRoot)) {  // internal storage must before external storage, because internal storage actually under external storage (eg: internal is "/storage/emulated/0/Android/data/packagename/xxx/xxxx/x", external is "/storage/emulated/0")
+            internalPathPrefix+((getPathAfterParent(parent= internalStorageRoot, fullPath=fullPath)).removePrefix("/"))
         }else {
-            externalPathPrefix+getPathAfterParent(parentNoEndsWithSeparator=externalStorageRoot, fullPath=fullPath)
+            externalPathPrefix+((getPathAfterParent(parent= externalStorageRoot, fullPath=fullPath)).removePrefix("/"))
         }
+    }
+
+    fun removeInternalStoragePrefix(path: String): String {
+        return path.removePrefix(internalPathPrefix)
+    }
+
+    fun removeExternalStoragePrefix(path: String): String {
+        return path.removePrefix(externalPathPrefix)
     }
 
     object Patch {

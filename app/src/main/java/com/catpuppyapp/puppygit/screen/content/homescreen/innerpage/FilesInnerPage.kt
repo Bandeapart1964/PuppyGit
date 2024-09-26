@@ -68,7 +68,6 @@ import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
-import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dev.applyPatchTestPassed
@@ -250,8 +249,15 @@ fun FilesInnerPage(
         renameFileName.value = newVal
 
     }
+
+
+    val goToPath = {path:String ->
+        currentPath.value = path
+        changeStateTriggerRefreshPage(needRefreshFilesPage)
+    }
+
     val showGoToPathDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val pathGoTo = StateUtil.getRememberSaveableState(initValue = "")
+    val pathToGo = StateUtil.getRememberSaveableState(initValue = "")
     if(showGoToPathDialog.value) {
         ConfirmDialog(
             requireShowTextCompose = true,
@@ -259,10 +265,10 @@ fun FilesInnerPage(
                 Column {
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
-                        value = pathGoTo.value,
+                        value = pathToGo.value,
                         singleLine = true,
                         onValueChange = {
-                            pathGoTo.value = it
+                            pathToGo.value = it
                         },
                         label = {
                             Text(stringResource(R.string.path))
@@ -270,7 +276,7 @@ fun FilesInnerPage(
                     )
                 }
             },
-            okBtnEnabled = pathGoTo.value.isNotBlank(),
+            okBtnEnabled = pathToGo.value.isNotBlank(),
             okBtnText = stringResource(id = R.string.ok),
             cancelBtnText = stringResource(id = R.string.cancel),
             title = stringResource(R.string.go_to),
@@ -289,13 +295,18 @@ fun FilesInnerPage(
 //                    repoBaseDirPath.removeSuffix(slash)+slash+pathGoTo.value.removePrefix(slash)
 //                }
 
-                //expect absolute path
-                val finallyPath = pathGoTo.value
+                // handle path to absolute path, btw: internal path must before external path, because internal actually starts with external, if swap order, code block of internal path will ignore ever
+                val finallyPath = if(pathToGo.value.startsWith(FsUtils.internalPathPrefix)) {
+                        FsUtils.getInternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeInternalStoragePrefix(pathToGo.value)
+                    }else if(pathToGo.value.startsWith(FsUtils.externalPathPrefix)) {
+                        FsUtils.getExternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeExternalStoragePrefix(pathToGo.value)
+                    }else {  // absolute path linke /storage/emulate/0/abc
+                        pathToGo.value
+                    }
 
                 val f = File(finallyPath)
                 if(f.canRead()) {
-                    currentPath.value = finallyPath
-                    changeStateTriggerRefreshPage(needRefreshFilesPage)
+                    goToPath(finallyPath)
                 }else { // can't read path: usually by path non-exists or no permission to read
                     Msg.requireShow(appContext.getString(R.string.cant_read_path))
                 }
@@ -1752,6 +1763,16 @@ fun FilesInnerPage(
     if(filesPageRequestFromParent.value==PageRequest.copyRealPath) {
         PageRequest.clearStateThenDoAct(filesPageRequestFromParent) {
             copyRealPath(currentPath.value)
+        }
+    }
+    if(filesPageRequestFromParent.value==PageRequest.goToInternalStorage) {
+        PageRequest.clearStateThenDoAct(filesPageRequestFromParent) {
+            goToPath(FsUtils.getInternalStorageRootPathNoEndsWithSeparator())
+        }
+    }
+    if(filesPageRequestFromParent.value==PageRequest.goToExternalStorage) {
+        PageRequest.clearStateThenDoAct(filesPageRequestFromParent) {
+            goToPath(FsUtils.getExternalStorageRootPathNoEndsWithSeparator())
         }
     }
 
