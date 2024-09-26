@@ -796,9 +796,10 @@ fun FilesInnerPage(
                             Text(text = File.separator)
                             Text(text =it.name,
                                 modifier = Modifier.combinedClickable (
-                                    onLongClick = {  //长按显示文件夹名称
+                                    onLongClick = {  //long press will copy path
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        Msg.requireShow(it.name)
+                                        clipboardManager.setText(AnnotatedString(it.fullPath))
+                                        Msg.requireShow(appContext.getString(R.string.path_copied))
                                     }
                                 ){ //onClick
 

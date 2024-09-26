@@ -837,5 +837,6 @@
     <string name="no_dir_selected">No dir selected</string>
     <string name="paths_are_repo_parent_dir">Paths are repo parent dir</string>
     <string name="will_scan_repos_under_folders">will scan repos under folders</string>
+    <string name="path_copied">Path copied</string>
 
 </resources>
