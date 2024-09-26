@@ -48,6 +48,8 @@ fun CredentialItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                    curCredentialState.value = CredentialEntity()
+
                     //设置当前条目，供bottomsheet使用
                     curCredentialState.value = thisItem
 

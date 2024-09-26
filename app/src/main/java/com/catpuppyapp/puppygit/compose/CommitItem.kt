@@ -55,9 +55,13 @@ fun CommitItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                    curCommit.value = CommitDto()
+                    curCommitIdx.intValue = -1
+
                     //设置当前条目
                     curCommit.value = commitDto
                     curCommitIdx.intValue = idx
+
                     //显示底部菜单
                     showBottomSheet.value = true
                 },

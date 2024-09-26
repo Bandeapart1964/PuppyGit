@@ -49,6 +49,8 @@ fun ReflogItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                    curObjFromParent.value = ReflogEntryDto()
+
                     //设置当前条目
                     curObjFromParent.value = thisObj
 

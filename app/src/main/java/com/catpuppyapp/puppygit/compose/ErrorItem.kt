@@ -50,6 +50,8 @@ fun ErrorItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                    curObjInState.value = ErrorEntity()
+
                     //设置当前条目
                     curObjInState.value = curObj
 

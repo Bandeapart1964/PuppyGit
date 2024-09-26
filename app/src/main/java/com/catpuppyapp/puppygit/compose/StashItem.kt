@@ -49,6 +49,7 @@ fun StashItem(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
                     //设置当前条目
+                    curObjFromParent.value = StashDto()
                     curObjFromParent.value = thisObj
 
                     //显示底部菜单

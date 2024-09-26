@@ -52,6 +52,8 @@ fun RemoteItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
+                    curObjInState.value = RemoteDto()
+
                     //设置当前条目
                     curObjInState.value = curObj
 
