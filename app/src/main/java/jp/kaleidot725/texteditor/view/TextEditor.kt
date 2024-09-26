@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -126,8 +128,8 @@ fun TextEditor(
     //最后显示屏幕范围的第一行的索引
 //    var lastFirstVisibleLineIndexState  by remember { mutableIntStateOf(lastEditedPos.firstVisibleLineIndex) }
 
-    var showGoToLineDialog  by remember { mutableStateOf(false) }
-    var goToLineValue  by remember { mutableStateOf("") }
+    val showGoToLineDialog  = remember { mutableStateOf(false) }
+    val goToLineValue  = remember { mutableStateOf("") }
 
     //是否显示光标拖手(cursor handle
     val needShowCursorHandle = remember { mutableStateOf(false) }
@@ -261,7 +263,7 @@ fun TextEditor(
     }
     if(requestFromParent.value==PageRequest.goToLine) {
         PageRequest.clearStateThenDoAct(requestFromParent) {
-            showGoToLineDialog=true
+            showGoToLineDialog.value=true
         }
     }
     if(requestFromParent.value==PageRequest.requireSearch) {
@@ -367,47 +369,91 @@ fun TextEditor(
     val doGoToLine = {
         //x 会报错，提示index必须为非负数) 测试下如果是-1会怎样？是否会报错？
 //        val lineIntVal = -1
-        val lineIntVal = getLineVal(goToLineValue)
+        val lineIntVal = getLineVal(goToLineValue.value)
         //行号减1即要定位行的索引
         lastScrollEvent = ScrollEvent(index = lineIntVal-1, forceGo=true)
     }
 
-    if(showGoToLineDialog) {
-        val lineNumRange = "1-${textEditorState.fields.size}"
+    if(showGoToLineDialog.value) {
+        val firstLine = "1"
+        val lastLine = ""+textEditorState.fields.size
+        val lineNumRange = "$firstLine-$lastLine"
         ConfirmDialog(title = stringResource(R.string.go_to_line),
             requireShowTextCompose = true,
             textCompose = {
-                androidx.compose.material3.TextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
+                Column(
+                    modifier=Modifier.fillMaxWidth()
+                        .verticalScroll(StateUtil.getRememberScrollState())
                     ,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
-                    keyboardActions = KeyboardActions(onGo = {
-                        showGoToLineDialog = false
-                        doGoToLine()
-                    }),
-                    singleLine = true,
+                ) {
 
-                    value = goToLineValue,
-                    onValueChange = {
-                        goToLineValue=it
-                    },
-                    label = {
-                        Text(stringResource(R.string.line_number)+"($lineNumRange)")
-                    },
-                    placeholder = {
-                        //显示行号范围，例如："Range: 1-123"
-                        Text(stringResource(R.string.range) + ": $lineNumRange")
+                    androidx.compose.material3.TextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                        ,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
+                        keyboardActions = KeyboardActions(onGo = {
+                            showGoToLineDialog.value = false
+                            doGoToLine()
+                        }),
+                        singleLine = true,
+
+                        value = goToLineValue.value,
+                        onValueChange = {
+                            goToLineValue.value=it
+                        },
+                        label = {
+                            Text(stringResource(R.string.line_number)+"($lineNumRange)")
+                        },
+                        placeholder = {
+                            //显示行号范围，例如："Range: 1-123"
+                            Text(stringResource(R.string.range) + ": $lineNumRange")
+                        }
+                    )
+
+                    Column(
+                        modifier=Modifier.fillMaxWidth()
+                            .padding(end = 10.dp)
+                        ,
+                        horizontalAlignment = Alignment.End
+                    ) {
+
+                        Text(
+                            text = stringResource(R.string.first_line),
+                            style = MyStyleKt.ClickableText.style,
+                            color = MyStyleKt.ClickableText.color,
+                            modifier = MyStyleKt.ClickableText.modifier.clickable {
+                                goToLineValue.value = firstLine
+                            },
+                            fontWeight = FontWeight.Light
+                        )
+
+                        Spacer(Modifier.height(15.dp))
+
+                        Text(
+                            text = stringResource(R.string.last_line),
+                            style = MyStyleKt.ClickableText.style,
+                            color = MyStyleKt.ClickableText.color,
+                            modifier = MyStyleKt.ClickableText.modifier.clickable {
+                                goToLineValue.value = lastLine
+                            },
+                            fontWeight = FontWeight.Light
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
                     }
-                )
+                }
+
+
             },
-            okBtnEnabled = goToLineValue.isNotBlank(),
+            okBtnEnabled = goToLineValue.value.isNotBlank(),
             okBtnText = stringResource(id = R.string.go),
             cancelBtnText = stringResource(id = R.string.cancel),
-            onCancel = { showGoToLineDialog = false }
+            onCancel = { showGoToLineDialog.value = false }
         ) {
-            showGoToLineDialog = false
+            showGoToLineDialog.value = false
             doGoToLine()
         }
     }

@@ -224,6 +224,15 @@ fun EditorPageActions(
                 }
             )
 
+            DropdownMenuItem(
+                enabled = enableMenuItem,
+                text = { Text(stringResource(R.string.go_to_line)) },
+                onClick = {
+                    editorPageRequest.value = PageRequest.goToLine  //发请求，由TextEditor组件开启搜索模式
+                    closeMenu()
+                }
+            )
+
             if(UserUtil.isPro() && (dev_EnableUnTestedFeature || editorSearchTestPassed)){
                 DropdownMenuItem(
                     enabled = enableMenuItem,

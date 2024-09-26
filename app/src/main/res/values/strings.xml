@@ -841,5 +841,7 @@
     <string name="external_storage">External Storage</string>
     <string name="err_read_folder_failed">err: read folder failed</string>
     <string name="current_dir_doesnt_exist_anymore">Current dir doesn\'t exist anymore</string>
+    <string name="first_line">First Line</string>
+    <string name="last_line">Last Line</string>
 
 </resources>
