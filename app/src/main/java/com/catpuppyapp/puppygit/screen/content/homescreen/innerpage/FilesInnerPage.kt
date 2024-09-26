@@ -705,13 +705,18 @@ fun FilesInnerPage(
             onOk = f@{ fileOrFolderName: String, type: Int ->
                 //do create file or folder
                 try {
+                    // if current path already deleted, then show err and abort create
+                    if(!File(currentPath.value).exists()) {
+                        throw RuntimeException(appContext.getString(R.string.current_dir_doesnt_exist_anymore))
+                    }
+
                     val fileOrFolderNameCheckRet = checkFileOrFolderNameAndTryCreateFile(fileOrFolderName, appContext)
                     if(fileOrFolderNameCheckRet.hasError()){
 //                        Msg.requireShowLongDuration(pathCheckRet.msg)
                         createFileOrFolderErrMsg.value = fileOrFolderNameCheckRet.msg
                         return@f false
                     }else {  //文件名ok，检查文件是否存在
-                        val file = File(currentPath.value + File.separator + fileOrFolderName)
+                        val file = File(currentPath.value, fileOrFolderName)
                         if (file.exists()) {  //文件存在
                             createFileOrFolderErrMsg.value = fileAlreadyExistStrRes
                             return@f false
@@ -747,7 +752,8 @@ fun FilesInnerPage(
             onCancel = {
                 showCreateFileOrFolderDialog.value = false
                 createFileOrFolderErrMsg.value=""
-            })
+            }
+        )
     }
 
     // 向下滚动监听，开始

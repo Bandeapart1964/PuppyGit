@@ -840,5 +840,6 @@
     <string name="path_copied">Path copied</string>
     <string name="external_storage">External Storage</string>
     <string name="err_read_folder_failed">err: read folder failed</string>
+    <string name="current_dir_doesnt_exist_anymore">Current dir doesn\'t exist anymore</string>
 
 </resources>
