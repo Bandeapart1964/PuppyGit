@@ -494,6 +494,8 @@ fun FilesInnerPage(
         loadingText.value=defaultLoadingText
     }
 
+    val openDirErr = StateUtil.getRememberSaveableState("")
+
     val getListState:(String)->LazyListState = { path:String ->
         // key有点太长了
         val key = "FilesPageListState:"+path
@@ -523,7 +525,7 @@ fun FilesInnerPage(
         isImportedMode = isImportMode,
         selecteItem=selecteItem,
         filesPageRequestFromParent = filesPageRequestFromParent,
-
+        openDirErr=openDirErr
     )
 
     //back handler block start
@@ -785,6 +787,7 @@ fun FilesInnerPage(
                 .padding(contentPadding)
 //            .verticalScroll(StateUtil.getRememberScrollState())  //和LazyColumn不能共用
         ) {
+            // bread crumb
             if(currentPathBreadCrumbList.value.isEmpty()) {
                 Row (modifier = Modifier
                     .padding(5.dp)
@@ -846,95 +849,110 @@ fun FilesInnerPage(
                 }.value
             }
 
-
-            val k = filesPageSimpleFilterKeyWord.value.text.lowercase()  //关键字
-            val enableFilter = filesPageSimpleFilterOn.value && k.isNotEmpty()
-            val currentPathFileList = if(enableFilter){
-                val fl = currentPathFileList.value.filter {
-                    it.name.lowercase().contains(k) || it.lastModifiedTime.lowercase().contains(k) || it.createTime.lowercase().contains(k)
+            // file list
+            // if has err, show err, else show file list
+            if(openDirErr.value.isNotBlank()){
+                Column(
+                    modifier = Modifier
+                        //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
+                        .fillMaxSize()
+                        .padding(contentPadding)
+                        .verticalScroll(StateUtil.getRememberScrollState())
+                    ,
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(openDirErr.value)
                 }
-                filterList.value.clear()
-                filterList.value.addAll(fl)
-                fl
             }else {
-                currentPathFileList.value
-            }
-
-
-            val listState = if(enableFilter) StateUtil.getRememberLazyListState() else curListState.value
-            if(enableFilter) {  //更新filter列表state
-                filterListState.value = listState
-            }
-            //更新是否启用filter
-            enableFilterState.value = enableFilter
-
-            MyLazyColumn(
-                contentPadding = PaddingValues(0.dp),  //外部padding了
-                list = currentPathFileList,
-                listState = listState,
-                requireForEachWithIndex = true,
-                requirePaddingAtBottom =true
-            ) {index, it ->
-                // 没测试，我看其他文件管理器针对目录都没open with，所以直接隐藏了) 需要测试：能否针对目录执行openwith？如果不能，对目录移除openwith选项
-                FileListItem(
-                    item = it,
-                    isPasteMode = isPasteMode,
-                    menuKeyTextList = if(it.isFile) fileMenuKeyTextList else dirMenuKeyTextList,
-                    menuKeyActList = if(it.isFile) fileMenuKeyActList else dirMenuKeyActList,
-                    iconOnClick={  //点击文件或文件夹图标时的回调函数
-                        if (!isPasteMode.value && !isImportMode.value) {
-                            switchItemSelected(it)
-                        }
-                    },
-                    switchItemSelected = switchItemSelected,
-                    isItemInSelected=isItemInSelected,
-                    itemOnLongClick = {
-                        //如果不是选择模式或粘贴模式，切换为选择模式
-                        if (!isFileSelectionMode.value && !isPasteMode.value && !isImportMode.value) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            switchItemSelected(it)
-
-                        //如果处于选择模式，长按执行连续选择
-                        }else if(isFileSelectionMode.value && !isPasteMode.value && !isImportMode.value) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            UIHelper.doSelectSpan(index, it,
-                                //这里调用 toList() 是为了拷贝下源list，避免并发修改异常
-                                selectedItems.value.toList(), currentPathFileList.toList(),
-                                switchItemSelected,
-                                selecteItem
-                            )
-                        }
+                val k = filesPageSimpleFilterKeyWord.value.text.lowercase()  //关键字
+                val enableFilter = filesPageSimpleFilterOn.value && k.isNotEmpty()
+                val currentPathFileList = if(enableFilter){
+                    val fl = currentPathFileList.value.filter {
+                        it.name.lowercase().contains(k) || it.lastModifiedTime.lowercase().contains(k) || it.createTime.lowercase().contains(k)
                     }
-                ) itemOnClick@{  //itemOnClick
-                    if (isFileSelectionMode.value) {  //选择模式，切换选择
-                        switchItemSelected(it)
-                    } else {  //非选择模式，若文件则在编辑器打开，否则在当前页面打开目录
+                    filterList.value.clear()
+                    filterList.value.addAll(fl)
+                    fl
+                }else {
+                    currentPathFileList.value
+                }
 
-                        //关闭过滤模式的逻辑：如果是目录，一律关闭；如果是文件，判断是否用内部Editor打开，如果是关闭，否则不关闭。
-                        if (it.isFile) {
-                            //粘贴或导入模式下点击文件无效，除非先退出对应模式(不过没禁止通过三个点的菜单打开文件)
-                            if(isPasteMode.value || isImportMode.value) {
-                                return@itemOnClick
+
+                val listState = if(enableFilter) StateUtil.getRememberLazyListState() else curListState.value
+                if(enableFilter) {  //更新filter列表state
+                    filterListState.value = listState
+                }
+                //更新是否启用filter
+                enableFilterState.value = enableFilter
+
+                MyLazyColumn(
+                    contentPadding = PaddingValues(0.dp),  //外部padding了
+                    list = currentPathFileList,
+                    listState = listState,
+                    requireForEachWithIndex = true,
+                    requirePaddingAtBottom =true
+                ) {index, it ->
+                    // 没测试，我看其他文件管理器针对目录都没open with，所以直接隐藏了) 需要测试：能否针对目录执行openwith？如果不能，对目录移除openwith选项
+                    FileListItem(
+                        item = it,
+                        isPasteMode = isPasteMode,
+                        menuKeyTextList = if(it.isFile) fileMenuKeyTextList else dirMenuKeyTextList,
+                        menuKeyActList = if(it.isFile) fileMenuKeyActList else dirMenuKeyActList,
+                        iconOnClick={  //点击文件或文件夹图标时的回调函数
+                            if (!isPasteMode.value && !isImportMode.value) {
+                                switchItemSelected(it)
                             }
+                        },
+                        switchItemSelected = switchItemSelected,
+                        isItemInSelected=isItemInSelected,
+                        itemOnLongClick = {
+                            //如果不是选择模式或粘贴模式，切换为选择模式
+                            if (!isFileSelectionMode.value && !isPasteMode.value && !isImportMode.value) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                switchItemSelected(it)
 
-                            //检查文件大小，如果太大，拒绝打开，考虑下大小设多少合适。
-                            // 如果是文本类型，用文本编辑器打开，其他类型弹窗提示用外部程序打开还是用文本编辑器打开
-                            //goto editor page with file path
+                                //如果处于选择模式，长按执行连续选择
+                            }else if(isFileSelectionMode.value && !isPasteMode.value && !isImportMode.value) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                UIHelper.doSelectSpan(index, it,
+                                    //这里调用 toList() 是为了拷贝下源list，避免并发修改异常
+                                    selectedItems.value.toList(), currentPathFileList.toList(),
+                                    switchItemSelected,
+                                    selecteItem
+                                )
+                            }
+                        }
+                    ) itemOnClick@{  //itemOnClick
+                        if (isFileSelectionMode.value) {  //选择模式，切换选择
+                            switchItemSelected(it)
+                        } else {  //非选择模式，若文件则在编辑器打开，否则在当前页面打开目录
 
-                            //如果是文件，只有使用内部Editor打开文件才退出过滤模式，否则不退出（请求使用外部程序打开文件时退出过滤模式的话感觉很奇怪）
-                            if(MimeType.guessFromFileName(it.name).value == MimeType.TEXT_PLAIN.value) {  //如果是文本类型，直接打开
-                                //关闭过滤模式
-                                //20240516: 改成跳转到编辑器不关过滤模式了，感觉更符合直觉
+                            //关闭过滤模式的逻辑：如果是目录，一律关闭；如果是文件，判断是否用内部Editor打开，如果是关闭，否则不关闭。
+                            if (it.isFile) {
+                                //粘贴或导入模式下点击文件无效，除非先退出对应模式(不过没禁止通过三个点的菜单打开文件)
+                                if(isPasteMode.value || isImportMode.value) {
+                                    return@itemOnClick
+                                }
+
+                                //检查文件大小，如果太大，拒绝打开，考虑下大小设多少合适。
+                                // 如果是文本类型，用文本编辑器打开，其他类型弹窗提示用外部程序打开还是用文本编辑器打开
+                                //goto editor page with file path
+
+                                //如果是文件，只有使用内部Editor打开文件才退出过滤模式，否则不退出（请求使用外部程序打开文件时退出过滤模式的话感觉很奇怪）
+                                if(MimeType.guessFromFileName(it.name).value == MimeType.TEXT_PLAIN.value) {  //如果是文本类型，直接打开
+                                    //关闭过滤模式
+                                    //20240516: 改成跳转到编辑器不关过滤模式了，感觉更符合直觉
 //                                filesPageFilterModeOff()
 
 
-                                //请求打开文件
-                                val expectReadOnly = false
-                                requireInnerEditorOpenFile(it.fullPath, expectReadOnly)
-                            }else {  //非文本类型，尝试用外部软件打开
-                                openAsDialogFilePath.value = it.fullPath
-                                showOpenInEditor.value=true
-                                showOpenAsDialog.value=true
+                                    //请求打开文件
+                                    val expectReadOnly = false
+                                    requireInnerEditorOpenFile(it.fullPath, expectReadOnly)
+                                }else {  //非文本类型，尝试用外部软件打开
+                                    openAsDialogFilePath.value = it.fullPath
+                                    showOpenInEditor.value=true
+                                    showOpenAsDialog.value=true
 //                                        val file = File(it.fullPath)
 //                                        val ret = FsUtils.openFileEditFirstIfFailedThenTryView(appContext, file)
 //                                        if(ret.hasError()) {
@@ -942,31 +960,32 @@ fun FilesInnerPage(
 //                                            changeStateTriggerRefreshPage(needRefreshFilesPage)
 //
 //                                        }
-                            }
-                        } else/* if (item.isDirectory) */ {  //点击目录，直接打开
-                            //粘贴模式下点击被选中的文件夹无效，以免出现无限递归复制
-                            //导入模式不会选中PuppyGit app中的文件夹且所有文件夹都可点击，所以无需判断导入模式
-                            if(isPasteMode.value && isItemInSelected(it)) {
-                                return@itemOnClick
-                            }
+                                }
+                            } else/* if (item.isDirectory) */ {  //点击目录，直接打开
+                                //粘贴模式下点击被选中的文件夹无效，以免出现无限递归复制
+                                //导入模式不会选中PuppyGit app中的文件夹且所有文件夹都可点击，所以无需判断导入模式
+                                if(isPasteMode.value && isItemInSelected(it)) {
+                                    return@itemOnClick
+                                }
 
-                            //关闭过滤模式
+                                //关闭过滤模式
 //                            filesPageFilterModeOff()
 
-                            filesPageSimpleFilterKeyWord.value = TextFieldValue("")  //清空过滤关键字
+                                filesPageSimpleFilterKeyWord.value = TextFieldValue("")  //清空过滤关键字
 
-                            //打开目录
-                            currentPath.value = it.fullPath
-                            //更新面包屑，重组吧还是
+                                //打开目录
+                                currentPath.value = it.fullPath
+                                //更新面包屑，重组吧还是
 //                                val willUpdateList = if(currentPathBreadCrumbList.intValue == 1) currentPathBreadCrumbList1 else currentPathBreadCrumbList2
 //                                willUpdateList.add(it)
-                            //刷新页面
-                            changeStateTriggerRefreshPage(needRefreshFilesPage)
+                                //刷新页面
+                                changeStateTriggerRefreshPage(needRefreshFilesPage)
+                            }
                         }
                     }
-                }
 
-                HorizontalDivider()
+                    HorizontalDivider()
+                }
             }
 
         }
@@ -1814,6 +1833,7 @@ private fun getInit(
     isImportedMode:MutableState<Boolean>,
     selecteItem:(FileItemDto) ->Unit,
     filesPageRequestFromParent:MutableState<String>,
+    openDirErr:MutableState<String>
 //    currentPathBreadCrumbList: MutableIntState,
 //    currentPathBreadCrumbList1: SnapshotStateList<FileItemDto>,
 //    currentPathBreadCrumbList2: SnapshotStateList<FileItemDto>
@@ -1991,6 +2011,14 @@ private fun getInit(
             }
             //刷新页面，改了状态应该会自动刷新，不需再刷新
 //            changeStateTriggerRefreshPage(needRefreshFilesPage)
+        }
+
+
+        // set err if has
+        if(!File(currentPath.value).canRead()) {  // can't read dir, usually no permission for dir or dir doesn't exist
+            openDirErr.value = appContext.getString(R.string.err_read_folder_failed)
+        }else {
+            openDirErr.value = ""
         }
     }
 

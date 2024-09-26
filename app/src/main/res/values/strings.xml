@@ -839,5 +839,6 @@
     <string name="will_scan_repos_under_folders">will scan repos under folders</string>
     <string name="path_copied">Path copied</string>
     <string name="external_storage">External Storage</string>
+    <string name="err_read_folder_failed">err: read folder failed</string>
 
 </resources>
