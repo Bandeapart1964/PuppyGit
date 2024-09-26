@@ -643,9 +643,6 @@ fun RemoteListScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            //TODO 这个东西也要根据选择哪个抽屉菜单条目而变化
-            //TODO 要能在向上滚动时，隐藏这个topbar，向下滚动时，显示出来
-            //TODO Editor时，在右隐藏侧栏显示文件名怎么样？
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -701,7 +698,6 @@ fun RemoteListScreen(
 
                     }
                 },
-                //TODO IconButton不支持长按显示提示信息，我想让用户长按，手机震动，在按钮附近半透明显示按钮功能，就像安卓4.x那样
                 actions = {
                     if(!filterModeOn.value) {
                         LongPressAbleIconBtn(
