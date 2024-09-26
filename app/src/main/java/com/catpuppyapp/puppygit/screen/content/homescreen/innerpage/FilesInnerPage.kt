@@ -1215,8 +1215,8 @@ fun FilesInnerPage(
                         Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
                     }catch (e:Exception) {
                         //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
-                        MyLog.e(TAG, "import repo from repoPage err: importRepoResult=$importRepoResult, err="+e.localizedMessage)
-                        Msg.requireShowLongDuration(e.localizedMessage ?: "import repo err")
+                        MyLog.e(TAG, "import repo from FilesPage err: importRepoResult=$importRepoResult, err="+e.localizedMessage)
+                        Msg.requireShowLongDuration("err:${e.localizedMessage}")
                     }finally {
                         // because import doesn't change Files page, so need not do anything yet
                     }
