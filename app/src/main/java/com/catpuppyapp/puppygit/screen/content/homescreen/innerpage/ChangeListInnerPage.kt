@@ -832,11 +832,13 @@ fun ChangeListInnerPage(
                     //如果调用者想自己判断是否有冲突，可传showMsgIfHasConflicts为false
                     if (mergeResult.code == Ret.ErrCode.mergeFailedByAfterMergeHasConfilts) {
                         if(showMsgIfHasConflicts){
-                            if(trueMergeFalseRebase) {
-                                requireShowToast(appContext.getString(R.string.merge_failed_has_conflicts))
-                            }else {
-                                requireShowToast(appContext.getString(R.string.err_has_conflicts_rebase_failed))
-                            }
+                            requireShowToast(appContext.getString(R.string.has_conflicts))
+
+//                            if(trueMergeFalseRebase) {
+//                                requireShowToast(appContext.getString(R.string.merge_has_conflicts))
+//                            }else {
+//                                requireShowToast(appContext.getString(R.string.rebase_has_conflicts))
+//                            }
 
                         }
                     }else {
@@ -869,7 +871,14 @@ fun ChangeListInnerPage(
             }
         }catch (e:Exception) {
             //log
-            showErrAndSaveLog(TAG, "#doMerge(trueMergeFalseRebase=$trueMergeFalseRebase) err:"+e.stackTraceToString(), "${if(trueMergeFalseRebase) "merge" else "rebase"} err:"+e.localizedMessage, requireShowToast, curRepoFromParentPage.value.id)
+            showErrAndSaveLog(
+                logTag = TAG,
+                logMsg = "#doMerge(trueMergeFalseRebase=$trueMergeFalseRebase) err:"+e.stackTraceToString(),
+                showMsg = e.localizedMessage ?: "err",
+                showMsgMethod = requireShowToast,
+                repoId = curRepoFromParentPage.value.id,
+                errMsgForErrDb = "${if(trueMergeFalseRebase) "merge" else "rebase"} err: "+e.localizedMessage
+            )
 
             //关闭底栏，如果需要的话
             if (requireCloseBottomBar) {

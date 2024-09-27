@@ -234,11 +234,12 @@ fun BranchListScreen(
                 //检查是否存在冲突条目
                 //如果调用者想自己判断是否有冲突，可传showMsgIfHasConflicts为false
                 val errMsg = if (mergeResult.code == Ret.ErrCode.mergeFailedByAfterMergeHasConfilts) {
-                    if(trueMergeFalseRebase) {
-                        appContext.getString(R.string.merge_failed_has_conflicts)
-                    }else {
-                        appContext.getString(R.string.err_has_conflicts_rebase_failed)
-                    }
+                    appContext.getString(R.string.has_conflicts)
+//                    if(trueMergeFalseRebase) {
+//                        appContext.getString(R.string.merge_has_conflicts)
+//                    }else {
+//                        appContext.getString(R.string.rebase_has_conflicts)
+//                    }
                 }else{
                     //显示错误提示
                     mergeResult.msg
@@ -535,8 +536,9 @@ fun BranchListScreen(
                 }catch (e:Exception) {
                     MyLog.e(TAG, "MergeDialog#doMerge(trueMergeFalseRebase=${!requireRebase.value}) err: "+e.stackTraceToString())
 
-                    val errMsg = "${if(requireRebase.value) "rebase" else "merge"} failed:"+e.localizedMessage
-                    requireShowToast(errMsg)
+                    requireShowToast(e.localizedMessage ?: "err")
+
+                    val errMsg = "${if(requireRebase.value) "rebase" else "merge"} failed: "+e.localizedMessage
                     createAndInsertError(curRepo.value.id, errMsg)
                 }finally {
                     //别忘了刷新页面！

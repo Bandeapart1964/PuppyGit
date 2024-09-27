@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -40,16 +41,14 @@ fun DiffCommitsDialog(
         textCompose = {
             //只能有一个节点，因为这个东西会在lambda后返回，而lambda只能有一个返回值，弄两个布局就乱了，和react组件只能有一个root div一个道理 。
             Column {
-                Text(text = stringResource(R.string.note_leave_commit_hash_empty_to_compare_with_local_worktree),
-//                    fontWeight = FontWeight.ExtraBold
-                )
-                Spacer(modifier = Modifier.height(10.dp))
 
-
-                Text(text = stringResource(R.string.will_show_differences_of_left_to_right)
-                )
+                Text(text = stringResource(R.string.compare_left_to_right))
 
                 Spacer(modifier = Modifier.height(10.dp))
+
+                Text(text = stringResource(R.string.note_leave_commit_hash_empty_to_compare_with_local_worktree), fontWeight = FontWeight.Light)
+
+                Spacer(modifier = Modifier.height(15.dp))
 
                 TextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -83,6 +82,7 @@ fun DiffCommitsDialog(
                         Text(stringResource(R.string.hash_branch_tag))
                     },
                 )
+
             }
         },
         okBtnText = stringResource(id = R.string.ok),

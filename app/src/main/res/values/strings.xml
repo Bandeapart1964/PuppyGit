@@ -285,7 +285,6 @@
     <string name="into">into</string>
     <string name="and">and</string>
     <string name="already_up_to_date">Already up-to-date</string>
-    <string name="merge_failed_has_conflicts">Merge failed:has conflicts!</string>
     <string name="set_upstream_success">Set upstream success</string>
     <string name="select_remote">Select Remote</string>
     <string name="set_upstream_branch_name">Set upstream branch name</string>
@@ -664,7 +663,6 @@
     <string name="repo_not_in_rebasing">Repo not in rebasing</string>
     <string name="repo_not_in_cherrypick">Repo not in cherrypick</string>
     <string name="no_cherrypick_head_found">No Cherrypick HEAD found!</string>
-    <string name="err_has_conflicts_rebase_failed">err:has conflicts, rebase failed!</string>
     <string name="rebase_current_onto">Rebase Current onto</string>
     <string name="rebase_branch1_onto_branch2">Rebase ph_a3f241dc_1 onto ph_a3f241dc_2</string>
     <string name="rebase">Rebase</string>
@@ -754,7 +752,6 @@
     <string name="invalid_oid">invalid oid</string>
     <string name="export_path_ph1_you_can_go_to_files_page_found_this_file">export path: ph_a3f241dc_1 \n\n you can go to Files page found this file</string>
     <string name="full_name">Full Name</string>
-    <string name="will_show_differences_of_left_to_right">will show differences of \'Left\' to \'Right\'</string>
     <string name="left">Left</string>
     <string name="right">Right</string>
     <string name="err_remote_list_is_empty">err: Remote list is empty</string>
@@ -843,5 +840,6 @@
     <string name="current_dir_doesnt_exist_anymore">Current dir doesn\'t exist anymore</string>
     <string name="first_line">First Line</string>
     <string name="last_line">Last Line</string>
+    <string name="compare_left_to_right">Compare \'Left\' to \'Right\'</string>
 
 </resources>
