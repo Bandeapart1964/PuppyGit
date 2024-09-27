@@ -62,7 +62,7 @@ For reduce risk of password leak, Your passwords of git repos(e.g. github) are e
 - update `EncryptorImpl.kt`, set your password encryptor, or simple use default encryptor
 - set your encryptor version and password in `PassEncryptHelper.kt`, the password must enough to long and better don't make it be public
 
-note: you should not change the passwords of old versions of password encryptors, if changed, when you upgrade app will can't decrypt the passwords encrypted by encryptor with old passwords, then all saved passwords on user device will be invalid, users must re-set passwords of credentials to right passwords and save them again.
+note: you should not change the passwords of old versions of password encryptors, if changed, when you upgrade app will can't decrypt the passwords encrypted by encryptor with old passwords, then all saved passwords on user device will be invalid, users must delete all credentials, then restart app, then re create credentials again.
 
 
 ## Help translate
