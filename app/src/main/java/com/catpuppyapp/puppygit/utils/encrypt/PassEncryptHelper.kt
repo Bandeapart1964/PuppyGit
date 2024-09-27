@@ -39,7 +39,7 @@ class PassEncryptHelper {
             return currentVerEncryptor.encrypt(raw, currentVerKey)
         }
         fun decryptWithCurrentEncryptor(encryptedStr:String):String {
-            return currentVerEncryptor.decrpyt(encryptedStr, currentVerKey)
+            return currentVerEncryptor.decrypt(encryptedStr, currentVerKey)
         }
     }
 }

@@ -9,7 +9,7 @@ val defaultEncryptor = object : Encryptor {
         return EncryptUtil.encryptString(raw,key)
     }
 
-    override fun decrpyt(encrypted: String, key: String): String {
+    override fun decrypt(encrypted: String, key: String): String {
         if(encrypted.isNullOrEmpty()) {
             return encrypted
         }

@@ -73,7 +73,7 @@ class PassEncryptRepositoryImpl(private val dao: PassEncryptDao) : PassEncryptRe
                     if(c.pass.isNullOrEmpty()) {
                         continue
                     }
-                    val raw = oldEncryptor.decrpyt(c.pass, oldKey)  //解密密码
+                    val raw = oldEncryptor.decrypt(c.pass, oldKey)  //解密密码
                     c.pass = PassEncryptHelper.encryptWithCurrentEncryptor(raw)  //用新加密器加密密码
                     credentialDb.update(c)  //更新db
                 }
