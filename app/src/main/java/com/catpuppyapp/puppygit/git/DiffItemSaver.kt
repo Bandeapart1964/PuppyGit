@@ -1,6 +1,9 @@
 package com.catpuppyapp.puppygit.git
 
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.utils.compare.SimilarCompare
+import com.catpuppyapp.puppygit.utils.compare.param.StringCompareParam
+import com.catpuppyapp.puppygit.utils.compare.result.IndexModifyResult
 import com.github.git24j.core.Diff
 import java.util.EnumSet
 import java.util.TreeMap
@@ -38,6 +41,36 @@ class PuppyHunkAndLines {
     //{lineNum: {originType:line}}, 其中 originType预期有3种类型：context/del/add
     var groupedLines:TreeMap<Int, HashMap<String, PuppyLine>> = TreeMap()
 
+    // {lineNum: IndexModifyResult}
+    private val modifyResultMap:MutableMap<Int, IndexModifyResult> = mutableMapOf()
+
+    // {linNum: Unit}, if map.get(lineNum) != null, means already showed add or del line as context, need not show one more
+    // add and del only difference at end has "/n" or not, in that case, show 1 of them as context
+    // 同一行，包含添加和删除，区别只在于末尾是否有换行符，仅显示对应行号一次，且类型为context
+    private val mergedAddDelLine:MutableMap<Int, Unit> = mutableMapOf()
+
+    class MergeAddDelLineResult (
+        //是否已经显示过此行，若已显示过，不会在显示，例如第12行只有末尾是否有换行符的区别，遍历到+12时，显示12行作为context，下次遍历到-12，则直接不显示
+        // if already showed this line as context, next time same line will not showed again, eg: if +12 and -12 only diff at end of line has "\n" or not, then only show context line 12 once
+        // instead by field `data`
+//        val alreadyShowedAsContext:Boolean,
+
+        //是否需要显示此行为context
+        // need show this line as context or not, if not, will show origin line, else set line origin type to context, then show it
+        val needShowAsContext:Boolean,
+
+        // if need show data as context, set text to this field, else set null
+        val data:PuppyLine?=null,
+    )
+
+    /**
+     * should clear caches if page re-render
+     */
+    fun clearCachesForShown(){
+        mergedAddDelLine.clear()
+        modifyResultMap.clear()
+    }
+
     fun addLineToGroup(puppyLine: PuppyLine) {
         val lineNum = puppyLine.lineNum
         val line = groupedLines.get(lineNum)
@@ -48,6 +81,67 @@ class PuppyHunkAndLines {
         }else {
             line.put(puppyLine.originType, puppyLine)
         }
+    }
+
+
+    /**
+     * 仅对类型为add或del的行调用此函数，若返回true，代表两者除了末尾换行符没区别，这时将其转换为context显示，
+     */
+    fun needShowAddOrDelLineAsContext(lineNum: Int):MergeAddDelLineResult {
+        val groupedLine = groupedLines.get(lineNum)
+        val add = groupedLine?.get(Diff.Line.OriginType.ADDITION.toString())
+        val del = groupedLine?.get(Diff.Line.OriginType.DELETION.toString())
+        if(add!=null && del!=null && add.content.removeSuffix("\n").equals(del.content.removeSuffix("\n"))) {
+            val alreadyShowed = mergedAddDelLine.get(lineNum) != null
+            if(!alreadyShowed) {
+                mergedAddDelLine.put(lineNum, Unit)
+            }
+
+            return MergeAddDelLineResult(
+                needShowAsContext = true,
+                data = if(alreadyShowed) null else del.copy(originType = Diff.Line.OriginType.CONTEXT.toString()),
+            )
+        }else {
+            return MergeAddDelLineResult(needShowAsContext = false)
+        }
+    }
+
+
+    fun needShowAddOrDelLineAsContext_2(lineNum: Int):Boolean {
+        val groupedLine = groupedLines.get(lineNum)
+        val add = groupedLine?.get(Diff.Line.OriginType.ADDITION.toString())
+        val del = groupedLine?.get(Diff.Line.OriginType.DELETION.toString())
+        return add!=null && del!=null && add.content.removeSuffix("\n").equals(del.content.removeSuffix("\n"))
+    }
+
+    fun getModifyResult(lineNum: Int, requireBetterMatchingForCompare:Boolean):IndexModifyResult? {
+        val r = modifyResultMap.get(lineNum)
+
+        if(r!=null) {
+            return r
+        }
+
+        // r is null, try generate
+        val groupedLine = groupedLines.get(lineNum)
+
+        val add = groupedLine?.get(Diff.Line.OriginType.ADDITION.toString())
+        val del = groupedLine?.get(Diff.Line.OriginType.DELETION.toString())
+
+        if(add!=null && del!=null) {
+            val modifyResult2 = SimilarCompare.INSTANCE.doCompare(
+                    StringCompareParam(add.content),
+                    StringCompareParam(del.content),
+
+                    //为true则对比更精细，但是，时间复杂度乘积式增加，不开 O(n)， 开了 O(nm)
+                    requireBetterMatching = requireBetterMatchingForCompare
+                )
+
+            modifyResultMap.put(lineNum, modifyResult2)
+            return modifyResult2
+        }else {
+            return null
+        }
+
     }
 }
 

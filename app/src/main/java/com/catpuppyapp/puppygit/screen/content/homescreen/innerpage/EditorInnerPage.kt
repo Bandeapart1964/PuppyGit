@@ -36,6 +36,7 @@ import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dto.FileSimpleDto
 import com.catpuppyapp.puppygit.play.pro.R
@@ -102,7 +103,7 @@ fun EditorInnerPage(
     editorPageIsContentSnapshoted:MutableState<Boolean>,
     goToFilesPage:(path:String) -> Unit,
     drawerState: DrawerState? = null,  //只有editor作为顶级页面时用到这个变量，子页面没用，用来在drawer打开时保存文件
-    goToLine:Int = -1,  //若大于0，打开文件后跳转到指定行；否则还是旧逻辑（跳转到上次退出前的第一行）。SubPageEditor会用到此变量，HomeScreen跳转来Editor的话，目前用不到，以后若有需要再传参
+    goToLine:Int = LineNum.lastPosition,  //若大于0，打开文件后跳转到指定行；否则还是旧逻辑（跳转到上次退出前的第一行）。SubPageEditor会用到此变量，HomeScreen跳转来Editor的话，目前用不到，以后若有需要再传参
     editorSearchMode:MutableState<Boolean>,
     editorSearchKeyword:CustomStateSaveable<TextFieldValue>,
     readOnlyMode:MutableState<Boolean>,

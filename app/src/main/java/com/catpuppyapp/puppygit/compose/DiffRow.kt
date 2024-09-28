@@ -12,6 +12,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.git.PuppyLine
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
@@ -37,8 +38,8 @@ fun DiffRow (line:PuppyLine, stringPartList:List<IndexStringPart>? = null, fileF
 //                        val lineTypeStr = getDiffLineTypeStr(line)
     val lineNumColor = if (inDarkTheme) MyStyleKt.TextColor.lineNum_forDiffInDarkTheme else MyStyleKt.TextColor.lineNum_forDiffInLightTheme
 
-    val lineNum = line.lineNum
-    var prefix = ""
+    val lineNum = if(line.lineNum== LineNum.EOF.LINE_NUM) LineNum.EOF.TEXT else line.lineNum.toString()
+//    var prefix = ""
     val content = line.content
     //我发现明明新旧都没末尾行，但是originType却是添加了末尾行 '>'， 很奇怪，所以把行相关的背景颜色改了，文字颜色一律灰色，另外，因为patch输出会包含 no new line at end 之类的东西，所以不需要我再特意添加那句话了
     //只显示新增换行符、删除换行符、新旧文件都没换行符、新增行、删除行、上下文
@@ -49,11 +50,13 @@ fun DiffRow (line:PuppyLine, stringPartList:List<IndexStringPart>? = null, fileF
 ////                            prefix=line.originType+ ":"
 //
 //                    } else
-    prefix = line.originType + lineNum + ":"
+
+//    prefix = line.originType + lineNum + ":"  // show add or del and line num, e.g. "+123:" or "-123:"
+    val prefix = "$lineNum:"  // only show line num (can use color figure add or del), e.g. "123:"
 
 
     //因为下面用Row换行了，所以不需要内容以换行符结尾
-    prefix = prefix.removeSuffix("\n")
+//    prefix = prefix.removeSuffix("\n")
 //    content = content.removeSuffix("\n")
 
     Row(
@@ -73,14 +76,15 @@ fun DiffRow (line:PuppyLine, stringPartList:List<IndexStringPart>? = null, fileF
 ////                                    )
 //                            },
     ) {
-        //添加/删除，行号
+        //show add/del and line number, e.g. +123, or only show line num e.g. 123, it should make a settings item for it
         Text(
             text = prefix,
             color = lineNumColor,
             fontSize = MyStyleKt.TextSize.lineNumSize,
             modifier = Modifier.clickable {
                 val filePathKey = Cache.setThenReturnKey(fileFullPath)
-                val goToLine = lineNum
+                //if jump line is EOF, should go to last line of file, but didn't know the line num, so set line num to a enough big number
+                val goToLine = if(lineNum == LineNum.EOF.TEXT) LineNum.EOF.LINE_NUM else lineNum
                 val initMergeMode = "0"  //能进diff页面说明没冲突，所以mergemode设为0
                 val initReadOnly = "0"  //app内置目录下的文件不可能在diff页面显示，所以在这把readonly设为0即可
                 navController.navigate(Cons.nav_SubPageEditor + "/$filePathKey"+"/$goToLine"+"/$initMergeMode"+"/$initReadOnly")

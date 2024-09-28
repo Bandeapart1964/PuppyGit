@@ -1,8 +1,6 @@
 package com.catpuppyapp.puppygit.compose
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,22 +12,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.dev.FlagFileName
 import com.catpuppyapp.puppygit.dev.detailsDiffTestPassed
-import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
+import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.git.DiffItemSaver
 import com.catpuppyapp.puppygit.git.PuppyHunkAndLines
 import com.catpuppyapp.puppygit.git.PuppyLine
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.Theme
-import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
@@ -38,7 +37,6 @@ import com.catpuppyapp.puppygit.utils.compare.SimilarCompare
 import com.catpuppyapp.puppygit.utils.compare.param.StringCompareParam
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Diff
@@ -69,6 +67,7 @@ fun DiffContent(
     //废弃，改用获取diffItem时动态计算实际需要显示的contentLen总和了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
 
+    val settings=SettingsUtil.getSettingsSnapshot()
 
     val appContext = AppModel.singleInstanceHolder.appContext
     val inDarkTheme = Theme.inDarkTheme
@@ -140,94 +139,173 @@ fun DiffContent(
                 //数据结构是一个hunk header N 个行
                 diffItem.value.hunks.forEach { it: PuppyHunkAndLines ->
 
-                    if(fileChangeTypeIsModified && UserUtil.isPro()
-                        && (dev_EnableUnTestedFeature || detailsDiffTestPassed)
-                    ) {  //增量diff
-                        it.groupedLines.forEach printLine@{ (_lineNum:Int, lines:HashMap<String, PuppyLine>) ->
-                            //若非 新增行、删除行、上下文 ，不显示
-                            if (!(lines.contains(Diff.Line.OriginType.ADDITION.toString())
-                                        || lines.contains(Diff.Line.OriginType.DELETION.toString())
-                                        || lines.contains(Diff.Line.OriginType.CONTEXT.toString())
-                                 )
-                            ) {
-                                return@printLine
-                            }
+                    if(fileChangeTypeIsModified && proFeatureEnabled(detailsDiffTestPassed)) {  //增量diff
+                        if(!settings.groupDiffContentByLineNum || FlagFileName.flagFileExist(FlagFileName.disableGroupDiffContentByLineNum)) {
+                            //this method need use some caches, clear them before iterate lines
+                            //这种方式需要使用缓存，每次遍历lines前都需要先清下缓存，否则可能多显示或少显示某些行
+                            it.clearCachesForShown()
 
-                            val add = lines.get(Diff.Line.OriginType.ADDITION.toString())
-                            val del = lines.get(Diff.Line.OriginType.DELETION.toString())
-                            val context = lines.get(Diff.Line.OriginType.CONTEXT.toString())
-
-                            //若 context del add同时存在，打印顺序为 context/del/add，不过不太可能3个同时存在，顶多两个同时存在
-
-                            if(context!=null) {
-                                //打印context
-                                DiffRow(
-                                    line = context,
-                                    fileFullPath=fileFullPath
-                                )
-                            }
-
-                            if(add!=null && del!=null) {  //同样行号，同时存在删除和新增，执行增量diff
-                                //解决：两行除了末尾换行符没任何区别的情况仍显示diff的bug（有红有绿但没区别，令人迷惑）
-                                if(add.content.removeSuffix("\n").equals(del.content.removeSuffix("\n"))){
+                            it.lines.forEach printLine@{ line: PuppyLine ->
+                                // show add or eof new line
+                                if(line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()
+                                    || line.originType == Diff.Line.OriginType.DEL_EOFNL.toString()
+                                ) {
                                     DiffRow(
-                                        //随便拷贝下del或add（不拷贝只改类型也行但不推荐以免有坏影响）把类型改成context，就行了
-                                        line = del.copy(originType = Diff.Line.OriginType.CONTEXT.toString()),
+                                        line = LineNum.EOF.transLineToEofLine(line, add = line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()),
                                         fileFullPath=fileFullPath
                                     )
 
-                                }else {
+                                    return@printLine
+                                }
 
-                                    val modifyResult2 =
-                                        SimilarCompare.INSTANCE.doCompare(
-                                            StringCompareParam(add.content),
-                                            StringCompareParam(del.content),
 
-                                            //为true则对比更精细，但是，时间复杂度乘积式增加，不开 O(n)， 开了 O(nm)
-                                            requireBetterMatching = requireBetterMatchingForCompare.value
-                                        )
 
-                                    if(modifyResult2.matched) {
+                                //若非 新增行、删除行、上下文 ，不显示
+                                if (line.originType != Diff.Line.OriginType.ADDITION.toString()
+                                    && line.originType != Diff.Line.OriginType.DELETION.toString()
+                                    && line.originType != Diff.Line.OriginType.CONTEXT.toString()
+                                ) {
+                                    return@printLine
+                                }
+
+                                val mergeAddDelLineResult = it.needShowAddOrDelLineAsContext(line.lineNum)
+                                // ignore which lines has ADD and DEL 2 types, but only difference at has '\n' or has not
+                                if(mergeAddDelLineResult.needShowAsContext) {
+                                    // 合并只有末尾是否有换行符的添加和删除行为context等于显示一个没修改的行，既然没修改，直接不显示不就行了？反正本来就自带context，顶多差一行
+                                    if(mergeAddDelLineResult.data!=null) {  // now showed this line before, show it
                                         DiffRow(
-                                            line = del,
-                                            stringPartList = modifyResult2.del,
+                                            //随便拷贝下del或add（不拷贝只改类型也行但不推荐以免有坏影响）把类型改成context，就行了
+                                            line = mergeAddDelLineResult.data,
                                             fileFullPath=fileFullPath
-
                                         )
-                                        DiffRow(
-                                            line = add,
-                                            stringPartList = modifyResult2.add,
-                                            fileFullPath=fileFullPath
+                                    }
 
+                                    return@printLine
+                                }
+
+
+                                if(line.originType == Diff.Line.OriginType.CONTEXT.toString()) {
+                                    DiffRow(
+                                        line = line,
+                                        fileFullPath=fileFullPath
+                                    )
+                                }else {  // add or del
+                                    val modifyResult = it.getModifyResult(line.lineNum, requireBetterMatchingForCompare.value)
+                                    if(modifyResult == null || !modifyResult.matched) {
+                                        DiffRow(
+                                            line = line,
+                                            fileFullPath=fileFullPath
+                                        )
+                                    }else{  // matched
+                                        DiffRow(
+                                            line = line,
+                                            fileFullPath=fileFullPath,
+                                            stringPartList = if(line.originType == Diff.Line.OriginType.ADDITION.toString()) modifyResult.add else modifyResult.del
+                                        )
+                                    }
+                                }
+
+                            }
+                        }else {  // grouped lines by line num
+
+                            it.groupedLines.forEach printLine@{ (_lineNum:Int, lines:HashMap<String, PuppyLine>) ->
+                                //若非 新增行、删除行、上下文 ，不显示
+                                if (!(lines.contains(Diff.Line.OriginType.ADDITION.toString())
+                                            || lines.contains(Diff.Line.OriginType.DELETION.toString())
+                                            || lines.contains(Diff.Line.OriginType.CONTEXT.toString())
+                                            )
+                                ) {
+                                    return@printLine
+                                }
+
+                                val add = lines.get(Diff.Line.OriginType.ADDITION.toString())
+                                val del = lines.get(Diff.Line.OriginType.DELETION.toString())
+                                val context = lines.get(Diff.Line.OriginType.CONTEXT.toString())
+
+                                //若 context del add同时存在，打印顺序为 context/del/add，不过不太可能3个同时存在，顶多两个同时存在
+
+                                if(context!=null) {
+                                    //打印context
+                                    DiffRow(
+                                        line = context,
+                                        fileFullPath=fileFullPath
+                                    )
+                                }
+
+                                if(add!=null && del!=null) {  //同样行号，同时存在删除和新增，执行增量diff
+                                    //解决：两行除了末尾换行符没任何区别的情况仍显示diff的bug（有红有绿但没区别，令人迷惑）
+                                    if(add.content.removeSuffix("\n").equals(del.content.removeSuffix("\n"))){
+                                        DiffRow(
+                                            //随便拷贝下del或add（不拷贝只改类型也行但不推荐以免有坏影响）把类型改成context，就行了
+                                            line = del.copy(originType = Diff.Line.OriginType.CONTEXT.toString()),
+                                            fileFullPath=fileFullPath
                                         )
 
                                     }else {
-                                        // 直接使用addContent和delContent即可，不用遍历数组，虽然遍历数组也行，但直接使用字符串性能会稍微好一丢丢
+
+                                        val modifyResult2 =
+                                            SimilarCompare.INSTANCE.doCompare(
+                                                StringCompareParam(add.content),
+                                                StringCompareParam(del.content),
+
+                                                //为true则对比更精细，但是，时间复杂度乘积式增加，不开 O(n)， 开了 O(nm)
+                                                requireBetterMatching = requireBetterMatchingForCompare.value
+                                            )
+
+                                        if(modifyResult2.matched) {
+                                            DiffRow(
+                                                line = del,
+                                                stringPartList = modifyResult2.del,
+                                                fileFullPath=fileFullPath
+
+                                            )
+                                            DiffRow(
+                                                line = add,
+                                                stringPartList = modifyResult2.add,
+                                                fileFullPath=fileFullPath
+
+                                            )
+
+                                        }else {
+                                            // 直接使用addContent和delContent即可，不用遍历数组，虽然遍历数组也行，但直接使用字符串性能会稍微好一丢丢
+                                            DiffRow(
+                                                line = del,
+                                                fileFullPath=fileFullPath
+                                            )
+                                            DiffRow(
+                                                line = add,
+                                                fileFullPath=fileFullPath
+                                            )
+                                        }
+                                    }
+                                }else{ //有一个为null，不用对比
+                                    if(del!=null) {
                                         DiffRow(
                                             line = del,
                                             fileFullPath=fileFullPath
                                         )
+                                    }
+                                    if(add!=null) {
                                         DiffRow(
                                             line = add,
                                             fileFullPath=fileFullPath
                                         )
                                     }
                                 }
-                            }else{ //有一个为null，不用对比
-                                if(del!=null) {
-                                    DiffRow(
-                                        line = del,
-                                        fileFullPath=fileFullPath
-                                    )
-                                }
-                                if(add!=null) {
-                                    DiffRow(
-                                        line = add,
-                                        fileFullPath=fileFullPath
-                                    )
-                                }
+                            }
+
+                            // if delete EOFNL or add EOFNL , show it
+                            val indexOfEOFNL = it.lines.indexOfFirst { it.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString() || it.originType ==  Diff.Line.OriginType.DEL_EOFNL.toString()}
+                            if(indexOfEOFNL!=-1) {
+                                val eofLine = it.lines.get(indexOfEOFNL)
+                                DiffRow(
+                                    line = LineNum.EOF.transLineToEofLine(eofLine, add = eofLine.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString()),
+                                    fileFullPath=fileFullPath
+                                )
                             }
                         }
+
+
 
                     }else { //普通预览，非pro或关闭细节compare时走这里
 
@@ -256,22 +334,29 @@ fun DiffContent(
 //                }
                         //遍历行
                         it.lines.forEach printLine@{ line: PuppyLine ->
-                            //若非 新增行、删除行、上下文 ，不显示
-                            if (line.originType != Diff.Line.OriginType.ADDITION.toString()
-                                && line.originType != Diff.Line.OriginType.DELETION.toString()
-                                && line.originType != Diff.Line.OriginType.CONTEXT.toString()
+
+                            // show add or eof new line
+                            if(line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()
+                                || line.originType == Diff.Line.OriginType.DEL_EOFNL.toString()
                             ) {
+                                DiffRow(
+                                    line = LineNum.EOF.transLineToEofLine(line, add = line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()),
+                                    fileFullPath=fileFullPath
+                                )
+
                                 return@printLine
                             }
 
-
-                            DiffRow(
-                                line = line,
-                                fileFullPath=fileFullPath
-                            )
-
-//                    }
-
+                            //若非 新增行、删除行、上下文 ，不显示
+                            if (line.originType == Diff.Line.OriginType.ADDITION.toString()
+                                || line.originType == Diff.Line.OriginType.DELETION.toString()
+                                || line.originType == Diff.Line.OriginType.CONTEXT.toString()
+                            ) {
+                                DiffRow(
+                                    line = line,
+                                    fileFullPath=fileFullPath
+                                )
+                            }
                         }
                     }
 

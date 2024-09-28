@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 
@@ -183,7 +184,7 @@ fun AppScreenNavigator() {
                     val l = it.arguments?.getString("goToLine") ?: ""
                     l.toInt()
                 }catch (e:Exception) {
-                    -1
+                    LineNum.lastPosition
                 },
                 initMergeMode = it.arguments?.getString("initMergeMode") == "1",  //传1开启mergeMode，否则关闭
                 initReadOnly = it.arguments?.getString("initReadOnly") == "1",  //传1开启read only，否则关闭

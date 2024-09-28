@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class Cons {
     companion object {
+
 //        @Deprecated("改用：StorageDirCons.DefaultStorageDir.allRepoParentsDir.name")  //20240527：禁用，sd相关
         const val defaultAllRepoParentDirName = "PuppyGitRepos"
 //        @Deprecated("改用：StorageDirCons.DefaultStorageDir.puppyGitDataDir.name")  //20240527：禁用，sd相关

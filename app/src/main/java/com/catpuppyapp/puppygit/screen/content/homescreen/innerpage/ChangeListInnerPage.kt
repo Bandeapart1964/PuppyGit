@@ -67,6 +67,7 @@ import com.catpuppyapp.puppygit.compose.OpenAsDialog
 import com.catpuppyapp.puppygit.compose.RequireCommitMsgDialog
 import com.catpuppyapp.puppygit.compose.SetUpstreamDialog
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -2389,7 +2390,7 @@ fun ChangeListInnerPage(
 
     val openFileWithInnerEditor = { filePath:String, initMergeMode:Boolean ->
         val filePathKey = Cache.setThenReturnKey(filePath)
-        val goToLine = "-1"
+        val goToLine = LineNum.lastPosition
         val initMergeMode = if(initMergeMode) "1" else "0"
         val initReadOnly = "0"  //cl页面不可能打开app内置目录下的文件，所以read only初始化为关闭即可
 

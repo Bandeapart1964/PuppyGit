@@ -2,6 +2,7 @@ package com.catpuppyapp.puppygit.dev
 
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
+import java.io.File
 
 //TODO before release:发布应用之前把这几个变量改成false
 @Deprecated("用 `UserUtil.isPro()` 替代")
@@ -133,4 +134,10 @@ object FlagFileName {
      * if this file exists then enable file snapshot, else demand on settings.editor.enableFileSnapshot
      */
     const val enableFileSnapshot = "enableFileSnapshot"
+
+    const val disableGroupDiffContentByLineNum = "disableGroupDiffContentByLineNum"
+
+    fun flagFileExist(flagFileName:String):Boolean {
+        return File(AppModel.singleInstanceHolder.getOrCreatePuppyGitDataUnderAllReposDir().canonicalPath, flagFileName).exists()
+    }
 }

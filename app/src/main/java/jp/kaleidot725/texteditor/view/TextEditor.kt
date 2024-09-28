@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.CopyableDialog
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dev.bug_Editor_GoToColumnCantHideKeyboard_Fixed
 import com.catpuppyapp.puppygit.dev.bug_Editor_SelectColumnRangeOfLine_Fixed
@@ -99,7 +100,7 @@ fun TextEditor(
     editorLastScrollEvent:MutableState<ScrollEvent?>,
     editorListState: LazyListState,
     editorPageIsInitDone:MutableState<Boolean>,
-    goToLine:Int,
+    goToLine:Int,  // is line number, not line index
     readOnlyMode:Boolean,
     searchMode:MutableState<Boolean>,
     mergeMode:Boolean,
@@ -356,12 +357,18 @@ fun TextEditor(
         }
     }
 
+    // get line number(line index+1)
     val getLineVal = {i:String ->
         try {
             //删下首尾空格，增加容错率，然后尝试转成int
             val line = i.trim().toInt()
-            Math.max(1, line)
+            if(line==LineNum.EOF.LINE_NUM) {  // if is EOF, return last line number, then can go to end of file
+                textEditorState.fields.size
+            }else{
+                Math.max(1, line)
+            }
         }catch (e:Exception) {
+            // parse int failed, then go first line
             1
         }
 
@@ -493,11 +500,15 @@ fun TextEditor(
 
                 //goToLine触发场景：预览diff，发现某行需要改，点击行号，就会直接定位到对应行了
                 //会用goToLine的值减1得到索引，所以0也不行
-                val useLastEditPos = goToLine <= 0
+                val useLastEditPos = LineNum.shouldRestoreLastPosition(goToLine)
 
                 //滚动一定要放到scope里执行，不然这个东西一滚动，整个LaunchedEffect代码块后面就不执行了
                 //如果goToLine大于0，把行号减1换成索引；否则跳转到上次退出前的第一可见行
-                UIHelper.scrollToItem(scope, lazyColumnState, if(useLastEditPos) lastEditedPos.firstVisibleLineIndex else goToLine-1)
+                UIHelper.scrollToItem(
+                    coroutineScope = scope,
+                    listState = lazyColumnState,
+                    index = if(useLastEditPos) lastEditedPos.firstVisibleLineIndex else if(goToLine==LineNum.EOF.LINE_NUM) textEditorState.fields.size-1 else goToLine-1
+                )
 
                 //如果定位到上次退出位置，进一步检查是否需要定位到最后编辑列
                 //因为定位column会弹出键盘所以暂时不定位了，我不想一打开编辑器自动弹出键盘，因为键盘会自动读取上下文，可能意外获取屏幕上的文本泄漏隐私

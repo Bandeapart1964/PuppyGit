@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.detailsDiffTestPassed
@@ -105,7 +106,7 @@ fun DiffPageActions(
 
             //跳转到SubEditor页面
             val filePathKey = Cache.setThenReturnKey(fileFullPath)
-            val goToLine = "-1"
+            val goToLine = LineNum.lastPosition
             val initMergeMode = "0"  //冲突条目无法进入diff页面，所以能预览diff定不是冲突条目，因此跳转到editor时应将mergemode初始化为假
             val initReadOnly = "0"  //diff页面不可能显示app内置目录下的文件，所以一率可编辑
 
