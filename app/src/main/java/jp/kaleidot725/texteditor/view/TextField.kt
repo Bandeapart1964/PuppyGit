@@ -29,6 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.dev.bug_Editor_WrongUpdateEditColumnIdx_Fixed
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.UIHelper
 import jp.kaleidot725.texteditor.state.TextFieldState
@@ -54,6 +55,8 @@ internal fun TextField(
 ) {
     val currentTextField by rememberUpdatedState(newValue = textFieldState.value)
     val inDarkTheme = Theme.inDarkTheme
+
+    val settings = SettingsUtil.getSettingsSnapshot()
 
     LaunchedEffect(textFieldState.isSelected) {
         if (textFieldState.isSelected) {
@@ -83,7 +86,9 @@ internal fun TextField(
             if (it.text.contains('\n')) onContainNewLine(it) else onUpdateText(it)
         },
         //字体样式:字体颜色、字体大小、背景颜色等
-        textStyle = TextStyle.Default.copy(fontSize = fontSize.intValue.sp, color = UIHelper.getFontColor(inDarkTheme)),
+        textStyle = TextStyle.Default.copy(fontSize = fontSize.intValue.sp, color = UIHelper.getFontColor(inDarkTheme),
+            background = if(mergeMode) UIHelper.getBackgroundColorForMergeConflictSplitText(currentTextField.text, settings, inDarkTheme) else Color.Unspecified
+        ),
         //光标颜色
         cursorBrush = SolidColor(if(inDarkTheme) Color.LightGray else Color.Black),
 

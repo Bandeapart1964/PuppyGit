@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.settings.AppSettings
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import kotlinx.coroutines.CoroutineScope
@@ -174,5 +175,18 @@ object UIHelper {
     @Composable
     fun getHighlightingBackgroundColor(): Color {
         return MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f)
+    }
+
+    fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
+        return if(text.startsWith(settings.editor.conflictStartStr)) {
+            if(inDarkTheme) Color(0xFF106410) else Color.Green.copy(alpha = 0.6f)
+        }else if(text.startsWith(settings.editor.conflictSplitStr)){
+            if(inDarkTheme) Color(0xFF107070) else Color.Cyan.copy(alpha = 0.6f)
+        }else if(text.startsWith(settings.editor.conflictEndStr)) {
+            if(inDarkTheme) Color(0xFF601560) else Color.Magenta.copy(alpha = 0.6f)
+        }else {
+            Color.Unspecified
+        }
+
     }
 }

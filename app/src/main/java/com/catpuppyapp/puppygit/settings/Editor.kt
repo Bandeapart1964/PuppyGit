@@ -20,6 +20,7 @@ data class Editor (
     var editCacheKeepInDays:Int = 3,  //编辑缓存文件保存天数，超过天数的文件会在启动app时删除
     var editCacheEnable:Boolean = false,  //是否启用编辑缓存，修改后重启app生效
 
+    // conflict text split for merge, it should be able custom in settings page
     var conflictStartStr:String = SettingsCons.defaultConflictStartStr,
     var conflictSplitStr:String = SettingsCons.defaultConfilctSplitStr,
     var conflictEndStr:String = SettingsCons.defaultConflictEndStr,
