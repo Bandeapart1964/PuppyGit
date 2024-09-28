@@ -134,32 +134,18 @@ fun DiffContent(
                 .padding(bottom = 150.dp),
 
             ) {
-
+                val lastIndex = diffItem.value.hunks.size - 1
 
                 //数据结构是一个hunk header N 个行
-                diffItem.value.hunks.forEach { it: PuppyHunkAndLines ->
+                diffItem.value.hunks.forEachIndexed { index, hunkAndLines: PuppyHunkAndLines ->
 
                     if(fileChangeTypeIsModified && proFeatureEnabled(detailsDiffTestPassed)) {  //增量diff
                         if(!settings.groupDiffContentByLineNum || FlagFileName.flagFileExist(FlagFileName.disableGroupDiffContentByLineNum)) {
                             //this method need use some caches, clear them before iterate lines
                             //这种方式需要使用缓存，每次遍历lines前都需要先清下缓存，否则可能多显示或少显示某些行
-                            it.clearCachesForShown()
+                            hunkAndLines.clearCachesForShown()
 
-                            it.lines.forEach printLine@{ line: PuppyLine ->
-                                // show add or eof new line
-                                if(line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()
-                                    || line.originType == Diff.Line.OriginType.DEL_EOFNL.toString()
-                                ) {
-                                    DiffRow(
-                                        line = LineNum.EOF.transLineToEofLine(line, add = line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()),
-                                        fileFullPath=fileFullPath
-                                    )
-
-                                    return@printLine
-                                }
-
-
-
+                            hunkAndLines.lines.forEach printLine@{ line: PuppyLine ->
                                 //若非 新增行、删除行、上下文 ，不显示
                                 if (line.originType != Diff.Line.OriginType.ADDITION.toString()
                                     && line.originType != Diff.Line.OriginType.DELETION.toString()
@@ -168,7 +154,7 @@ fun DiffContent(
                                     return@printLine
                                 }
 
-                                val mergeAddDelLineResult = it.needShowAddOrDelLineAsContext(line.lineNum)
+                                val mergeAddDelLineResult = hunkAndLines.needShowAddOrDelLineAsContext(line.lineNum)
                                 // ignore which lines has ADD and DEL 2 types, but only difference at has '\n' or has not
                                 if(mergeAddDelLineResult.needShowAsContext) {
                                     // 合并只有末尾是否有换行符的添加和删除行为context等于显示一个没修改的行，既然没修改，直接不显示不就行了？反正本来就自带context，顶多差一行
@@ -190,7 +176,7 @@ fun DiffContent(
                                         fileFullPath=fileFullPath
                                     )
                                 }else {  // add or del
-                                    val modifyResult = it.getModifyResult(line.lineNum, requireBetterMatchingForCompare.value)
+                                    val modifyResult = hunkAndLines.getModifyResult(line.lineNum, requireBetterMatchingForCompare.value)
                                     if(modifyResult == null || !modifyResult.matched) {
                                         DiffRow(
                                             line = line,
@@ -208,12 +194,12 @@ fun DiffContent(
                             }
                         }else {  // grouped lines by line num
 
-                            it.groupedLines.forEach printLine@{ (_lineNum:Int, lines:HashMap<String, PuppyLine>) ->
+                            hunkAndLines.groupedLines.forEach printLine@{ (_lineNum:Int, lines:HashMap<String, PuppyLine>) ->
                                 //若非 新增行、删除行、上下文 ，不显示
                                 if (!(lines.contains(Diff.Line.OriginType.ADDITION.toString())
-                                            || lines.contains(Diff.Line.OriginType.DELETION.toString())
-                                            || lines.contains(Diff.Line.OriginType.CONTEXT.toString())
-                                            )
+                                      || lines.contains(Diff.Line.OriginType.DELETION.toString())
+                                      || lines.contains(Diff.Line.OriginType.CONTEXT.toString())
+                                     )
                                 ) {
                                     return@printLine
                                 }
@@ -294,15 +280,6 @@ fun DiffContent(
                                 }
                             }
 
-                            // if delete EOFNL or add EOFNL , show it
-                            val indexOfEOFNL = it.lines.indexOfFirst { it.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString() || it.originType ==  Diff.Line.OriginType.DEL_EOFNL.toString()}
-                            if(indexOfEOFNL!=-1) {
-                                val eofLine = it.lines.get(indexOfEOFNL)
-                                DiffRow(
-                                    line = LineNum.EOF.transLineToEofLine(eofLine, add = eofLine.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString()),
-                                    fileFullPath=fileFullPath
-                                )
-                            }
                         }
 
 
@@ -333,20 +310,7 @@ fun DiffContent(
 //                    }
 //                }
                         //遍历行
-                        it.lines.forEach printLine@{ line: PuppyLine ->
-
-                            // show add or eof new line
-                            if(line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()
-                                || line.originType == Diff.Line.OriginType.DEL_EOFNL.toString()
-                            ) {
-                                DiffRow(
-                                    line = LineNum.EOF.transLineToEofLine(line, add = line.originType == Diff.Line.OriginType.ADD_EOFNL.toString()),
-                                    fileFullPath=fileFullPath
-                                )
-
-                                return@printLine
-                            }
-
+                        hunkAndLines.lines.forEach printLine@{ line: PuppyLine ->
                             //若非 新增行、删除行、上下文 ，不显示
                             if (line.originType == Diff.Line.OriginType.ADDITION.toString()
                                 || line.originType == Diff.Line.OriginType.DELETION.toString()
@@ -357,6 +321,20 @@ fun DiffContent(
                                     fileFullPath=fileFullPath
                                 )
                             }
+                        }
+                    }
+
+
+                    //EOF_NL only appear at last hunk, so better check index avoid non-sense iterate
+                    if(index == lastIndex) {
+                        // if delete EOFNL or add EOFNL , show it
+                        val indexOfEOFNL = hunkAndLines.lines.indexOfFirst { it.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString() || it.originType ==  Diff.Line.OriginType.DEL_EOFNL.toString()}
+                        if(indexOfEOFNL != -1) {  // found originType EOFNL
+                            val eofLine = hunkAndLines.lines.get(indexOfEOFNL)
+                            DiffRow(
+                                line = LineNum.EOF.transLineToEofLine(eofLine, add = eofLine.originType ==  Diff.Line.OriginType.ADD_EOFNL.toString()),
+                                fileFullPath=fileFullPath
+                            )
                         }
                     }
 
@@ -373,7 +351,7 @@ fun DiffContent(
     LaunchedEffect(needRefresh.value) {
 //        if(!fileSizeOverLimit) {  //这里其实没必要，上级页面已经判断了，但我还是不放心，所以在这里再加个判断以防文件过大时误加载这个代码块导致app卡死
             if (repoId.isNotBlank() && relativePathUnderRepoDecoded.isNotBlank()) {
-                // TODO 设置页面loading为true
+                //      设置页面loading为true
                 //      从数据库异步查询repo数据，调用diff方法获得diff内容，然后使用diff内容更新页面state
                 //      最后设置页面loading 为false
                 doJobThenOffLoading launch@{
