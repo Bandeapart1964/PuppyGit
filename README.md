@@ -27,9 +27,6 @@ PuppyGit Pro is A Git Client for Android, Open Source and No Ads and Free to use
 - simple file editor (only utf8 supported)
 - commit history (git log)
 - shallow clone
-
-
-## Untested features (already implemented, will release when test passed)
 - rebase
 - cherry-pick
 - patch
@@ -37,6 +34,8 @@ PuppyGit Pro is A Git Client for Android, Open Source and No Ads and Free to use
 - tags manage
 - stash manage
 
+## under working
+I am focus implement submodules for now
 
 ## TODO (welcome pr)
 - implement a settings page
