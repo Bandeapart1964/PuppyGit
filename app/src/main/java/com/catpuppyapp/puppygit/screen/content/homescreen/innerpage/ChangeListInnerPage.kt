@@ -2385,7 +2385,8 @@ fun ChangeListInnerPage(
     val menuKeyTextList = listOf(
         stringResource(R.string.open),
         stringResource(R.string.open_as),
-        stringResource(R.string.show_in_files)
+        stringResource(R.string.show_in_files),
+        stringResource(R.string.copy_real_path),
     )
 
     val openFileWithInnerEditor = { filePath:String, initMergeMode:Boolean ->
@@ -2425,6 +2426,10 @@ fun ChangeListInnerPage(
             }
 
             goToFilesPage(item.canonicalPath)
+        },
+        copyRealPath@{item:StatusTypeEntrySaver ->
+            clipboardManager.setText(AnnotatedString(item.canonicalPath))
+            Msg.requireShow(appContext.getString(R.string.copied))
         }
     )
     val menuKeyEnableList:List<(StatusTypeEntrySaver)->Boolean> = listOf(
@@ -2433,7 +2438,7 @@ fun ChangeListInnerPage(
 
         //只有worktree的cl页面支持在Files页面显示文件，index页面由于是二级页面，跳转不了，干脆禁用了
         showInFilesEnabled@{fromTo == Cons.gitDiffFromIndexToWorktree},  //对所有条目都启用showInFiles，不过会在点击后检查文件是否存在，若不存在不会跳转
-
+        copyRealPath@{true}
     )
 
     //这个页面，显示就是启用，禁用就不需要显示，所以直接把enableList作为visibleList即可
