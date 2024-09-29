@@ -304,7 +304,11 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         dao.deleteByStorageDirId(storageDirId)
     }
 
-    override suspend fun importRepos(dir: String, isReposParent: Boolean, repoNamePrefix:String): ImportRepoResult {
+    override suspend fun importRepos(dir: String,
+                                     isReposParent: Boolean,
+                                     repoNamePrefix:String,
+                                     parentRepoId:String?
+    ): ImportRepoResult {
         val repos = getAll(updateRepoInfo = false).toMutableList()
 
         var all = 0  // count of all repos found. btw: this is not all subdirs count under dir, this only mean how many git repos found, it may less than subdirs under dir
@@ -331,6 +335,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                                     repoWorkDirPath = repoWorkDirPath,
                                     initRepoName = repoNamePrefix + sub.name,
                                     addRepoToThisListIfSuccess = repos,
+                                    parentRepoId=parentRepoId
                                 )
 
                                 if(importSuccess) {
@@ -361,6 +366,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                             repo = repo,
                             repoWorkDirPath = repoWorkdirPath,
                             initRepoName = repoNamePrefix + dirFile.name,
+                            parentRepoId=parentRepoId
                         )
                         if(importSuccess) {
                             success = 1
@@ -378,7 +384,18 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
     }
 
-    private suspend fun importSingleRepo(repo:Repository, repoWorkDirPath:String, initRepoName:String, addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null):Boolean {
+    /**
+     * @param addRepoToThisListIfSuccess when possible import more than 1 repo,
+     *  should update all repos list after every imported for avoid add repo redundant,
+     *  in that case, should pass all repos list to this param;
+     *  but if add only 1 repo, needn't this param yet, pass null or ignore is ok
+     */
+    private suspend fun importSingleRepo(repo:Repository,
+                                         repoWorkDirPath:String,
+                                         initRepoName:String,
+                                         addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null,
+                                         parentRepoId: String?
+    ):Boolean {
         val funName = "importSingleRepo"
 
         try {
@@ -408,6 +425,10 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
             repoEntity.fullSavePath = repoWorkDirPath
             repoEntity.workStatus = Cons.dbRepoWorkStatusUpToDate
             repoEntity.createBy = Cons.dbRepoCreateByImport
+
+            if(parentRepoId != null) {
+                repoEntity.parentRepoId = parentRepoId
+            }
 
             val remotes = Libgit2Helper.getRemoteList(repo)
             remotes.forEach { remoteName ->
