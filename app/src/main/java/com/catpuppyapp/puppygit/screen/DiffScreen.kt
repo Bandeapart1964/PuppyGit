@@ -17,8 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.DiffContent
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
@@ -32,6 +35,7 @@ import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.DiffP
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.DiffScreenTitle
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
@@ -57,11 +61,14 @@ fun DiffScreen(
 
     //废弃，改用diffContent里获取diffItem时动态计算了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
-    //TODO 需要在diff页面右上角加个打开源文件的功能，编辑器，但是，没抽屉，可返回，返回后自动刷新diff内容，再加个用外部程序打开源文件的功能，这样可用其他编辑器打开源文件
     val dbContainer = AppModel.singleInstanceHolder.dbContainer
     val homeTopBarScrollBehavior = AppModel.singleInstanceHolder.homeTopBarScrollBehavior
 
+    val appContext = AppModel.singleInstanceHolder.appContext
+
     val scope = rememberCoroutineScope()
+
+    val clipboardManager = LocalClipboardManager.current
 
     //这个值存到状态变量里之后就不用管了，与页面共存亡即可，如果旋转屏幕也没事，返回rememberSaveable可恢复
 //    val relativePathUnderRepoDecoded = (Cache.Map.getThenDel(Cache.Map.Key.diffScreen_UnderRepoPath) as? String)?:""
@@ -119,11 +126,37 @@ fun DiffScreen(
         }
     }
 
+    val detailsString = StateUtil.getRememberSaveableState("")
+    val showDetailsDialog = StateUtil.getRememberSaveableState(false)
+    if(showDetailsDialog.value){
+        CopyableDialog(
+            title = stringResource(id = R.string.details),
+            text = detailsString.value,
+            onCancel = { showDetailsDialog.value = false }
+        ) {
+            showDetailsDialog.value = false
+            clipboardManager.setText(AnnotatedString(detailsString.value))
+            Msg.requireShow(appContext.getString(R.string.copied))
+        }
+    }
 
     if(request.value == PageRequest.showOpenAsDialog) {
         PageRequest.clearStateThenDoAct(request) {
             openAsDialogFilePath.value = fileFullPath.value
             showOpenAsDialog.value=true
+        }
+    }
+
+    if(request.value == PageRequest.showDetails) {
+        PageRequest.clearStateThenDoAct(request) {
+            val sb = StringBuilder()
+            sb.append(appContext.getString(R.string.file_name)+": ").appendLine(fileNameOnly.value).appendLine()
+            sb.append(appContext.getString(R.string.path_under_repo)+": ").appendLine(relativePathUnderRepoState.value).appendLine()
+
+            sb.append(appContext.getString(R.string.path)+": ").appendLine(fileFullPath.value)  // no more append line yet, because is last line
+
+            detailsString.value = sb.toString()
+            showDetailsDialog.value=true
         }
     }
 
@@ -165,7 +198,8 @@ fun DiffScreen(
                         filePath = fileUnderRepoRelativePathOnly.value,
                         fileRelativePathUnderRepoState = relativePathUnderRepoState,
                         listState,
-                        scope
+                        scope,
+                        request
                     )
                 },
                 navigationIcon = {

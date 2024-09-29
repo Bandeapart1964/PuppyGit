@@ -78,7 +78,11 @@ interface RepoRepository {
     suspend fun updateIsShallow(repoId:String, isShallow:Int)
     suspend fun getByStorageDirId(storageDirId:String): List<RepoEntity>
     suspend fun deleteByStorageDirId(storageDirId:String)
-    suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult
+
+    /**
+     * @param repoNamePrefix specific a prefix for repo name, e.g. when import submodule of repos, default prefix is "sub_"
+     */
+    suspend fun importRepos(dir: String, isReposParent: Boolean, repoNamePrefix:String=""): ImportRepoResult
 
     /**
      * if reponame has illegal chars or exists in repo, return false, else return true

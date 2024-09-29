@@ -228,29 +228,16 @@ fun TextEditor(
     val clipboardManager = LocalClipboardManager.current
 
     val showDetailsDialog = remember { mutableStateOf(false) }
+    val detailsStr = remember { mutableStateOf("") }
 
     if(showDetailsDialog.value) {
-        val file = File(fileFullPath)
-        val fileSize = getHumanReadableSizeStr(file.length())
-        val (charsCount, linesCount) = editableController.getCharsAndLinesCount()
-        val sb = StringBuilder()
-
-        sb.appendLine(appContext.getString(R.string.file_name)+": "+file.name).appendLine()
-//            .appendLine(appContext.getString(R.string.path)+": "+ getFilePathStrBasedRepoDir(fileFullPath, returnResultStartsWithSeparator=true)).appendLine()
-            .appendLine(appContext.getString(R.string.path)+": "+ fileFullPath).appendLine()
-            .appendLine(appContext.getString(R.string.chars)+": "+charsCount).appendLine()
-            .appendLine(appContext.getString(R.string.lines) +": "+linesCount).appendLine()
-            .appendLine(appContext.getString(R.string.file_size)+": "+fileSize).appendLine()
-
-        val text  = sb.toString()
-
         CopyableDialog(
             title = stringResource(R.string.details),
-            text = text,
+            text = detailsStr.value,
             onCancel = { showDetailsDialog.value = false }
         ) {
             showDetailsDialog.value = false
-            clipboardManager.setText(AnnotatedString(text))
+            clipboardManager.setText(AnnotatedString(detailsStr.value))
             Msg.requireShow(appContext.getString(R.string.copied))
         }
     }
@@ -353,6 +340,20 @@ fun TextEditor(
 
     if(requestFromParent.value==PageRequest.showDetails) {
         PageRequest.clearStateThenDoAct(requestFromParent) {
+            val file = File(fileFullPath)
+            val fileSize = getHumanReadableSizeStr(file.length())
+            val (charsCount, linesCount) = editableController.getCharsAndLinesCount()
+            val sb = StringBuilder()
+
+            sb.appendLine(appContext.getString(R.string.file_name)+": "+file.name).appendLine()
+//            .appendLine(appContext.getString(R.string.path)+": "+ getFilePathStrBasedRepoDir(fileFullPath, returnResultStartsWithSeparator=true)).appendLine()
+                .appendLine(appContext.getString(R.string.path)+": "+ fileFullPath).appendLine()
+                .appendLine(appContext.getString(R.string.chars)+": "+charsCount).appendLine()
+                .appendLine(appContext.getString(R.string.lines) +": "+linesCount).appendLine()
+
+                .appendLine(appContext.getString(R.string.file_size)+": "+fileSize)
+
+            detailsStr.value = sb.toString()
             showDetailsDialog.value = true
         }
     }

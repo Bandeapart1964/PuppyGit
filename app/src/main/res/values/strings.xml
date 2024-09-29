@@ -844,5 +844,6 @@
 
 <!--    the suffix "_str" for avoid conflict with android reserved keyword-->
     <string name="selected_str">Selected</string>
+    <string name="path_under_repo">Path Under Repo</string>
 
 </resources>

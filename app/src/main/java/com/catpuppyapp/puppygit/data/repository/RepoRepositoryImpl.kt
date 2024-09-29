@@ -304,7 +304,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         dao.deleteByStorageDirId(storageDirId)
     }
 
-    override suspend fun importRepos(dir: String, isReposParent: Boolean): ImportRepoResult {
+    override suspend fun importRepos(dir: String, isReposParent: Boolean, repoNamePrefix:String): ImportRepoResult {
         val repos = getAll(updateRepoInfo = false).toMutableList()
 
         var all = 0  // count of all repos found. btw: this is not all subdirs count under dir, this only mean how many git repos found, it may less than subdirs under dir
@@ -326,7 +326,13 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                             if(repos.indexOfFirst {it.fullSavePath == repoWorkDirPath} != -1) {
                                 existed++
                             }else {
-                                val importSuccess = importSingleRepo(repo, repoWorkDirPath, initRepoName = sub.name, addRepoToThisListIfSuccess = repos)
+                                val importSuccess = importSingleRepo(
+                                    repo = repo,
+                                    repoWorkDirPath = repoWorkDirPath,
+                                    initRepoName = repoNamePrefix + sub.name,
+                                    addRepoToThisListIfSuccess = repos,
+                                )
+
                                 if(importSuccess) {
                                     success++
                                 }else {
@@ -351,7 +357,11 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                     if(repos.indexOfFirst {it.fullSavePath == repoWorkdirPath} != -1) {  // repo already exists
                         existed = 1
                     }else { // repo not exist, import
-                        val importSuccess = importSingleRepo(repo, repoWorkdirPath, initRepoName = dirFile.name)
+                        val importSuccess = importSingleRepo(
+                            repo = repo,
+                            repoWorkDirPath = repoWorkdirPath,
+                            initRepoName = repoNamePrefix + dirFile.name,
+                        )
                         if(importSuccess) {
                             success = 1
                         }else {
