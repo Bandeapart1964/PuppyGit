@@ -42,45 +42,45 @@ fun featureEnabled(featureFlag: Boolean):Boolean {
  */
 //TODO 测试功能完毕后设为true
 val shallowAndSingleBranchTestPassed = true  //代表shallow clone和single branch功能是否测试通过
-val tagsTestPassed = false  // tags管理功能是否测试通过
+val tagsTestPassed = true  // tags管理功能是否测试通过
 val detailsDiffTestPassed = true  //增量diff是否测试通过
-val reflogTestPassed = false  //reflog
-val stashTestPassed = false  //stash
-val editorMergeModeTestPassed = false  // editor两处：1 从cl页面进入subeditor时是否以merge mode启动；2 editor页面菜单项merge mode功能
-val editorSearchTestPassed = false  // editor search 功能
-val commitsDiffCommitsTestPassed = false  //commit页面，弹窗输入两个提交号然后跳转到diff页面那个功能
-val commitsDiffToLocalTestPassed = false  //commit页面，长按提交菜单项 "Diff To Local"
-val commitsTreeToTreeDiffReverseTestPassed = false  //TreeToTreeChangelist页面顶栏 swap commits 按钮
-val rebaseTestPassed = false
-val resetByHashTestPassed = false
-val diffToHeadTestPassed = false
-val pushForceTestPassed = false
+val reflogTestPassed = true  //reflog
+val stashTestPassed = true  //stash
+val editorMergeModeTestPassed = true  // editor两处：1 从cl页面进入subeditor时是否以merge mode启动；2 editor页面菜单项merge mode功能
+val editorSearchTestPassed = true  // editor search 功能
+val commitsDiffCommitsTestPassed = true  //commit页面，弹窗输入两个提交号然后跳转到diff页面那个功能
+val commitsDiffToLocalTestPassed = true  //commit页面，长按提交菜单项 "Diff To Local"
+val commitsTreeToTreeDiffReverseTestPassed = true  //TreeToTreeChangelist页面顶栏 swap commits 按钮
+val rebaseTestPassed = true
+val resetByHashTestPassed = true
+val diffToHeadTestPassed = true
+val pushForceTestPassed = true
 
-val cherrypickTestPassed = false
-val createPatchTestPassed = false
-val checkoutFilesTestPassed = false
+val cherrypickTestPassed = true
+val createPatchTestPassed = true
+val checkoutFilesTestPassed = true
 fun treeToTreeBottomBarActAtLeastOneTestPassed() = cherrypickTestPassed || createPatchTestPassed || checkoutFilesTestPassed  // tree to tree页面的checkout/cherrypick/patch，至少一个测试通过才在tree to tree页面显示底栏
 
-val applyPatchTestPassed = false
-val overwriteExistWhenCreateBranchTestPassed = false
-val dontCheckoutWhenCreateBranchAtCheckoutDialogTestPassed = false
-val forceCheckoutTestPassed = false
-val dontUpdateHeadWhenCheckoutTestPassed = false
-val createRemoteTestPassed = false
+val applyPatchTestPassed = true
+val overwriteExistWhenCreateBranchTestPassed = true
+val dontCheckoutWhenCreateBranchAtCheckoutDialogTestPassed = true
+val forceCheckoutTestPassed = true
+val dontUpdateHeadWhenCheckoutTestPassed = true
+val createRemoteTestPassed = true
 
-val branchListPagePublishBranchTestPassed = false
-val branchRenameTestPassed = false
+val branchListPagePublishBranchTestPassed = true
+val branchRenameTestPassed = true
 
-val repoRenameTestPassed = false
+val repoRenameTestPassed = true
 
-val importReposFromFilesTestPassed = false
+val importReposFromFilesTestPassed = true
 
-val editorFontSizeTestPassed = false  //editor字体大小调整（会保存，有设置项）
-val editorLineNumFontSizeTestPassed = false  //editor行号字体大小调整（会保存，有设置项）
-val editorHideOrShowLineNumTestPassed = false  //editor显示或隐藏行号（会保存，有设置项）
-val editorEnableLineSelecteModeFromMenuTestPassed = false  //editor 从菜单开启行选择模式，若隐藏行号，只能由此开启选择模式（不保存）
+val editorFontSizeTestPassed = true  //editor字体大小调整（会保存，有设置项）
+val editorLineNumFontSizeTestPassed = true  //editor行号字体大小调整（会保存，有设置项）
+val editorHideOrShowLineNumTestPassed = true  //editor显示或隐藏行号（会保存，有设置项）
+val editorEnableLineSelecteModeFromMenuTestPassed = true  //editor 从菜单开启行选择模式，若隐藏行号，只能由此开启选择模式（不保存）
 
-val importRepoTestPassed = false
+val importRepoTestPassed = true
 /**
  * below is bug
  */
