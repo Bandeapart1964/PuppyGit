@@ -842,4 +842,7 @@
     <string name="last_line">Last Line</string>
     <string name="compare_left_to_right">Compare \'Left\' to \'Right\'</string>
 
+<!--    the suffix "_str" for avoid conflict with android reserved keyword-->
+    <string name="selected_str">Selected</string>
+
 </resources>

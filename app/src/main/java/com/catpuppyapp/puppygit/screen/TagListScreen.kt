@@ -499,6 +499,32 @@ fun TagListScreen(
             }
         },
     )
+
+
+    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
+    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    if(showSelectedItemsShortDetailsDialog.value) {
+        CopyableDialog(
+            title = stringResource(id = R.string.selected_str),
+            text = selectedItemsShortDetailsStr.value,
+            onCancel = { showSelectedItemsShortDetailsDialog.value = false }
+        ) {
+            showSelectedItemsShortDetailsDialog.value = false
+            clipboardManager.setText(AnnotatedString(selectedItemsShortDetailsStr.value))
+            Msg.requireShow(appContext.getString(R.string.copied))
+        }
+    }
+
+    val countNumOnClickForBottomBar = {
+        val list = selectedItemList.value.toList()
+        val sb = StringBuilder()
+        list.toList().forEach {
+            sb.appendLine(it.shortName).appendLine()
+        }
+        selectedItemsShortDetailsStr.value = sb.removeSuffix("\n").toString()
+        showSelectedItemsShortDetailsDialog.value = true
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
@@ -760,6 +786,8 @@ fun TagListScreen(
                     moreItemOnClickList=moreItemOnClickList,
                     getSelectedFilesCount = getSelectedFilesCount,
                     moreItemEnableList = moreItemEnableList,
+                    countNumOnClickEnabled = true,
+                    countNumOnClick = countNumOnClickForBottomBar
                 )
             }
         }

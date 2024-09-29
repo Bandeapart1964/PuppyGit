@@ -50,7 +50,9 @@ fun BottomBar(
     moreItemOnClickList:List<()->Unit>,
     moreItemEnableList:List<()->Boolean>,
     iconVisibleList:List<()->Boolean> = listOf(),
-    moreItemVisibleList:List<()->Boolean> = listOf()
+    moreItemVisibleList:List<()->Boolean> = listOf(),
+    countNumOnClickEnabled:Boolean=false,
+    countNumOnClick:()->Unit={},
 ) {
     val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false) }
     val showDropDownMenu = {
@@ -101,8 +103,13 @@ fun BottomBar(
                         quitSelectionMode()
                     },
                 )
+
                 //选择的条目数
-                Text(text = ""+getSelectedFilesCount())
+                Text(text = ""+getSelectedFilesCount(),
+                    modifier = MyStyleKt.ClickableText.modifier.clickable(enabled = countNumOnClickEnabled) {
+                        countNumOnClick()
+                    }
+                )
 
             }
 

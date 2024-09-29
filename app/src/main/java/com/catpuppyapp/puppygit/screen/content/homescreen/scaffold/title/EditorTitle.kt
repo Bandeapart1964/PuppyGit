@@ -5,6 +5,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -57,34 +58,35 @@ fun EditorTitle(editorPageShowingFilePath: MutableState<String>,
 
         Column(
             //双击标题回到文件顶部；长按可跳转到指定行；点击显示路径
-            modifier = Modifier.combinedClickable(
-                enabled = !editorOpenFileErr,  //只有在成功打开文件时才启用点击标题长按标题之类的操作
-                onDoubleClick = {
-//                    val settings = SettingsUtil.getSettingsSnapshot()
-//                    val lastPos = settings.editor.filesLastEditPosition[editorPageShowingFilePath.value]
-//
-//                    //不在第一行，返回第一行；否则返回上次编辑位置（如果有的话，没的话还是返回第一行）
-//                    if(lastPos==null || lastPos.firstVisibleLineIndex != 0) {
-//                        editorPageRequestFromParent.value = PageRequest.goToTop
-//                    }else {
-//                        editorPageRequestFromParent.value = PageRequest.backLastEditedLine
-//                    }
+            modifier = Modifier.defaultMinSize(MyStyleKt.ClickableText.minClickableSize)
+                .combinedClickable(
+                    enabled = !editorOpenFileErr,  //只有在成功打开文件时才启用点击标题长按标题之类的操作
+                    onDoubleClick = {
+    //                    val settings = SettingsUtil.getSettingsSnapshot()
+    //                    val lastPos = settings.editor.filesLastEditPosition[editorPageShowingFilePath.value]
+    //
+    //                    //不在第一行，返回第一行；否则返回上次编辑位置（如果有的话，没的话还是返回第一行）
+    //                    if(lastPos==null || lastPos.firstVisibleLineIndex != 0) {
+    //                        editorPageRequestFromParent.value = PageRequest.goToTop
+    //                    }else {
+    //                        editorPageRequestFromParent.value = PageRequest.backLastEditedLine
+    //                    }
 
-                    editorPageRequestFromParent.value = PageRequest.switchBetweenFirstLineAndLastEditLine
-                },
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    editorPageRequestFromParent.value = PageRequest.goToLine
+                        editorPageRequestFromParent.value = PageRequest.switchBetweenFirstLineAndLastEditLine
+                    },
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        editorPageRequestFromParent.value = PageRequest.goToLine
+                    }
+                ) {  //onClick
+                        //显示仓库开头的相对路径
+    //                    Msg.requireShowLongDuration(filePath)
+
+                    //显示文件详情（大小、路径、字数，等）
+                    editorPageRequestFromParent.value = PageRequest.showDetails
+                    //点按显示文件名
+    //                showToast(AppModel.singleInstanceHolder.appContext, fileName)
                 }
-            ) {  //onClick
-                    //显示仓库开头的相对路径
-//                    Msg.requireShowLongDuration(filePath)
-
-                //显示文件详情（大小、路径、字数，等）
-                editorPageRequestFromParent.value = PageRequest.showDetails
-                //点按显示文件名
-//                showToast(AppModel.singleInstanceHolder.appContext, fileName)
-            }
         ) {
             if(editorSearchMode) {
                     FilterTextField(

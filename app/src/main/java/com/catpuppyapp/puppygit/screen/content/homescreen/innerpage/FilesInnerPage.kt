@@ -1321,6 +1321,31 @@ fun FilesInnerPage(
         }
     }
 
+
+    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
+    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    if(showSelectedItemsShortDetailsDialog.value) {
+        CopyableDialog(
+            title = stringResource(id = R.string.selected_str),
+            text = selectedItemsShortDetailsStr.value,
+            onCancel = { showSelectedItemsShortDetailsDialog.value = false }
+        ) {
+            showSelectedItemsShortDetailsDialog.value = false
+            clipboardManager.setText(AnnotatedString(selectedItemsShortDetailsStr.value))
+            Msg.requireShow(appContext.getString(R.string.copied))
+        }
+    }
+
+    val countNumOnClickForSelectAndPasteModeBottomBar = {
+        val list = selectedItems.value.toList()
+        val sb = StringBuilder()
+        list.toList().forEach {
+            sb.appendLine("${it.name}, ${if(it.isDir) "dir" else "file"}, ${it.fullPath}").appendLine()
+        }
+        selectedItemsShortDetailsStr.value = sb.removeSuffix("\n").toString()
+        showSelectedItemsShortDetailsDialog.value = true
+    }
+
     //Bottom bar，一个是选择模式，一个是粘贴模式
     if (isFileSelectionMode.value) {
         val selectionModeIconList = listOf(
@@ -1415,6 +1440,7 @@ fun FilesInnerPage(
             {selectedItems.value.indexOfFirst{it.isDir} != -1}  //enable import as repo. (if has dirs in selected items, then enable else disbale)
         )
 
+
         if(!isLoading.value) {
             BottomBar(
                 quitSelectionMode=filesPageQuitSelectionMode,
@@ -1427,7 +1453,9 @@ fun FilesInnerPage(
                 moreItemTextList=selectionModeMoreItemTextList,
                 moreItemOnClickList=selectionModeMoreItemOnClickList,
                 getSelectedFilesCount = getSelectedFilesCount,
-                moreItemEnableList = selectionModeMoreItemEnableList
+                moreItemEnableList = selectionModeMoreItemEnableList,
+                countNumOnClickEnabled = true,
+                countNumOnClick = countNumOnClickForSelectAndPasteModeBottomBar,
             )
         }
     }
@@ -1578,6 +1606,17 @@ fun FilesInnerPage(
             {requireImportUriList.value.isNotEmpty()},
         )
 
+        val countNumOnClickForImportMode = {
+            val list = requireImportUriList.value.toList()
+            val sb = StringBuilder()
+            list.toList().forEach {
+                sb.appendLine(it.path).appendLine()
+            }
+            selectedItemsShortDetailsStr.value = sb.removeSuffix("\n").toString()
+            showSelectedItemsShortDetailsDialog.value = true
+
+        }
+
         if(!isLoading.value) {
             BottomBar(
                 quitSelectionMode=quitImportMode,
@@ -1590,7 +1629,9 @@ fun FilesInnerPage(
                 moreItemTextList= listOf(),
                 moreItemOnClickList= listOf(),
                 getSelectedFilesCount = getRequireUriFilesCount,
-                moreItemEnableList = listOf()
+                moreItemEnableList = listOf(),
+                countNumOnClickEnabled = true,
+                countNumOnClick=countNumOnClickForImportMode
             )
         }
     }
@@ -1687,7 +1728,9 @@ fun FilesInnerPage(
                 moreItemTextList= listOf(),
                 moreItemOnClickList= listOf(),
                 getSelectedFilesCount = getSelectedFilesCount,
-                moreItemEnableList = listOf()
+                moreItemEnableList = listOf(),
+                countNumOnClickEnabled = true,
+                countNumOnClick = countNumOnClickForSelectAndPasteModeBottomBar
             )
         }
 

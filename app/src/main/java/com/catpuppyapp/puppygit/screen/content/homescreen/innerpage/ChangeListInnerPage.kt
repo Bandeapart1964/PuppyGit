@@ -2518,6 +2518,29 @@ fun ChangeListInnerPage(
     BackHandler(enabled = isBackHandlerEnable.value, onBack = {backHandlerOnBack()})
     //back handler block end
 
+    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
+    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    if(showSelectedItemsShortDetailsDialog.value) {
+        CopyableDialog(
+            title = stringResource(id = R.string.selected_str),
+            text = selectedItemsShortDetailsStr.value,
+            onCancel = { showSelectedItemsShortDetailsDialog.value = false }
+        ) {
+            showSelectedItemsShortDetailsDialog.value = false
+            clipboardManager.setText(AnnotatedString(selectedItemsShortDetailsStr.value))
+            Msg.requireShow(appContext.getString(R.string.copied))
+        }
+    }
+
+    val countNumOnClickForBottomBar = {
+        val list = selectedItemList.value.toList()
+        val sb = StringBuilder()
+        list.toList().forEach {
+            sb.appendLine("${it.fileName}, ${it.relativePathUnderRepo.removeSuffix(it.fileName)}").appendLine()
+        }
+        selectedItemsShortDetailsStr.value = sb.removeSuffix("\n").toString()
+        showSelectedItemsShortDetailsDialog.value = true
+    }
 
     if(showRevertAlert.value) {
         ConfirmDialog(
@@ -2982,7 +3005,9 @@ fun ChangeListInnerPage(
                         getSelectedFilesCount = getSelectedFilesCount,
                         moreItemEnableList = moreItemEnableList,
                         moreItemVisibleList = moreItemVisibleList,
-                        iconVisibleList = iconVisibleList
+                        iconVisibleList = iconVisibleList,
+                        countNumOnClickEnabled = true,
+                        countNumOnClick = countNumOnClickForBottomBar
                     )
                 }
             }
