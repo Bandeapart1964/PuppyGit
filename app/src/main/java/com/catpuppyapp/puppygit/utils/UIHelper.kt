@@ -179,11 +179,11 @@ object UIHelper {
 
     fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
         return if(text.startsWith(settings.editor.conflictStartStr)) {
-            if(inDarkTheme) Color(0xFF106410) else Color.Green.copy(alpha = 0.6f)
+            if(inDarkTheme) Color(0xFF0C4B0C) else Color.Green.copy(alpha = 0.6f)
         }else if(text.startsWith(settings.editor.conflictSplitStr)){
-            if(inDarkTheme) Color(0xFF107070) else Color.Cyan.copy(alpha = 0.6f)
+            if(inDarkTheme) Color(0xFF0D5052) else Color.Cyan.copy(alpha = 0.6f)
         }else if(text.startsWith(settings.editor.conflictEndStr)) {
-            if(inDarkTheme) Color(0xFF601560) else Color.Magenta.copy(alpha = 0.6f)
+            if(inDarkTheme) Color(0xFF591159) else Color.Magenta.copy(alpha = 0.6f)
         }else {
             Color.Unspecified
         }
