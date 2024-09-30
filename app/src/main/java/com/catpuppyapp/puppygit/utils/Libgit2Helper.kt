@@ -107,10 +107,11 @@ class Libgit2Helper {
         private fun getDefaultStatusOptTypeSet():EnumSet<Status.OptT> {
             return EnumSet.of(
                 Status.OptT.OPT_INCLUDE_UNTRACKED,
+                //TODO submodule ：有待验证此选项是否可以正常处理submodule的path，期望的是可以把submodule路径直接列出来。若不能，需要自己遍历目录，将submodule和file都当作叶子节点处理，不展开submodule文件夹
                 Status.OptT.OPT_RECURSE_UNTRACKED_DIRS,  // 包含untracked目录下的每个文件而不是只列出目录。（不设这个的话，如果目录里全是untracked文件，则不会列出其中的文件，只会列出目录名，还得我自己遍历目录文件，麻烦）
 //            Status.OptT.OPT_RENAMES_HEAD_TO_INDEX,  //把index条目的rename检测关了，这个会把相似度高的文件的删除和新增合并成一个renamed条目，还得检查oldfile和newfile，麻烦，不如直接把新增和删除列出来，反正用户自己知道是否重命名
                 Status.OptT.OPT_SORT_CASE_INSENSITIVELY,
-                Status.OptT.OPT_EXCLUDE_SUBMODULES,  //暂不支持submodule，先排除
+//                Status.OptT.OPT_EXCLUDE_SUBMODULES,  // 没搞懂是排除submodule本身还是排除其内部文件的修改
             )
         }
 
@@ -121,7 +122,10 @@ class Libgit2Helper {
                 Diff.Options.FlagT.RECURSE_UNTRACKED_DIRS,  //包含untracked目录下的文件内容
                 //                Diff.Options.FlagT.INCLUDE_CASECHANGE,  //包含文件名大小写改变，不建议设置，由配置文件控制即可
                 //                Diff.Options.FlagT.IGNORE_CASE,  //忽略文件名大小写改变，不建议设置，由配置文件控制即可
-                Diff.Options.FlagT.IGNORE_SUBMODULES,  //忽略submodules
+
+                //if not ignore, will show submodules from old commit hash to new hash when diff
+//                Diff.Options.FlagT.IGNORE_SUBMODULES,  //忽略submodules，把所有submodules都当作unmodified。
+
 //            Diff.Options.FlagT.SHOW_UNMODIFIED
 //            Diff.Options.FlagT.PATIENCE,
 //            Diff.Options.FlagT.MINIMAL,
