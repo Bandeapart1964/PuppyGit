@@ -24,6 +24,7 @@ import com.catpuppyapp.puppygit.git.ReflogEntryDto
 import com.catpuppyapp.puppygit.git.RemoteAndCredentials
 import com.catpuppyapp.puppygit.git.StashDto
 import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
+import com.catpuppyapp.puppygit.git.SubmoduleDto
 import com.catpuppyapp.puppygit.git.TagDto
 import com.catpuppyapp.puppygit.git.Upstream
 import com.catpuppyapp.puppygit.play.pro.R
@@ -4416,14 +4417,14 @@ class Libgit2Helper {
         }
 
 
-        fun isValidGitRepo(dir:File):Boolean {
+        fun isValidGitRepo(repoFullPath:String):Boolean {
             try {
                 // should use Repository.open() check dir is or not a repo, if open success, is a repo, else not.
                 // shouldn't use check dir/.git folder exists or not for determine folder is repo or not
                 // because when a repo is a submodule, maybe it will haven't .git folder, but has .git file,
                 // the .git file include a relative path to ".git" folder(maybe is not named .git folder, but meant same)
                 // and the repoFullPath should be .git files folder
-                Repository.open(dir.canonicalPath).use {}
+                Repository.open(repoFullPath).use {}
                 return true
             }catch (e:Exception) {
                 return false
@@ -4473,8 +4474,9 @@ class Libgit2Helper {
             }
 
             if (!subModulesGitFile.exists()) {
+                // e.g. "../../.git/modules/path/to/submodule"
                 val relativeGoToSubModuleDotGitFolderAtParentFromSubModuleWorkDir =
-                    getGoToParentRelativePathOfParent(parentRepoFullPathNoSlashSuffix, subFullPath) +
+                    getGoToParentRelativePathFromSub(parentRepoFullPathNoSlashSuffix, subFullPath) +
                         ".git/modules/" +
                         subRepoPathUnderParentNoSlashPrefixAndSuffix;
 
@@ -4491,7 +4493,7 @@ class Libgit2Helper {
          * e.g. parent is "/abc/def", sub is "def", will return "../",
          * if sub is not under parent, return null, if sub and parent are same, return empty str
          */
-        private fun getGoToParentRelativePathOfParent(parent:String, subFullPath:String):String? {
+        private fun getGoToParentRelativePathFromSub(parent:String, subFullPath:String):String? {
             // parent and sub are same
             if(parent == subFullPath) {
                 return ""
@@ -4521,6 +4523,48 @@ class Libgit2Helper {
          */
         fun addSubmodule(repo: Repository, remoteUrl: String, relativePathUnderParentRepo:String, useGitlink:Boolean=true) {
             Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink);
+        }
+
+        fun getSubmoduleDtoList(repo:Repository):List<SubmoduleDto> {
+            val parentWorkdirPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
+            val list = mutableListOf<SubmoduleDto>()
+            Submodule.foreach(repo) { sm, name ->
+                val smRelativePath = sm.path()
+                val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
+                list.add(
+                    SubmoduleDto(
+                        name=name,
+                        relativePathUnderParent = smRelativePath,
+                        fullPath = smFullPath,
+                        cloned = isValidGitRepo(smFullPath)
+                    )
+                )
+
+                0
+
+            }
+
+            return list
+        }
+
+        fun removeSubmodule(){
+            TODO("not implement yet")
+
+            // remove submodule info from .gitmodules
+            // remove submodule info from .git/config
+            // delete submodule's .git folder under .git/modules
+            // delete submodule folder
+            // update parent's index
+            // done
+        }
+
+        fun updateSubmoduleUrl(parentRepo:Repository, sm:Submodule, remoteUrl:String) {
+            //update url
+            Submodule.setUrl(parentRepo, sm.name(), URI.create(remoteUrl))
+
+            //after update, do init and sync for update parent repos config and submodules git config
+            sm.init(true)  // I do not sure, but maybe only sync is enough, this only update .git/config
+            sm.sync()  // update .git/config and submodules .git/config url make them same as .gitmodules
         }
 
         /**
