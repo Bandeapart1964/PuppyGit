@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class Cons {
     companion object {
+        // use as path separator
+        const val slash = "/"
+        const val slashChar = '/'
 
 //        @Deprecated("改用：StorageDirCons.DefaultStorageDir.allRepoParentsDir.name")  //20240527：禁用，sd相关
         const val defaultAllRepoParentDirName = "PuppyGitRepos"

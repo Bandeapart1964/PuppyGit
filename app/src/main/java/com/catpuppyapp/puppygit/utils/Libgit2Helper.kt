@@ -16,6 +16,7 @@ import com.catpuppyapp.puppygit.dto.createCommitDto
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.BranchNameAndTypeDto
 import com.catpuppyapp.puppygit.git.CommitDto
+import com.catpuppyapp.puppygit.git.CredentialStrategy
 import com.catpuppyapp.puppygit.git.DiffItemSaver
 import com.catpuppyapp.puppygit.git.PuppyHunkAndLines
 import com.catpuppyapp.puppygit.git.PuppyLine
@@ -59,6 +60,7 @@ import com.github.git24j.core.SortT
 import com.github.git24j.core.Stash
 import com.github.git24j.core.Status
 import com.github.git24j.core.Status.StatusList
+import com.github.git24j.core.Submodule
 import com.github.git24j.core.Tag
 import com.github.git24j.core.Tree
 import java.io.File
@@ -4414,7 +4416,7 @@ class Libgit2Helper {
         }
 
 
-        fun isGitRepo(dir:File):Boolean {
+        fun isValidGitRepo(dir:File):Boolean {
             try {
                 // should use Repository.open() check dir is or not a repo, if open success, is a repo, else not.
                 // shouldn't use check dir/.git folder exists or not for determine folder is repo or not
@@ -4454,6 +4456,113 @@ class Libgit2Helper {
 
         fun getRepoWorkdirNoEndsWithSlash(repo: Repository): String {
             return repo.workdir().toString().removeSuffix("/")
+        }
+
+        /**
+         * create .git file under submodule workdir if it is not exist
+         */
+        fun createDotGitFileIfNeed(parentRepoFullPathNoSlashSuffix:String, subRepoPathUnderParentNoSlashPrefixAndSuffix:String, force:Boolean) {
+//            .gitfile content should like: "gitdir: ../../.git/modules/"
+            val subFullPath = parentRepoFullPathNoSlashSuffix + Cons.slash + subRepoPathUnderParentNoSlashPrefixAndSuffix
+
+            val subModulesGitFile = File(subFullPath, ".git")
+
+            if(force) {
+                // it should not throw exception even file doesn't exist when deleting
+                subModulesGitFile.delete()
+            }
+
+            if (!subModulesGitFile.exists()) {
+                val relativeGoToSubModuleDotGitFolderAtParentFromSubModuleWorkDir =
+                    getGoToParentRelativePathOfParent(parentRepoFullPathNoSlashSuffix, subFullPath) +
+                        ".git/modules/" +
+                        subRepoPathUnderParentNoSlashPrefixAndSuffix;
+
+                subModulesGitFile.createNewFile()
+
+                subModulesGitFile.bufferedWriter().use {
+                    it.write("gitdir: $relativeGoToSubModuleDotGitFolderAtParentFromSubModuleWorkDir")
+                }
+            }
+
+        }
+
+        /**
+         * e.g. parent is "/abc/def", sub is "def", will return "../",
+         * if sub is not under parent, return null, if sub and parent are same, return empty str
+         */
+        private fun getGoToParentRelativePathOfParent(parent:String, subFullPath:String):String? {
+            // parent and sub are same
+            if(parent == subFullPath) {
+                return ""
+            }
+
+            // is not a sub path yet
+            if(!subFullPath.startsWith(parent)) {
+                return null
+            }
+
+            val pIdx = subFullPath.indexOf(parent)
+            val subRelativePath = subFullPath.substring(pIdx+parent.length)
+
+            val levelCount = subRelativePath.count {
+                it == Cons.slashChar
+            }
+
+            var result = ""
+            for(i in 0..<levelCount) {
+                result+="../"
+            }
+            return result
+        }
+
+        /**
+         * @param useGitlink if true, will create .git file under submodule, else will create .git folder, pc git default create .git file, so recommand set it to true
+         */
+        fun addSubmodule(repo: Repository, remoteUrl: String, relativePathUnderParentRepo:String, useGitlink:Boolean=true) {
+            Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink);
+        }
+
+        /**
+         * @param credentialStrategy if is SPECIFIED, will use `specifiedCredential`
+         */
+        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy){
+            val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
+            Submodule.foreach(repo) { sm, name ->
+                // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
+                // sm.sync();  // update parent repo's .git/config and submodules .git/config, if use this, need not do init again yet, but if do init again, nothing bad though
+                // sm.init(true);  // only update .git/config, 如果传参为false，将不会更新已存在条目，即使与.gitmodules里的信息不匹配，建议传true，强制更新为.gitmodules里的内容
+                // if(true) return 0;
+
+                val uopts = Submodule.UpdateOptions.createDefault()
+
+                if(credentialStrategy == CredentialStrategy.SPECIFIED && specifiedCredential!=null) {
+                    uopts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                }else if(credentialStrategy == CredentialStrategy.MATCH_BY_DOMAIN) {
+                    //TODO query credential by domain, then set it
+                }// else NONE, don't set credential
+
+                val submodulePath = sm.path()
+
+                //submodule的.git动不动就被删了，无语，创建下，如果不存在
+                createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
+
+                sm.init(true)
+                sm.sync()
+
+                val subRepo = try {
+                    Repository.open(repoFullPathNoSlashSuffix + Cons.slash + submodulePath)
+                } catch (e: Exception) {
+                    sm.clone(uopts)
+                }
+
+                // recursive clone
+                if(recursive) {
+                    cloneSubmodules(subRepo, recursive, specifiedCredential, credentialStrategy)
+                }
+
+                0
+            }
         }
 
     }
