@@ -4567,16 +4567,29 @@ class Libgit2Helper {
             sm.sync()  // update .git/config and submodules .git/config url make them same as .gitmodules
         }
 
+        fun cloneAllSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy){
+            cloneSubmodulesByPredicate(repo, recursive, specifiedCredential, credentialStrategy, predicate = {true})
+        }
+
+        fun cloneSubmodulesByNames(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleNames:List<String>) {
+            cloneSubmodulesByPredicate(repo, recursive, specifiedCredential, credentialStrategy, predicate = {name-> submoduleNames.contains(name)})
+        }
+
         /**
          * @param credentialStrategy if is SPECIFIED, will use `specifiedCredential`
+         * @param predicate only predicate success will be cloned, you can set this for filter submodules
          */
-        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy){
+        fun cloneSubmodulesByPredicate(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, predicate:(submoduleName:String)->Boolean){
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
             Submodule.foreach(repo) { sm, name ->
                 // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
                 // sm.sync();  // update parent repo's .git/config and submodules .git/config, if use this, need not do init again yet, but if do init again, nothing bad though
                 // sm.init(true);  // only update .git/config, 如果传参为false，将不会更新已存在条目，即使与.gitmodules里的信息不匹配，建议传true，强制更新为.gitmodules里的内容
                 // if(true) return 0;
+
+                if(!predicate(name)) {
+                    return@foreach 0
+                }
 
                 val uopts = Submodule.UpdateOptions.createDefault()
 
@@ -4602,7 +4615,8 @@ class Libgit2Helper {
 
                 // recursive clone
                 if(recursive) {
-                    cloneSubmodules(subRepo, recursive, specifiedCredential, credentialStrategy)
+                    // does not support filter submodule's submodule, so predicate always return true when reach here
+                    cloneSubmodulesByPredicate(subRepo, recursive, specifiedCredential, credentialStrategy, predicate = {true})
                 }
 
                 0
