@@ -300,7 +300,7 @@ fun FilesInnerPage(
                         FsUtils.getInternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeInternalStoragePrefix(pathToGo.value)
                     }else if(pathToGo.value.startsWith(FsUtils.externalPathPrefix)) {
                         FsUtils.getExternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeExternalStoragePrefix(pathToGo.value)
-                    }else {  // absolute path linke /storage/emulate/0/abc
+                    }else {  // absolute path like "/storage/emulate/0/abc"
                         pathToGo.value
                     }
 

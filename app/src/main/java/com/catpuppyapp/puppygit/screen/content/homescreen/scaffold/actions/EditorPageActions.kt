@@ -268,7 +268,8 @@ fun EditorPageActions(
 
             DropdownMenuItem(
                 //非readOnly目录才允许开启或关闭readonly状态，否则强制启用readonly状态且不允许关闭
-                enabled = enableMenuItem && !FsUtils.isReadOnlyDir(editorPageShowingFilePath.value),
+//                enabled = enableMenuItem && !FsUtils.isReadOnlyDir(editorPageShowingFilePath.value),
+                enabled = enableMenuItem,
                 text = { Text(stringResource(R.string.read_only)) },
                 trailingIcon = {
                     Icon(
