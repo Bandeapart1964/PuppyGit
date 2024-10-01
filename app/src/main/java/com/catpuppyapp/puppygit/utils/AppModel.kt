@@ -120,6 +120,7 @@ class AppModel {
 
             // log dir，必须在初始化log前初始化这个变量
             appModel.logDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultLogDirName)
+            appModel.submoduleDotGitBackupDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultSmGit)
 
             //设置文件快照目录
 //            AppModel.singleInstanceHolder.fileSnapshotDir = createFileSnapshotDirIfNonexists(AppModel.singleInstanceHolder.allRepoParentDir, Cons.defaultFileSnapshotDirName)
@@ -390,7 +391,8 @@ class AppModel {
     private lateinit var patchDir: File
 
     //20240505:这个变量实际上，半废弃了，只在初始化的时候用一下，然后把路径传给MyLog之后，MyLog就自己维护自己的logDir对象了，就不再使用这个变量了
-    private lateinit var logDir: File  // AppCacheDir/log
+    private lateinit var logDir: File
+    private lateinit var submoduleDotGitBackupDir: File
 
     //外部不应该直接获取此文件，此文件应通过DebugModeManager的setOn/Off方法维护
     private lateinit var debugModeFlagFile:File
@@ -444,6 +446,13 @@ class AppModel {
             logDir.mkdirs()
         }
         return logDir
+    }
+
+    fun getOrCreateSubmoduleDotGitBackupDir():File {
+        if(!submoduleDotGitBackupDir.exists()) {
+            submoduleDotGitBackupDir.mkdirs()
+        }
+        return submoduleDotGitBackupDir
     }
 
     //这个方法应该仅在初始化时调用一次，以后应通过AppModel.singleInstance.debugModeOn来获取debugMode是否开启，并且通过setDebugModeOn/Off来开启或关闭debug模式

@@ -218,6 +218,14 @@ fun AppScreenNavigator() {
                 },
             )
         }
+        composable(Cons.nav_SubmoduleListScreen+"/{repoId}") {
+            SubmoduleListScreen(
+                repoId = it.arguments?.getString("repoId") ?: "",
+                naviUp = {
+                    navController.navigateUp()
+                },
+            )
+        }
 
     }
 }

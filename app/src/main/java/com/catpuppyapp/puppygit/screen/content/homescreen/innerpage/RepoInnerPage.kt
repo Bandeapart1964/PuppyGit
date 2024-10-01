@@ -62,6 +62,7 @@ import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.reflogTestPassed
 import com.catpuppyapp.puppygit.dev.repoRenameTestPassed
 import com.catpuppyapp.puppygit.dev.stashTestPassed
+import com.catpuppyapp.puppygit.dev.submoduleTestPassed
 import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.Upstream
@@ -1040,6 +1041,12 @@ fun RepoInnerPage(
                         navController.navigate(Cons.nav_TagListScreen + "/" + curRepo.value.id)
                     }
 
+                }
+
+                if(proFeatureEnabled(submoduleTestPassed)) {
+                    BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.submodules)) {
+                        navController.navigate(Cons.nav_SubmoduleListScreen + "/" + curRepo.value.id)
+                    }
                 }
 
     //            BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.reflog)) {

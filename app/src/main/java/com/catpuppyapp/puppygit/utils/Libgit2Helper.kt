@@ -75,6 +75,149 @@ import kotlin.io.path.pathString
 private val TAG = "Libgit2Helper"
 
 class Libgit2Helper {
+    object CommitUtil{
+        //输入两个提交号后用此方法检测，若一样则提示用户且不进行diff
+        fun isSameCommitHash(h1:String, h2:String):Boolean {
+            return h1.startsWith(h2) || h2.startsWith(h1)
+        }
+
+        fun isLocalCommitHash(c:String):Boolean {
+            return c == Cons.gitLocalWorktreeCommitHash
+        }
+
+        /**
+         * 未检查是否全16进制字符，所以即使返回真也不一定是有效commit，但如果返回假，一定不是有效commit
+         */
+        fun mayGoodCommitHash(c:String):Boolean {
+            return c.isNotBlank() && c != Cons.allZeroOidStr
+        }
+    }
+
+    object ShallowManage{
+        val originShallow = "shallow"  //原始shallow文件名
+        val bak1 = "shallow.1.bak"  //用在代码里恢复的shallow文件
+        val bak2 = "shallow.2.bak"  //可手动用于恢复的shallow文件，主要是我用来测试的
+
+        fun createShallowBak(repoDotGitDir:String) {
+            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
+
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")  // repo/.git/puppygit目录/shallow.1.bak
+            val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")  // repo/.git/puppygit目录/shallow.2.bak
+            originShallowFile.copyTo(bak1File, overwrite = true)
+            originShallowFile.copyTo(bak2File, overwrite = true)
+        }
+
+        fun restoreShallowFile(repoDotGitDir:String) {
+            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")
+
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
+
+            //如果bak1存在，用它恢复shallow文件；如果不存在，用bak2恢复bak1和shallow文件
+            if(bak1File.exists()) {
+                bak1File.copyTo(originShallowFile, overwrite = true)
+            }else {  //bak1不存在，用bak2恢复bak1和原始shallow文件
+                val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")
+                bak2File.copyTo(bak1File, overwrite = true)
+                bak2File.copyTo(originShallowFile, overwrite = true)
+            }
+        }
+
+        fun deleteBak1(repoDotGitDir:String) {
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
+
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
+            if(bak1File.exists()) {
+                bak1File.delete()
+            }
+            //另一种写法
+//            bak1File.apply {  //绑定作用域为bak1File，作用域内this即为bak1File
+//                if(exists()) {
+//                    delete()
+//                }
+//            }
+        }
+
+        //在提交页面显示仓库是否grafted的时候用到这个方法
+        fun getShallowOidList(repoDotGitDir: String):List<String> {
+            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
+            if(!originShallowFile.exists()) {
+                return emptyList()
+            }
+            //返回原始文件中的非空行
+            return originShallowFile.readLines().filter { it.isNotBlank() }
+        }
+    }
+
+    object RebaseHelper {
+        //rebase init完毕但还没执行 next，这时过去current operation index 会获得-1
+        private const val rebaseInitedButNeverNextYetValue = -1
+
+        private const val detachedHead = "detached HEAD"
+        private val fileName_beforeBranch = "rebase_before_branch"
+
+        /**
+         * 如果创建rebase时传的Annotated是fromRef创建的则不需要用此函数获取分支名
+         */
+        fun saveRepoCurBranchNameOrDetached(repo:Repository) {
+            val name = if(repo.headDetached()) detachedHead else repo.head()?.name()
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
+            val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
+            if(!file.exists()) {
+                file.createNewFile()
+            }
+            file.bufferedWriter().use {
+                it.write(name)
+            }
+        }
+
+        /**
+         * 获取启动rebase之前的分支名
+         */
+        fun getRebaseBeforeName(repo:Repository):String? {
+            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
+            val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
+            if(!file.exists()) {
+                return null
+            }
+
+            file.bufferedReader().use {
+                val ret = try {
+                    it.readLine()  //取出之前的分支名
+                }catch (_:Exception){
+                    null
+                }
+                return ret
+            }
+        }
+    }
+
+    object SubmoduleDotGitFileMan {
+        fun backupDotGitFileForSubmodule(submoduleDotGitFullPath:String) {
+            try {
+                val backup = File(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir(), submoduleDotGitFullPath)
+                backup.parentFile?.mkdirs()  // create parent dirs
+                File(submoduleDotGitFullPath).copyTo(backup)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#backupDotGitFileForSubmodule: backup git file failed, path=$submoduleDotGitFullPath")
+            }
+        }
+
+        fun restoreDotGitFileForSubmodule(submoduleDotGitFullPath:String) {
+            if(File(submoduleDotGitFullPath).exists()) {
+                return
+            }
+
+            // if submodule's .git file non-exists , try restore
+            val backup = File(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir(), submoduleDotGitFullPath)
+            if(backup.exists()) {
+                backup.copyTo(File(submoduleDotGitFullPath), overwrite = true)
+            }
+        }
+
+    }
+
     companion object {
         private val getCredentialCb = { credentialType:Int, usernameOrPrivateKey:String, passOrPassphrase:String ->
 
@@ -4544,9 +4687,25 @@ class Libgit2Helper {
                         name=name,
                         relativePathUnderParent = smRelativePath,
                         fullPath = smFullPath,
-                        cloned = isValidGitRepo(smFullPath)
+                        cloned = isValidGitRepo(smFullPath),
+                        remoteUrl = sm.url().toString()
                     )
                 )
+
+                0
+
+            }
+
+            return list
+        }
+        fun getSubmoduleNameList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<String> {
+            val list = mutableListOf<String>()
+            Submodule.foreach(repo) { sm, name ->
+                if(!predicate(name)) {
+                    return@foreach 0
+                }
+
+                list.add(name)
 
                 0
 
@@ -4575,180 +4734,151 @@ class Libgit2Helper {
             sm.sync()  // update .git/config and submodules .git/config url make them same as .gitmodules
         }
 
-        fun cloneAllSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy){
-            cloneSubmodulesByPredicate(repo, recursive, specifiedCredential, credentialStrategy, predicate = {true})
+        fun resolveSubmodule(repo:Repository, name: String):Submodule? {
+            return try {
+                Submodule.lookup(repo, name)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#resolveSubmodule err: name=$name, err=${e.localizedMessage}")
+                null
+            }
         }
 
-        fun cloneSubmodulesByNames(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleNames:List<String>) {
-            cloneSubmodulesByPredicate(repo, recursive, specifiedCredential, credentialStrategy, predicate = {name-> submoduleNames.contains(name)})
-        }
 
         /**
          * @param credentialStrategy if is SPECIFIED, will use `specifiedCredential`
          * @param predicate only predicate success will be cloned, you can set this for filter submodules
          */
-        fun cloneSubmodulesByPredicate(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, predicate:(submoduleName:String)->Boolean){
+        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleNameList:List<String>){
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
-            // this foreach invoke in jni c code, if has some problems, try save submodules into java list, then iterate them
-            Submodule.foreach(repo) { sm, name ->
+            submoduleNameList.forEach { name ->
                 // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
                 // sm.sync();  // update parent repo's .git/config and submodules .git/config, if use this, need not do init again yet, but if do init again, nothing bad though
                 // sm.init(true);  // only update .git/config, 如果传参为false，将不会更新已存在条目，即使与.gitmodules里的信息不匹配，建议传true，强制更新为.gitmodules里的内容
                 // if(true) return 0;
 
-                if(!predicate(name)) {
-                    return@foreach 0
+                val sm = resolveSubmodule(repo, name)
+                if(sm==null){
+                    return@forEach
                 }
+                val submodulePath = sm.path()
+//                Submodule.setUpdate(repo, name, Submodule.UpdateT.CHECKOUT)
 
-                val uopts = Submodule.UpdateOptions.createDefault()
 
+                //symc submodule info to parent repo's .git/config
+                sm.init(true)
+                // init repo before clone
+                submoduleRepoInit(repoFullPathNoSlashSuffix, sm)
+
+                // sync submodule info to submodule .git/config
+                sm.sync()
+
+                val updateOpts = Submodule.UpdateOptions.createDefault()
+
+                //set credential
                 if(credentialStrategy == CredentialStrategy.SPECIFIED && specifiedCredential!=null) {
-                    uopts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                    updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
                 }else if(credentialStrategy == CredentialStrategy.MATCH_BY_DOMAIN) {
                     //TODO query credential by domain, then set it
                 }// else NONE, don't set credential
 
-                val submodulePath = sm.path()
 
-                //submodule的.git动不动就被删了，无语，创建下，如果不存在
-                createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
-
-                sm.init(true)
-                sm.sync()
-
-                val subRepo = try {
-                    Repository.open(repoFullPathNoSlashSuffix + Cons.slash + submodulePath)
+                // clone repo
+                val subRepo:Repository? = try {
+//                    createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
+                    MyLog.d(TAG,"#cloneSubmodules: will clone submodule '$name'")
+                    sm.clone(updateOpts)
                 } catch (e: Exception) {
-                    sm.clone(uopts)
+                    MyLog.e(TAG,"#cloneSubmodules: clone submodule '$name' err: ${e.localizedMessage}")
+
+                    try {
+                        Repository.open(repoFullPathNoSlashSuffix + Cons.slash + submodulePath)
+                    }catch (e2:Exception) {
+                        MyLog.e(TAG,"#cloneSubmodules: open submodule '$name' err: ${e2.localizedMessage}")
+                        null
+                    }
+                }
+
+                //clone failed and repo doesn't existed on disk
+                if(subRepo==null) {
+                    MyLog.e(TAG, "#cloneSubmodules: clone submodule '$name' for '${File(repoFullPathNoSlashSuffix).name}' err")
+                    return@forEach
+                }
+
+
+                // clone succeed!
+
+                // checkout submodule to specific commit which parent repo recorded
+                // 将子仓库检出到父仓库记录的提交号上
+                try {
+                    MyLog.d(TAG,"#cloneSubmodules: will update submodule '$name'")
+
+                    val smDotGitFile = File(repoFullPathNoSlashSuffix, submodulePath+Cons.slash+".git")
+                    if(!smDotGitFile.exists()) {
+                        SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(smDotGitFile.canonicalPath)
+                    }
+
+                    val init = true
+                    sm.update(init, updateOpts)
+                }catch (e:Exception) {
+                    MyLog.e(TAG,"#cloneSubmodules: update submodule '$name' err: ${e.localizedMessage}")
                 }
 
                 // recursive clone
+                // !! becareful with this, if repo contains nested-loops, will infinite clone !!
                 if(recursive) {
                     // does not support filter submodule's submodule, so predicate always return true when reach here
-                    cloneSubmodulesByPredicate(subRepo, recursive, specifiedCredential, credentialStrategy, predicate = {true})
+                    cloneSubmodules(subRepo, recursive, specifiedCredential, credentialStrategy, submoduleNameList= getSubmoduleNameList(subRepo))
+                }
+            }
+        }
+
+        /**
+         * only do this init before clone a submodule
+         */
+        private fun submoduleRepoInit(parentRepoFullPath:String, sm: Submodule) {
+            try {
+                sm.repoInit(true)
+                // if init repo success, backup the .git file, because it may delete by libgit2...................
+                SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(File(parentRepoFullPath, sm.path()+Cons.slash+".git").canonicalPath)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#submoduleRepoInit: repoInit err: ${e.localizedMessage}")
+            }
+        }
+
+        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleName: String){
+            try {
+                val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(parentRepo)
+
+                val sm = resolveSubmodule(parentRepo, submoduleName)
+                if(sm==null){
+                    return
+                }
+                val submodulePath = sm.path()
+                val smDotGitFile = File(repoFullPathNoSlashSuffix, submodulePath+Cons.slash+".git")
+                if(!smDotGitFile.exists()) {
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(smDotGitFile.canonicalPath)
                 }
 
-                0
+                val updateOpts = Submodule.UpdateOptions.createDefault()
+
+                //set credential
+                if(credentialStrategy == CredentialStrategy.SPECIFIED && specifiedCredential!=null) {
+                    updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                }else if(credentialStrategy == CredentialStrategy.MATCH_BY_DOMAIN) {
+                    //TODO query credential by domain, then set it
+                }// else NONE, don't set credential
+
+                MyLog.d(TAG,"#updateSubmodule: will update submodule '$submoduleName'")
+
+                sm.init(true)
+                sm.sync()
+                sm.update(true, updateOpts)
+            }catch (e:Exception) {
+                MyLog.e(TAG,"#updateSubmodule: update submodule '$submoduleName' err: ${e.localizedMessage}")
+                throw e
             }
         }
 
     }
 
-    object CommitUtil{
-        //输入两个提交号后用此方法检测，若一样则提示用户且不进行diff
-        fun isSameCommitHash(h1:String, h2:String):Boolean {
-            return h1.startsWith(h2) || h2.startsWith(h1)
-        }
-
-        fun isLocalCommitHash(c:String):Boolean {
-            return c == Cons.gitLocalWorktreeCommitHash
-        }
-
-        /**
-         * 未检查是否全16进制字符，所以即使返回真也不一定是有效commit，但如果返回假，一定不是有效commit
-         */
-        fun mayGoodCommitHash(c:String):Boolean {
-            return c.isNotBlank() && c != Cons.allZeroOidStr
-        }
-    }
-
-    object ShallowManage{
-        val originShallow = "shallow"  //原始shallow文件名
-        val bak1 = "shallow.1.bak"  //用在代码里恢复的shallow文件
-        val bak2 = "shallow.2.bak"  //可手动用于恢复的shallow文件，主要是我用来测试的
-
-        fun createShallowBak(repoDotGitDir:String) {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
-
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")  // repo/.git/puppygit目录/shallow.1.bak
-            val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")  // repo/.git/puppygit目录/shallow.2.bak
-            originShallowFile.copyTo(bak1File, overwrite = true)
-            originShallowFile.copyTo(bak2File, overwrite = true)
-        }
-
-        fun restoreShallowFile(repoDotGitDir:String) {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")
-
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
-
-            //如果bak1存在，用它恢复shallow文件；如果不存在，用bak2恢复bak1和shallow文件
-            if(bak1File.exists()) {
-                bak1File.copyTo(originShallowFile, overwrite = true)
-            }else {  //bak1不存在，用bak2恢复bak1和原始shallow文件
-                val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")
-                bak2File.copyTo(bak1File, overwrite = true)
-                bak2File.copyTo(originShallowFile, overwrite = true)
-            }
-        }
-
-        fun deleteBak1(repoDotGitDir:String) {
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
-
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
-            if(bak1File.exists()) {
-                bak1File.delete()
-            }
-            //另一种写法
-//            bak1File.apply {  //绑定作用域为bak1File，作用域内this即为bak1File
-//                if(exists()) {
-//                    delete()
-//                }
-//            }
-        }
-
-        //在提交页面显示仓库是否grafted的时候用到这个方法
-        fun getShallowOidList(repoDotGitDir: String):List<String> {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
-            if(!originShallowFile.exists()) {
-                return emptyList()
-            }
-            //返回原始文件中的非空行
-            return originShallowFile.readLines().filter { it.isNotBlank() }
-        }
-    }
-
-    object RebaseHelper {
-        //rebase init完毕但还没执行 next，这时过去current operation index 会获得-1
-        private const val rebaseInitedButNeverNextYetValue = -1
-
-        private const val detachedHead = "detached HEAD"
-        private val fileName_beforeBranch = "rebase_before_branch"
-
-        /**
-         * 如果创建rebase时传的Annotated是fromRef创建的则不需要用此函数获取分支名
-         */
-        fun saveRepoCurBranchNameOrDetached(repo:Repository) {
-            val name = if(repo.headDetached()) detachedHead else repo.head()?.name()
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
-            val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
-            if(!file.exists()) {
-                file.createNewFile()
-            }
-            file.bufferedWriter().use {
-                it.write(name)
-            }
-        }
-
-        /**
-         * 获取启动rebase之前的分支名
-         */
-        fun getRebaseBeforeName(repo:Repository):String? {
-            val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(getRepoGitDirPathNoEndsWithSlash(repo)).canonicalPath
-            val file = File(puppyGitDirUnderGitCanonicalPath, fileName_beforeBranch)
-            if(!file.exists()) {
-                return null
-            }
-
-            file.bufferedReader().use {
-                val ret = try {
-                    it.readLine()  //取出之前的分支名
-                }catch (_:Exception){
-                    null
-                }
-                return ret
-            }
-        }
-    }
 }

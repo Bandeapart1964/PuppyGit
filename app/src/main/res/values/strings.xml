@@ -845,5 +845,14 @@
 <!--    the suffix "_str" for avoid conflict with android reserved keyword-->
     <string name="selected_str">Selected</string>
     <string name="path_under_repo">Path Under Repo</string>
+    <string name="submodules">Submodules</string>
+    <string name="cloned">Cloned</string>
+    <string name="not_clone">Not Clone</string>
+    <string name="will_clone_selected_submodules_are_you_sure">Will clone selected submodules, are you sure?</string>
+    <string name="re_clone">Re-Clone</string>
+    <string name="re_clone_submodules_warning_text">Will delete submodules files on disk, then re-clone them again</string>
+    <string name="recursive">Recursive</string>
+    <string name="update">Update</string>
+    <string name="recursive_clone_submodule_nested_loop_warn">WARN: becareful! if your repo contains nested-loops, it will be infinite clone until your device no more storage space!!</string>
 
 </resources>
