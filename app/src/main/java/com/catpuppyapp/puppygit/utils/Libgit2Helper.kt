@@ -4529,10 +4529,14 @@ class Libgit2Helper {
             Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink);
         }
 
-        fun getSubmoduleDtoList(repo:Repository):List<SubmoduleDto> {
+        fun getSubmoduleDtoList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<SubmoduleDto> {
             val parentWorkdirPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
             val list = mutableListOf<SubmoduleDto>()
             Submodule.foreach(repo) { sm, name ->
+                if(!predicate(name)) {
+                    return@foreach 0
+                }
+
                 val smRelativePath = sm.path()
                 val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
                 list.add(
@@ -4585,6 +4589,7 @@ class Libgit2Helper {
          */
         fun cloneSubmodulesByPredicate(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, predicate:(submoduleName:String)->Boolean){
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
+            // this foreach invoke in jni c code, if has some problems, try save submodules into java list, then iterate them
             Submodule.foreach(repo) { sm, name ->
                 // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
                 // sm.sync();  // update parent repo's .git/config and submodules .git/config, if use this, need not do init again yet, but if do init again, nothing bad though
