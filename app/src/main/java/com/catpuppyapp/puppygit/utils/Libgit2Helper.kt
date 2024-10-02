@@ -4265,7 +4265,7 @@ class Libgit2Helper {
             pathSpecList: List<String>?=null,   //为null或空代表diff所有文件
 
             repo: Repository,
-            tree1: Tree,
+            tree1: Tree?,  // when diff index to worktree or head to index, pass `null` is ok
             tree2: Tree?,  // when diff to worktree, pass `null`
             diffOptionsFlags: EnumSet<Diff.Options.FlagT> = getDefaultDiffOptionsFlags(),
             fromTo: String,

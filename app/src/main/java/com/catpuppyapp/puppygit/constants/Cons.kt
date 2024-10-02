@@ -37,6 +37,8 @@ class Cons {
         val allZeroOid = Oid.of("0000000000000000000000000000000000000000")  //40个0
         val allZeroOidStr = "0000000000000000000000000000000000000000"  //40个0
         val gitLocalWorktreeCommitHash = "local"  //代表worktree
+        val gitIndexCommitHash = "index"  //代表index
+        val gitHeadCommitHash = "HEAD"  //代表HEAD
 
         const val defaultPageCount=50  //默认每页条目数
 

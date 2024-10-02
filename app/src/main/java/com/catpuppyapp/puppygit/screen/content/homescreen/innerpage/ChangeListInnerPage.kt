@@ -359,8 +359,10 @@ fun ChangeListInnerPage(
             hasConflictItemsSelected,  //accept ours
             selectedListIsNotEmpty,  //stage
             selectedListIsNotEmpty,  //revert
+            selectedListIsNotEmpty, // create patch
         ) else listOf(
             selectedListIsNotEmpty,  // unstage
+            selectedListIsNotEmpty, // create patch
         )
 
 //    val isAllConflictItemsSelected:()->Boolean = isAllConflictItemsSelectedLabel@{
@@ -1925,7 +1927,9 @@ fun ChangeListInnerPage(
 
                         var treeToWorkTree = false  //默认设为假，若和worktree对比（local），会改为真
 
-                        val (reverse, tree1, tree2) = if(Libgit2Helper.CommitUtil.isLocalCommitHash(leftCommit) || Libgit2Helper.CommitUtil.isLocalCommitHash(rightCommit)) {
+                        val (reverse:Boolean, tree1:Tree?, tree2:Tree?) = if(fromTo == Cons.gitDiffFromIndexToWorktree || fromTo == Cons.gitDiffFromHeadToIndex) {
+                            Triple(false, null, null)
+                        }else if(Libgit2Helper.CommitUtil.isLocalCommitHash(leftCommit) || Libgit2Helper.CommitUtil.isLocalCommitHash(rightCommit)) {
                             treeToWorkTree = true
 
                             //其中一个是local路径，为local的可不是有效tree
@@ -1943,17 +1947,25 @@ fun ChangeListInnerPage(
 
                             val tree2 = null
 
-                            Triple<Boolean, Tree, Tree?>(reverse, tree1, tree2)
+                            Triple(reverse, tree1, tree2)
                         } else {
-                            //没有local路径，全都得是有效tree
+                            //没有local路径，全都是有效tree
                             val reverse = false
                             val tree1 = Libgit2Helper.resolveTree(repo, leftCommit) ?: throw RuntimeException("resolve tree1 failed, 12978960")
                             val tree2 = Libgit2Helper.resolveTree(repo, rightCommit) ?: throw RuntimeException("resolve tree2 failed, 17819020")
-                            Triple<Boolean, Tree, Tree?>(reverse, tree1, tree2)
+                            Triple(reverse, tree1, tree2)
                         }
 
                         //获取输出文件，可能没创建，执行输出时会自动创建，重点是文件路径
-                        val outFile = FsUtils.Patch.newPatchFile(curRepoFromParentPage.value.repoName, getCommitLeft(), getCommitRight())
+                        val (left:String, right:String) = if(fromTo==Cons.gitDiffFromIndexToWorktree) {
+                            Pair(Cons.gitIndexCommitHash, Cons.gitLocalWorktreeCommitHash)
+                        }else if(fromTo==Cons.gitDiffFromHeadToIndex) {
+                            Pair(Cons.gitHeadCommitHash, Cons.gitIndexCommitHash)
+                        }else {
+                            Pair(getCommitLeft(), getCommitRight())
+                        }
+
+                        val outFile = FsUtils.Patch.newPatchFile(curRepoFromParentPage.value.repoName, left, right)
 
                         /*
                          *
@@ -2218,17 +2230,20 @@ fun ChangeListInnerPage(
         if(UserUtil.isPro()) stringResource(id = R.string.accept_theirs) else stringResource(id = R.string.accept_theirs_pro_only),
         if(UserUtil.isPro()) stringResource(id = R.string.accept_ours) else stringResource(id = R.string.accept_ours_pro_only),
         stringResource(R.string.stage),
-        stringResource(R.string.revert)
+        stringResource(R.string.revert),
+        stringResource(R.string.create_patch),
+
     )  //按元素添加顺序在列表中会呈现为从上到下
-    else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage))
+    else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage), stringResource(R.string.create_patch),)
     else listOf()  // tree to tree，无选项
 
     val moreItemVisibleList = if(fromTo == Cons.gitDiffFromIndexToWorktree) listOf(
         {repoState.intValue == Repository.StateT.MERGE.bit || repoState.intValue == Repository.StateT.REBASE_MERGE.bit || repoState.intValue == Repository.StateT.CHERRYPICK.bit},  // visible for "accept theirs"
         {repoState.intValue == Repository.StateT.MERGE.bit || repoState.intValue == Repository.StateT.REBASE_MERGE.bit || repoState.intValue == Repository.StateT.CHERRYPICK.bit},  // visible for "accept ours"
         {true},  // stage
-        {true}  // revert
-    ) else listOf()
+        {true},  // revert
+        {true},  // create patch
+    ) else listOf()  // empty list, always visible
 
     val showRevertAlert = StateUtil.getRememberSaveableState(initValue = false)
     val doRevert = {
@@ -2344,9 +2359,15 @@ fun ChangeListInnerPage(
             //显示弹窗，确认后才会执行操作
             showRevertAlert.value = true
         },
+        createPatch@{
+            showCreatePatchDialog.value = true
+        }
     ) else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(
         unstage@{
             showUnstageConfirmDialog.value = true
+        },
+        createPatch@{
+            showCreatePatchDialog.value = true
         }
     ) else listOf()  // fromTo == Cons.gitDiffFromTreeToTree
 

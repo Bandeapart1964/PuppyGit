@@ -949,8 +949,11 @@ fun HomeScreen(
                     swap=swapForChangeListPage.value,
                     commitForQueryParents = "",
                     rebaseCurOfAll=changeListPageRebaseCurOfAll,
-                    openDrawer = openDrawer
+                    openDrawer = openDrawer,
 
+                    // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
+//                    commit1OidStr = Cons.gitIndexCommitHash,
+//                    commit2OidStr = Cons.gitLocalWorktreeCommitHash
 //                    refreshRepoPage = { changeStateTriggerRefreshPage(needRefreshRepoPage) }
                 )
                 //改用dropdwonmenu了
