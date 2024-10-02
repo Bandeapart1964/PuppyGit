@@ -352,7 +352,7 @@ fun RepoInnerPage(
                         Msg.requireShow(appContext.getString(R.string.invalid_path))
                     }
                 }catch (e:Exception) {
-                    MyLog.e(TAG, "import repo from ReposPage err: "+e.localizedMessage)
+                    MyLog.e(TAG, "import repo from ReposPage err: "+e.stackTraceToString())
                     Msg.requireShowLongDuration("err:${e.localizedMessage}")
                 }finally {
                     changeStateTriggerRefreshPage(needRefreshRepoPage)

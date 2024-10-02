@@ -23,9 +23,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadForOffline
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.MoveToInbox
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -55,7 +55,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.BottomBar
-import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.FilterTextField
 import com.catpuppyapp.puppygit.compose.LoadingDialog
@@ -67,6 +67,7 @@ import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.git.CredentialStrategy
+import com.catpuppyapp.puppygit.git.ImportRepoResult
 import com.catpuppyapp.puppygit.git.SubmoduleDto
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
@@ -80,6 +81,7 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
+import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
 
@@ -132,7 +134,7 @@ fun SubmoduleListScreen(
     }
 
     if(showCreateDialog.value) {
-        ConfirmDialog(
+        ConfirmDialog2(
             title = stringResource(R.string.create),
             requireShowTextCompose = true,
             textCompose = {
@@ -168,7 +170,6 @@ fun SubmoduleListScreen(
                     )
                 }
             },
-
             onCancel = {showCreateDialog.value = false}
         ) {
             showCreateDialog.value = false
@@ -206,13 +207,13 @@ fun SubmoduleListScreen(
     val iconList:List<ImageVector> = listOf(
         Icons.Filled.Delete,  //删除
         Icons.Filled.DownloadForOffline,  //clone
-        Icons.Filled.Update,  //update
+        Icons.Filled.MoveToInbox,  //do `git submodule update`, actually is checkout submodule to parent's recorded commit
         Icons.Filled.SelectAll,  //全选
     )
     val iconTextList:List<String> = listOf(
         stringResource(id = R.string.delete),
         stringResource(id = R.string.clone),
-        stringResource(id = R.string.update),
+        stringResource(R.string.checkout_to_recorded_commit),
         stringResource(id = R.string.select_all),
     )
     val iconEnableList:List<()->Boolean> = listOf(
@@ -222,36 +223,31 @@ fun SubmoduleListScreen(
         {true} // select all
     )
 
-    val moreItemTextList = listOf(
-        stringResource(R.string.checkout),
-        stringResource(R.string.reset),  //日后改成reset并可选模式 soft/mixed/hard
-        stringResource(R.string.details),  //可针对单个或多个条目查看details，多个时，用分割线分割多个条目的信息
-    )
 
     val getSelectedFilesCount = {
         selectedItemList.value.size
     }
-    val moreItemEnableList:List<()->Boolean> = listOf(
-        {selectedItemList.value.size==1},  // checkout
-        {selectedItemList.value.size==1},  // hardReset
-        {selectedItemList.value.isNotEmpty()}  // details
-    )
+
     // BottomBar相关变量，结束
+
+    val containsForSelectedItems = { srcList:List<SubmoduleDto>, curItem:SubmoduleDto ->
+        srcList.indexOfFirst { it.name == curItem.name } != -1
+    }
 
     //多选模式相关函数，开始
     val switchItemSelected = { item: SubmoduleDto ->
         //如果元素不在已选择条目列表则添加
-        UIHelper.selectIfNotInSelectedListElseRemove(item, selectedItemList.value)
+        UIHelper.selectIfNotInSelectedListElseRemove(item, selectedItemList.value, contains = containsForSelectedItems)
         //开启选择模式
         multiSelectionMode.value = true
     }
 
     val selectItem = { item:SubmoduleDto ->
-        UIHelper.selectIfNotInSelectedListElseNoop(item, selectedItemList.value)
+        UIHelper.selectIfNotInSelectedListElseNoop(item, selectedItemList.value, contains = containsForSelectedItems)
     }
 
     val isItemInSelected= { item:SubmoduleDto ->
-        selectedItemList.value.contains(item)
+        containsForSelectedItems(selectedItemList.value, item)
     }
     // 多选模式相关函数，结束
 
@@ -260,8 +256,8 @@ fun SubmoduleListScreen(
         val sb = StringBuilder()
         sb.appendLine(appContext.getString(R.string.name)+": "+item.name).appendLine()
             .appendLine(appContext.getString(R.string.url)+": "+item.remoteUrl).appendLine()
-            .appendLine(appContext.getString(R.string.path_under_repo)+": "+item.relativePathUnderParent).appendLine()
-            .appendLine(appContext.getString(R.string.path)+": "+item.fullPath).appendLine()
+            .appendLine(appContext.getString(R.string.path)+": "+item.relativePathUnderParent).appendLine()
+            .appendLine(appContext.getString(R.string.full_path)+": "+item.fullPath).appendLine()
             .appendLine(appContext.getString(R.string.status)+": "+item.getStatus())
 
         sb.toString()
@@ -284,15 +280,245 @@ fun SubmoduleListScreen(
         }
     }
 
+    val showSetUrlDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val urlForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val nameForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
+    if(showSetUrlDialog.value) {
+        ConfirmDialog2(title = appContext.getString(R.string.set_url),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        value = urlForSetUrlDialog.value,
+                        singleLine = true,
+                        onValueChange = {
+                            urlForSetUrlDialog.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.url))
+                        },
+                    )
+                }
+            },
+            onCancel = {showSetUrlDialog.value = false}
+
+        ) {
+            showSetUrlDialog.value = false
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.updating)) act@{
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        val sm = Libgit2Helper.resolveSubmodule(repo, nameForSetUrlDialog.value)
+                        if(sm==null) {
+                            Msg.requireShowLongDuration(appContext.getString(R.string.resolve_submodule_failed))
+                            return@act
+                        }
+
+                        Libgit2Helper.updateSubmoduleUrl(repo, sm, urlForSetUrlDialog.value)
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+
+                }catch (e:Exception) {
+                    Msg.requireShowLongDuration(e.localizedMessage ?: " err")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+        }
+    }
+
+
+    val showSyncConfigDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val syncParentConfig = StateUtil.getRememberSaveableState(initValue = false)
+    val syncSubmoduleConfig = StateUtil.getRememberSaveableState(initValue = false)
+    if(showSyncConfigDialog.value) {
+        ConfirmDialog2(title = appContext.getString(R.string.sync_configs),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.will_sync_info_from_gitmodules_to_selected_configs))
+                    Spacer(Modifier.height(15.dp))
+                    MyCheckBox(text = stringResource(R.string.parent), value = syncParentConfig)
+                    MyCheckBox(text = stringResource(R.string.submodule), value = syncSubmoduleConfig)
+                }
+            },
+            onCancel = {showSyncConfigDialog.value = false},
+            okBtnEnabled = syncParentConfig.value || syncSubmoduleConfig.value
+
+        ) {
+            showSyncConfigDialog.value=false
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.updating)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        selectedItemList.value.toList().forEach {
+                            val sm = Libgit2Helper.openSubmodule(repo, it.name)
+                            if(sm!=null) {
+                                if(syncParentConfig.value) {
+                                    try {
+                                        sm.init(true)
+                                    }catch (_:Exception) {
+                                    }
+                                }
+
+                                if(syncSubmoduleConfig.value) {
+                                    try {
+                                        sm.sync()
+                                    }catch (_:Exception) {
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    Msg.requireShowLongDuration(e.localizedMessage ?: "err")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+
+        }
+    }
+
+    val moreItemEnableList:List<()->Boolean> = listOf(
+        {selectedItemList.value.isNotEmpty()},  // import repo
+        {selectedItemList.value.isNotEmpty()},  // update config
+        {selectedItemList.value.isNotEmpty()},  // init repo
+        {selectedItemList.value.isNotEmpty()},  // restore .git file
+        {selectedItemList.value.size == 1},  // set url
+        {selectedItemList.value.size == 1},  // copy full path
+        {selectedItemList.value.isNotEmpty()},  // details
+    )
+
+    val moreItemTextList = listOf(
+        stringResource(R.string.import_to_repos),
+        stringResource(R.string.sync_configs),
+        stringResource(R.string.init_repo),
+        stringResource(R.string.restore_dot_git_file),
+        stringResource(R.string.set_url),
+        stringResource(R.string.copy_full_path),
+        stringResource(R.string.details),  //可针对单个或多个条目查看details，多个时，用分割线分割多个条目的信息
+    )
+
     val moreItemOnClickList:List<()->Unit> = listOf(
         importToRepos@{
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                val repoNameSuffix = "_of_${curRepo.value.repoName}"
+
+                val importList = selectedItemList.value.toList().filter { it.cloned }
+
+                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                val importRepoResult = ImportRepoResult()
+
+                try {
+                    importList.forEach {
+                        val result = repoDb.importRepos(dir=it.fullPath, isReposParent=false, repoNameSuffix = repoNameSuffix)
+                        importRepoResult.all += result.all
+                        importRepoResult.success += result.success
+                        importRepoResult.failed += result.failed
+                        importRepoResult.existed += result.existed
+                    }
+
+                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+                }catch (e:Exception) {
+                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
+                    MyLog.e(TAG, "import repo from SubmoduleListPage err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
+                    Msg.requireShowLongDuration("err:${e.localizedMessage}")
+                }finally {
+                    // because import doesn't change current page, so need not do anything yet
+                }
+            }
         },
-        restoreDotGitFile@{
-            // 提示用户，将尝试恢复submodule的.git文件，当克隆仓库成功但update失败时，可能有帮助
+        syncConfigs@{  // git submodule init, git submodule sync. this is necessary if user's edit .gitmodules by hand
+            syncParentConfig.value = true
+            syncSubmoduleConfig.value = true
+
+            showSyncConfigDialog.value = true
+        },
+        initRepo@{ // libgit2's submodule.repoInit
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo ->
+                        val repoWorkDirFullPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+
+                        selectedItemList.value.toList().forEach {
+                            val sm = Libgit2Helper.openSubmodule(repo, it.name)
+                            if(sm!=null) {
+                                try {
+                                    Libgit2Helper.submoduleRepoInit(repoWorkDirFullPath, sm)
+                                }catch (_:Exception){
+
+                                }
+                            }
+                        }
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    Msg.requireShowLongDuration(e.localizedMessage ?: "err")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+        },
+        restoreDotGitFile@{ // most time will auto backup and restore when need
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo ->
+                        val repoWorkDirFullPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+
+                        selectedItemList.value.toList().forEach {
+                            try {
+                                Libgit2Helper.SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoWorkDirFullPath, it.relativePathUnderParent)
+                            }catch (_:Exception){
+
+                            }
+
+                        }
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+
+                }catch (e:Exception) {
+                    Msg.requireShowLongDuration(e.localizedMessage ?:"err")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
 
         },
-        copyFullPath@{
-            // copy full path of submodule
+        setUrl@{  // if selected one
+            try {
+                if(selectedItemList.value.isNotEmpty()) {
+                    val curItem = selectedItemList.value[0]
+                    urlForSetUrlDialog.value = curItem.remoteUrl
+                    nameForSetUrlDialog.value = curItem.name
+                    showSetUrlDialog.value = true
+                }else {
+                    Msg.requireShow(appContext.getString(R.string.no_item_selected))
+                }
+            }catch (e:Exception){
+                Msg.requireShow(e.localizedMessage ?: "err")
+            }
+        },
+        copyFullPath@{  // if selected one
+            // copy full path of a submodule
+            try {
+                if(selectedItemList.value.isNotEmpty()) {
+                    clipboardManager.setText(AnnotatedString(selectedItemList.value[0].fullPath))
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }else {
+                    Msg.requireShow(appContext.getString(R.string.no_item_selected))
+                }
+            }catch (e:Exception){
+                Msg.requireShow(e.localizedMessage ?: "err")
+            }
         },
         details@{
             val sb = StringBuilder()
@@ -379,11 +605,10 @@ fun SubmoduleListScreen(
     }
 
     if(showCloneDialog.value) {
-        ConfirmDialog(title = appContext.getString(R.string.clone),
+        ConfirmDialog2(title = appContext.getString(R.string.clone),
             requireShowTextCompose = true,
             textCompose = {
-                Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())
-                ) {
+                ScrollableColumn {
                     Text(stringResource(R.string.will_clone_selected_submodules_are_you_sure))
 
                     Spacer(Modifier.height(10.dp))
@@ -416,8 +641,19 @@ fun SubmoduleListScreen(
                 willCloneList.forEach { selectedItem ->
                     val curItemIdx = allItems.indexOfFirst { selectedItem.name == it.name }
                     doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
-                        allItems[curItemIdx] = itemWillUpdate.copy(tempStatus = cloningStr)
+                        val newItem = itemWillUpdate.copy(tempStatus = cloningStr)
+                        allItems[curItemIdx] = newItem
                         nameIndexMap.put(selectedItem.name, curItemIdx)
+
+                        // may cause ConcurrentException
+                        try {
+                            val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
+                            if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
+                                selectedItemList.value[selectedIdx] = newItem
+                            }
+                        }catch (_:Exception) {
+
+                        }
                     }
                 }
 
@@ -441,7 +677,18 @@ fun SubmoduleListScreen(
                         // clear status or set err to status
                         val curItemIdx = nameIndexMap.getOrDefault(selectedItem.name, defaultInvalidIdx)
                         doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
-                            allItems[curItemIdx] = itemWillUpdate.copy(tempStatus = resultMsg, cloned = Libgit2Helper.isValidGitRepo(itemWillUpdate.fullPath))
+                            val newItem = itemWillUpdate.copy(tempStatus = resultMsg, cloned = Libgit2Helper.isValidGitRepo(itemWillUpdate.fullPath))
+                            allItems[curItemIdx] = newItem
+
+                            try {
+                                // make selectedList info more real-time, but may cause ConcurrentException, most time should be fine
+                                val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
+                                if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
+                                    selectedItemList.value[selectedIdx] = newItem
+                                }
+                            }catch (_:Exception) {
+
+                            }
                         }
 
                     }
@@ -516,7 +763,7 @@ fun SubmoduleListScreen(
             val list = if(enableFilterState.value) filterList.value else list.value
 
             list.forEach {
-                UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value)
+                UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value, contains = containsForSelectedItems)
             }
         },
     )
@@ -742,10 +989,13 @@ fun SubmoduleListScreen(
                 SubmoduleItem(it, isItemInSelected, onLongClick = {
                     if(multiSelectionMode.value) {  //多选模式
                         //在选择模式下长按条目，执行区域选择（连续选择一个范围）
-                        UIHelper.doSelectSpan(idx, it,
-                            selectedItemList.value, list,
-                            switchItemSelected,
-                            selectItem
+                        UIHelper.doSelectSpan(
+                            itemIdxOfItemList = idx,
+                            item = it,
+                            selectedItems = selectedItemList.value,
+                            itemList = list,
+                            switchItemSelected = switchItemSelected,
+                            selectIfNotInSelectedListElseNoop = selectItem
                         )
                     }else {  //非多选模式
                         //启动多选模式
@@ -754,7 +1004,7 @@ fun SubmoduleListScreen(
                 }
                 ) {  //onClick
                     if(multiSelectionMode.value) {  //选择模式
-                        UIHelper.selectIfNotInSelectedListElseRemove(it, selectedItemList.value)
+                        UIHelper.selectIfNotInSelectedListElseRemove(it, selectedItemList.value, contains = containsForSelectedItems)
                     }else {  //非多选模式，点击显示详情
                         detailsString.value = getDetail(it)
                         showDetailsDialog.value = true
@@ -804,7 +1054,6 @@ fun SubmoduleListScreen(
                 loadingOff = loadingOff,
                 loadingText = appContext.getString(R.string.loading),
             ) {
-                selectedItemList.value.clear()  //清下已选中条目列表
                 list.value.clear()  //先清一下list，然后可能添加也可能不添加
 
                 if(!repoId.isNullOrBlank()) {
@@ -820,7 +1069,21 @@ fun SubmoduleListScreen(
                     }
                 }
 
-
+                if(list.value.isEmpty()) {
+                    selectedItemList.value.clear()  //清下已选中条目列表
+                }else {
+                    val listCopy = list.value.toList()
+                    val selectedListCopy = selectedItemList.value.toList()
+                    selectedListCopy.forEachIndexed { idx, oldSelectedItem ->
+                        // if list doesn't contains selected item, remove it from selected list
+                        val newItemIdx = listCopy.indexOfFirst { newItem -> oldSelectedItem.name==newItem.name }
+                        if(newItemIdx == -1) {
+                            selectedItemList.value.removeAt(idx)
+                        }else {  // update info of selected and still exists items
+                            selectedItemList.value[idx]=listCopy[newItemIdx]
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
             MyLog.e(TAG, "$TAG#LaunchedEffect() err:"+e.stackTraceToString())

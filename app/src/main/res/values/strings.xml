@@ -855,5 +855,17 @@
     <string name="update">Update</string>
     <string name="recursive_clone_submodule_nested_loop_warn">WARN: becareful! if your repo contains nested-loops, it will be infinite clone until your device no more storage space!!</string>
     <string name="no_submodules_found">No Submodules Found</string>
+    <string name="full_path">Full Path</string>
+    <string name="checkout_to_recorded_commit">Checkout To Recorded Commit</string>
+    <string name="import_to_repos">Import to Repos</string>
+    <string name="update_config">Update Config</string>
+    <string name="init_repo">Init Repo</string>
+    <string name="restore_dot_git_file">Restore .git file</string>
+    <string name="copy_full_path">Copy Full Path</string>
+    <string name="will_sync_info_from_gitmodules_to_selected_configs">Will sync info from .gitmodules to selected configs</string>
+    <string name="submodule">Submodule</string>
+    <string name="updating">Updating…</string>
+    <string name="resolve_submodule_failed">resolve submodule failed</string>
+    <string name="sync_configs">Sync Configs</string>
 
 </resources>

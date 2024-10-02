@@ -4685,16 +4685,13 @@ class Libgit2Helper {
             return result
         }
 
-        /**
-         * @param useGitlink if true, will create .git file under submodule, else will create .git folder, pc git default create .git file, so recommand set it to true
-         */
-        fun addSubmodule(repo: Repository, remoteUrl: String, relativePathUnderParentRepo:String, useGitlink:Boolean=true) {
+        fun addSubmodule(repo: Repository, remoteUrl: String, relativePathUnderParentRepo:String) {
+//            if true, will create .git file under submodule, else will create .git folder, pc git default create .git file, so recommend set it to true
+            val useGitlink=true
             Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink)
 
-            SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(
-                    getRepoWorkdirNoEndsWithSlash(repo),
-                    relativePathUnderParentRepo
-            )
+            // if add success, backup .git file
+            SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(getRepoWorkdirNoEndsWithSlash(repo), relativePathUnderParentRepo)
         }
 
         fun getSubmoduleDtoList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<SubmoduleDto> {
@@ -4755,7 +4752,8 @@ class Libgit2Helper {
             Submodule.setUrl(parentRepo, sm.name(), URI.create(remoteUrl))
 
             //after update, do init and sync for update parent repos config and submodules git config
-            sm.init(true)  // I do not sure, but maybe only sync is enough, this only update .git/config
+            val overwrite = true
+            sm.init(overwrite)  // I do not sure, but maybe only sync is enough, this only update .git/config
             sm.sync()  // update .git/config and submodules .git/config url make them same as .gitmodules
         }
 
@@ -4786,16 +4784,22 @@ class Libgit2Helper {
                     return@forEach
                 }
                 val submodulePath = sm.path()
+                val overwriteForInit = true
 //                Submodule.setUpdate(repo, name, Submodule.UpdateT.CHECKOUT)
 
 
-                //symc submodule info to parent repo's .git/config
-                sm.init(true)
-                // init repo before clone
-                submoduleRepoInit(repoFullPathNoSlashSuffix, sm)
+                try {
+                    //copy submodule info from .gitmodules to parent repo's .git/config
+                    sm.init(overwriteForInit)
 
-                // sync submodule info to submodule .git/config
-                sm.sync()
+                    // init repo before clone
+                    submoduleRepoInit(repoFullPathNoSlashSuffix, sm)
+
+                    // copy submodule info from .gitmodules to submodule's .git/config
+                    sm.sync()
+                }catch (_:Exception) {
+
+                }
 
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
@@ -4809,19 +4813,33 @@ class Libgit2Helper {
 
                 // clone repo
                 val subRepo:Repository? = try {
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
 //                    createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
                     MyLog.d(TAG,"#cloneSubmodules: will clone submodule '$name'")
                     sm.clone(updateOpts)
                 } catch (e: Exception) {
+                    // may delete .git file if sm.clone() failed, so try restore it
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
                     MyLog.e(TAG,"#cloneSubmodules: clone submodule '$name' err: ${e.localizedMessage}")
 
                     try {
-                        Repository.open(repoFullPathNoSlashSuffix + Cons.slash + submodulePath)
+                        val submoduleFullPath = File(repoFullPathNoSlashSuffix, submodulePath).canonicalPath
+                        // if submodule is valid, return reference, else return null
+                        if(isValidGitRepo(submoduleFullPath)) {
+                            Repository.open(submoduleFullPath)
+                        }else{
+                            null
+                        }
                     }catch (e2:Exception) {
                         MyLog.e(TAG,"#cloneSubmodules: open submodule '$name' err: ${e2.localizedMessage}")
                         null
                     }
                 }
+
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
 
                 //clone failed and repo doesn't existed on disk
                 if(subRepo==null) {
@@ -4837,13 +4855,14 @@ class Libgit2Helper {
                 try {
                     MyLog.d(TAG,"#cloneSubmodules: will update submodule '$name'")
 
-                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
-
                     val init = true
                     sm.update(init, updateOpts)
                 }catch (e:Exception) {
                     MyLog.e(TAG,"#cloneSubmodules: update submodule '$name' err: ${e.localizedMessage}")
                 }
+
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
 
                 // recursive clone
                 // !! becareful with this, if repo contains nested-loops, will infinite clone !!
@@ -4855,11 +4874,20 @@ class Libgit2Helper {
         }
 
         /**
-         * only do this init before clone a submodule
+         * only need do repoInit before clone a existed submodule after parent repo cloned, other case may failed,
+         * and if add submodule by app, need not call this method, because after add, it will do repoInit implicit.
+         *
+         * @param parentRepoFullPath used for backup .git file of submodule
          */
-        private fun submoduleRepoInit(parentRepoFullPath:String, sm: Submodule) {
+        fun submoduleRepoInit(parentRepoFullPath:String, sm: Submodule) {
             try {
-                sm.repoInit(true)
+                // true will create a ".git" file under submodule workdir, and .git folder will under parent repo's ".git/modules" folder;
+                // false will create .git folder under submodule workdir.
+                // because pc git default is true, so here is true too.
+                // btw: it will not affect submodules file, just difference way to saving submodules .git folder.
+                val useGitlink = true
+                sm.repoInit(useGitlink)
+
                 // if init repo success, backup the .git file, because it may delete by libgit2...................
                 SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(parentRepoFullPath, sm.path())
             }catch (e:Exception) {
@@ -4867,16 +4895,17 @@ class Libgit2Helper {
             }
         }
 
-        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleName: String){
+        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleName: String) {
+            val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(parentRepo)
+
+            val sm = resolveSubmodule(parentRepo, submoduleName)
+            if(sm==null){
+                return
+            }
+
+            val submodulePath = sm.path()
+
             try {
-                val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(parentRepo)
-
-                val sm = resolveSubmodule(parentRepo, submoduleName)
-                if(sm==null){
-                    return
-                }
-                val submodulePath = sm.path()
-
                 SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
                 val updateOpts = Submodule.UpdateOptions.createDefault()
@@ -4890,13 +4919,33 @@ class Libgit2Helper {
 
                 MyLog.d(TAG,"#updateSubmodule: will update submodule '$submoduleName'")
 
-                sm.init(true)
+                val overwriteForInit = true
+                val initForUpdate = true
+
+                sm.init(overwriteForInit)
                 sm.sync()
-                sm.update(true, updateOpts)
+
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
+                sm.update(initForUpdate, updateOpts)
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
             }catch (e:Exception) {
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
                 MyLog.e(TAG,"#updateSubmodule: update submodule '$submoduleName' err: ${e.localizedMessage}")
                 throw e
             }
+        }
+
+        fun openSubmodule(repo: Repository, subName: String):Submodule? {
+            try {
+                return Submodule.lookup(repo, subName)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#openSubmodule err: ${e.stackTraceToString()}")
+                return null
+            }
+
         }
 
     }

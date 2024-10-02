@@ -307,6 +307,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
     override suspend fun importRepos(dir: String,
                                      isReposParent: Boolean,
                                      repoNamePrefix:String,
+                                     repoNameSuffix:String,
                                      parentRepoId:String?
     ): ImportRepoResult {
         val repos = getAll(updateRepoInfo = false).toMutableList()
@@ -333,7 +334,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                                 val importSuccess = importSingleRepo(
                                     repo = repo,
                                     repoWorkDirPath = repoWorkDirPath,
-                                    initRepoName = repoNamePrefix + sub.name,
+                                    initRepoName = repoNamePrefix + sub.name + repoNameSuffix,
                                     addRepoToThisListIfSuccess = repos,
                                     parentRepoId=parentRepoId
                                 )
@@ -365,7 +366,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                         val importSuccess = importSingleRepo(
                             repo = repo,
                             repoWorkDirPath = repoWorkdirPath,
-                            initRepoName = repoNamePrefix + dirFile.name,
+                            initRepoName = repoNamePrefix + dirFile.name + repoNameSuffix,
                             parentRepoId=parentRepoId
                         )
                         if(importSuccess) {
@@ -459,7 +460,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
             return true
         }catch (e:Exception) {
-            MyLog.e(TAG, "#$funName: import err, err=${e.localizedMessage}")
+            MyLog.e(TAG, "#$funName: import repo err, err=${e.stackTraceToString()}")
             return false
         }
     }
