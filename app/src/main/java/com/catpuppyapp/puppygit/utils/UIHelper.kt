@@ -173,8 +173,8 @@ object UIHelper {
     }
 
     @Composable
-    fun getHighlightingBackgroundColor(): Color {
-        return MaterialTheme.colorScheme.inversePrimary.copy(alpha = 0.4f)
+    fun getHighlightingBackgroundColor(baseColor:Color = MaterialTheme.colorScheme.inversePrimary): Color {
+        return baseColor.copy(alpha = 0.4f)
     }
 
     fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {

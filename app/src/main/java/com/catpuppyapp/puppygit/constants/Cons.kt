@@ -40,6 +40,8 @@ class Cons {
         val gitIndexCommitHash = "index"  //代表index
         val gitHeadCommitHash = "HEAD"  //代表HEAD
 
+        val gitDotModules = ".gitmodules"
+
         const val defaultPageCount=50  //默认每页条目数
 
         //const的作用是定义编译时常量，可能会内联优化之类的

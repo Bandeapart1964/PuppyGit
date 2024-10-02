@@ -35,6 +35,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,6 +78,7 @@ import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.RepoStatusUtil
+import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.boolToDbInt
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
@@ -134,6 +136,8 @@ fun RepoInnerPage(
     val appContext = AppModel.singleInstanceHolder.appContext;
     val exitApp = AppModel.singleInstanceHolder.exitApp;
     val navController = AppModel.singleInstanceHolder.navController;
+    val scope = rememberCoroutineScope()
+
 
     val cloningText = stringResource(R.string.cloning)
     val unknownErrWhenCloning = stringResource(R.string.unknown_err_when_cloning)
@@ -158,6 +162,8 @@ fun RepoInnerPage(
 
     val inDarkTheme = Theme.inDarkTheme
 
+    val requireBlinkIdx = StateUtil.getRememberSaveableIntState(-1)
+
     val isLoading = StateUtil.getRememberSaveableState(initValue = true)
     val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
     val loadingOn = {text:String->
@@ -176,6 +182,8 @@ fun RepoInnerPage(
 //    }
 //    ShowToast(showToast, toastMsg)
     val requireShowToast:(String)->Unit = Msg.requireShowLongDuration
+
+    val filterList = StateUtil.getCustomSaveableStateList(stateKeyTag, "filterList") { listOf<RepoEntity>() }
 
     val errWhenQuerySettingsFromDbStrRes = stringResource(R.string.err_when_querying_settings_from_db)
     val saved = stringResource(R.string.saved)
@@ -808,6 +816,11 @@ fun RepoInnerPage(
                         requireDelFilesOnDisk = requireDelFilesOnDisk,
                         requireTransaction = requireTransaction
                     )
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception){
+                    Msg.requireShowLongDuration(e.localizedMessage ?:"err")
+                    MyLog.e(TAG, "del repo in ReposPage err: ${e.stackTraceToString()}")
                 }finally {
                     //请求刷新列表
                     changeStateTriggerRefreshPage(needRefreshRepoPage)
@@ -985,6 +998,15 @@ fun RepoInnerPage(
         }
     }
 
+    val getCurActiveList = {
+        if(repoPageFilterModeOn.value) filterList.value else repoList.value
+    }
+
+    val getCurActiveListState = {
+        if(repoPageFilterModeOn.value) filterListState.value else repoPageListState
+    }
+
+
     if(showBottomSheet.value) {
         val repoDto = curRepo.value
         val repoStatusGood = repoDto.gitRepoState!=null && !Libgit2Helper.isRepoStatusNotReadyOrErr(repoDto)
@@ -1070,9 +1092,45 @@ fun RepoInnerPage(
                         showUnshallowDialog.value = true
                     }
                 }
-                BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.explorer_files)) {
-                    showBottomSheet.value=false  //不知道为什么，常规的关闭菜单不太好使，一跳转页面就废了，所以手动隐藏下菜单
-                    goToFilesPage(curRepo.value.fullSavePath)
+
+//                BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.explorer_files)) {
+//                    showBottomSheet.value=false  //不知道为什么，常规的关闭菜单不太好使，一跳转页面就废了，所以手动隐藏下菜单
+//                    goToFilesPage(curRepo.value.fullSavePath)
+//                }
+
+                //show jump to parent repo if has parentRepoId
+                if(curRepo.value.parentRepoId.isNotBlank()) {
+                    val parentRepoId = curRepo.value.parentRepoId
+                    BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.go_parent)) {
+                        doJobThenOffLoading {
+                            val list = getCurActiveList()
+                            val listState = getCurActiveListState()
+                            val parentIndex = list.toList().indexOfFirst { it.id == parentRepoId }
+                            if(parentIndex != -1) {  // found in current active list
+                                requireBlinkIdx.intValue = parentIndex
+                                UIHelper.scrollToItem(scope, listState, parentIndex)
+                            }else{
+                                if(repoPageFilterModeOn.value) {
+                                    //从源列表找
+                                    val indexInOriginList = repoList.value.toList().indexOfFirst { it.id == parentRepoId }
+
+                                    if(indexInOriginList != -1){  // found in origin list
+                                        repoPageFilterModeOn.value = false  //关闭过滤模式
+                                        showBottomSheet.value = false  //关闭菜单
+
+                                        //定位条目
+                                        UIHelper.scrollToItem(scope, repoPageListState, indexInOriginList)
+                                        requireBlinkIdx.intValue = indexInOriginList  //设置条目闪烁以便用户发现
+                                    }else {
+                                        Msg.requireShow(appContext.getString(R.string.not_found))
+                                    }
+                                }else {
+                                    Msg.requireShow(appContext.getString(R.string.not_found))
+                                }
+                            }
+
+                        }
+                    }
                 }
 
                 //go to changelist，避免侧栏切换到changelist时刚好某个仓库加载很慢导致无法切换其他仓库
@@ -1168,6 +1226,7 @@ fun RepoInnerPage(
         }
     }
 
+
     // 向下滚动监听，开始
     val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else repoPageListState.firstVisibleItemIndex } }
@@ -1200,7 +1259,7 @@ fun RepoInnerPage(
         val k = repoPageFilterKeyWord.value.text.lowercase()  //关键字
         val enableFilter = repoPageFilterModeOn.value && k.isNotEmpty()
         val filteredList = if(enableFilter){
-            repoList.value.filter {
+            val tmpList = repoList.value.filter {
                 it.repoName.lowercase().contains(k)
                         || it.branch.lowercase().contains(k)
                         || it.cloneUrl.lowercase().contains(k)
@@ -1214,6 +1273,9 @@ fun RepoInnerPage(
                         || it.upstreamBranch.lowercase().contains(k)
                         || it.createErrMsg.lowercase().contains(k)
             }
+            filterList.value.clear()
+            filterList.value.addAll(tmpList)
+            tmpList
         }else {
             repoList.value
         }
@@ -1243,6 +1305,7 @@ fun RepoInnerPage(
                     repoDto = element,
                     repoDtoIndex = idx,
                     goToFilesPage = goToFilesPage,
+                    requireBlinkIdx = requireBlinkIdx
                 ) workStatusOnclick@{ clickedRepo, status ->  //这个是点击status的callback，这个status其实可以不传，因为这里的lambda能捕获到数组的元素，就是当前仓库
 
                     //把点击状态的仓库存下来
@@ -1272,7 +1335,9 @@ fun RepoInnerPage(
                     repoDtoList = repoList.value,
                     idx = idx,
                     needRefreshList = needRefreshRepoPage,
-                    requireDelRepo = requireDelRepo
+                    requireDelRepo = requireDelRepo,
+                    requireBlinkIdx = requireBlinkIdx
+
                 )
                 //                            if(it.workStatus == Cons.dbRepoWorkStatusCloneErr){  //克隆错误
                 //                            } // else if(other type err happened) ，显示其他类型的ErrRepoCard ,这里还能细分不同的错误显示不同的界面，例如克隆错误和初始化错误可以显示不同界面，后面加else if 即可

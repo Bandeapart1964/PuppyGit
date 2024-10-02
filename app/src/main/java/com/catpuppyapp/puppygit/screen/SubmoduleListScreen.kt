@@ -23,8 +23,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DownloadForOffline
 import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.MoveToInbox
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ReplayCircleFilled
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +51,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,6 +66,7 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
+import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.git.CredentialStrategy
 import com.catpuppyapp.puppygit.git.ImportRepoResult
@@ -84,6 +86,7 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
+import java.io.File
 
 private val TAG = "SubmoduleListScreen"
 private val stateKeyTag = "SubmoduleListScreen"
@@ -170,6 +173,7 @@ fun SubmoduleListScreen(
                     )
                 }
             },
+            okBtnEnabled = pathForCreate.value.isNotBlank() &&remoteUrlForCreate.value.isNotBlank(),
             onCancel = {showCreateDialog.value = false}
         ) {
             showCreateDialog.value = false
@@ -207,13 +211,13 @@ fun SubmoduleListScreen(
     val iconList:List<ImageVector> = listOf(
         Icons.Filled.Delete,  //删除
         Icons.Filled.DownloadForOffline,  //clone
-        Icons.Filled.MoveToInbox,  //do `git submodule update`, actually is checkout submodule to parent's recorded commit
+        Icons.Filled.ReplayCircleFilled,  //do `git submodule update`, actually is checkout submodule to parent's recorded commit
         Icons.Filled.SelectAll,  //全选
     )
     val iconTextList:List<String> = listOf(
         stringResource(id = R.string.delete),
         stringResource(id = R.string.clone),
-        stringResource(R.string.checkout_to_recorded_commit),
+        stringResource(R.string.update),
         stringResource(id = R.string.select_all),
     )
     val iconEnableList:List<()->Boolean> = listOf(
@@ -341,8 +345,8 @@ fun SubmoduleListScreen(
                 ScrollableColumn {
                     Text(stringResource(R.string.will_sync_info_from_gitmodules_to_selected_configs))
                     Spacer(Modifier.height(15.dp))
-                    MyCheckBox(text = stringResource(R.string.parent), value = syncParentConfig)
-                    MyCheckBox(text = stringResource(R.string.submodule), value = syncSubmoduleConfig)
+                    MyCheckBox(text = stringResource(R.string.parent_config), value = syncParentConfig)
+                    MyCheckBox(text = stringResource(R.string.submodule_config), value = syncSubmoduleConfig)
                 }
             },
             onCancel = {showSyncConfigDialog.value = false},
@@ -386,62 +390,21 @@ fun SubmoduleListScreen(
         }
     }
 
-    val moreItemEnableList:List<()->Boolean> = listOf(
-        {selectedItemList.value.isNotEmpty()},  // import repo
-        {selectedItemList.value.isNotEmpty()},  // update config
-        {selectedItemList.value.isNotEmpty()},  // init repo
-        {selectedItemList.value.isNotEmpty()},  // restore .git file
-        {selectedItemList.value.size == 1},  // set url
-        {selectedItemList.value.size == 1},  // copy full path
-        {selectedItemList.value.isNotEmpty()},  // details
-    )
-
-    val moreItemTextList = listOf(
-        stringResource(R.string.import_to_repos),
-        stringResource(R.string.sync_configs),
-        stringResource(R.string.init_repo),
-        stringResource(R.string.restore_dot_git_file),
-        stringResource(R.string.set_url),
-        stringResource(R.string.copy_full_path),
-        stringResource(R.string.details),  //可针对单个或多个条目查看details，多个时，用分割线分割多个条目的信息
-    )
-
-    val moreItemOnClickList:List<()->Unit> = listOf(
-        importToRepos@{
-            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
-                val repoNameSuffix = "_of_${curRepo.value.repoName}"
-
-                val importList = selectedItemList.value.toList().filter { it.cloned }
-
-                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-                val importRepoResult = ImportRepoResult()
-
-                try {
-                    importList.forEach {
-                        val result = repoDb.importRepos(dir=it.fullPath, isReposParent=false, repoNameSuffix = repoNameSuffix)
-                        importRepoResult.all += result.all
-                        importRepoResult.success += result.success
-                        importRepoResult.failed += result.failed
-                        importRepoResult.existed += result.existed
-                    }
-
-                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
-                }catch (e:Exception) {
-                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
-                    MyLog.e(TAG, "import repo from SubmoduleListPage err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
-                    Msg.requireShowLongDuration("err:${e.localizedMessage}")
-                }finally {
-                    // because import doesn't change current page, so need not do anything yet
+    val showInitRepoDialog = StateUtil.getRememberSaveableState(false)
+    if(showInitRepoDialog.value) {
+        ConfirmDialog2(title = appContext.getString(R.string.init_repo),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.will_do_init_repo_for_selected_submodules), fontWeight = FontWeight.Light)
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(R.string.most_time_need_not_do_init_repo_by_yourself))
                 }
-            }
-        },
-        syncConfigs@{  // git submodule init, git submodule sync. this is necessary if user's edit .gitmodules by hand
-            syncParentConfig.value = true
-            syncSubmoduleConfig.value = true
+            },
+            onCancel = {showInitRepoDialog.value = false},
+        ) {
+            showInitRepoDialog.value=false
 
-            showSyncConfigDialog.value = true
-        },
-        initRepo@{ // libgit2's submodule.repoInit
             doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
                 try {
                     Repository.open(curRepo.value.fullSavePath).use { repo ->
@@ -466,9 +429,26 @@ fun SubmoduleListScreen(
                     changeStateTriggerRefreshPage(needRefresh)
                 }
             }
-        },
-        restoreDotGitFile@{ // most time will auto backup and restore when need
-            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
+        }
+    }
+
+    val showRestoreDotGitFileDialog = StateUtil.getRememberSaveableState(false)
+    if(showRestoreDotGitFileDialog.value) {
+        ConfirmDialog2(
+            title = appContext.getString(R.string.restore_dot_git_file),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.will_try_restore_git_file_for_selected_submodules), fontWeight = FontWeight.Light)
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(R.string.most_time_need_not_restore_dot_git_file_by_yourself))
+                }
+            },
+            onCancel = { showRestoreDotGitFileDialog.value = false },
+
+        ) {
+            showRestoreDotGitFileDialog.value = false
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.restoring)) {
                 try {
                     Repository.open(curRepo.value.fullSavePath).use { repo ->
                         val repoWorkDirFullPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
@@ -491,7 +471,89 @@ fun SubmoduleListScreen(
                     changeStateTriggerRefreshPage(needRefresh)
                 }
             }
+        }
+    }
 
+    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
+    if(showImportToReposDialog.value){
+        ConfirmDialog2(
+            title = appContext.getString(R.string.import_to_repos),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
+                }
+            },
+            onCancel = { showImportToReposDialog.value = false },
+
+        ) {
+            showImportToReposDialog.value = false
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                val repoNameSuffix = "_of_${curRepo.value.repoName}"
+                val parentRepoId = curRepo.value.id
+                val importList = selectedItemList.value.toList().filter { it.cloned }
+
+                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                val importRepoResult = ImportRepoResult()
+
+                try {
+                    importList.forEach {
+                        val result = repoDb.importRepos(dir=it.fullPath, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId)
+                        importRepoResult.all += result.all
+                        importRepoResult.success += result.success
+                        importRepoResult.failed += result.failed
+                        importRepoResult.existed += result.existed
+                    }
+
+                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+                }catch (e:Exception) {
+                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
+                    MyLog.e(TAG, "import repo from SubmoduleListPage err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
+                    Msg.requireShowLongDuration("err:${e.localizedMessage}")
+                }finally {
+                    // because import doesn't change current page, so need not do anything yet
+                }
+            }
+
+        }
+    }
+
+    val moreItemEnableList:List<()->Boolean> = listOf(
+        {selectedItemList.value.isNotEmpty()},  // import repo
+        {selectedItemList.value.isNotEmpty()},  // update config
+        {selectedItemList.value.isNotEmpty()},  // init repo
+        {selectedItemList.value.isNotEmpty()},  // restore .git file
+        {selectedItemList.value.size == 1},  // set url
+        {selectedItemList.value.size == 1},  // copy full path
+        {selectedItemList.value.isNotEmpty()},  // details
+    )
+
+    val moreItemTextList = listOf(
+        stringResource(R.string.import_to_repos),
+        stringResource(R.string.sync_configs),
+        stringResource(R.string.init_repo),
+        stringResource(R.string.restore_dot_git_file),
+        stringResource(R.string.set_url),
+        stringResource(R.string.copy_full_path),
+        stringResource(R.string.details),  //可针对单个或多个条目查看details，多个时，用分割线分割多个条目的信息
+    )
+
+    val moreItemOnClickList:List<()->Unit> = listOf(
+        importToRepos@{
+            showImportToReposDialog.value = true
+        },
+        syncConfigs@{  // git submodule init, git submodule sync. this is necessary if user's edit .gitmodules by hand
+            syncParentConfig.value = true
+            syncSubmoduleConfig.value = true
+
+            showSyncConfigDialog.value = true
+        },
+        initRepo@{ // libgit2's submodule.repoInit
+            showInitRepoDialog.value = true
+        },
+        restoreDotGitFile@{ // most time will auto backup and restore when need
+            showRestoreDotGitFileDialog.value = true
         },
         setUrl@{  // if selected one
             try {
@@ -574,17 +636,117 @@ fun SubmoduleListScreen(
     val recursiveClone = StateUtil.getRememberSaveableState(initValue = false)
     val showCloneDialog = StateUtil.getRememberSaveableState(initValue = false)
 
-    val initDelTagDialog = {
-        requireDel.value = true
-        requireDelRemoteChecked.value = false  //默认不要勾选同时删除远程分支，要不然容易误删
-        trueFetchFalsePush.value = false
-        fetchPushDialogTitle.value = appContext.getString(R.string.delete_tags)
-        showForce.value = false
 
-        loadingTextForFetchPushDialog.value = appContext.getString(R.string.deleting)
+    val deleteConfigForDeleteDialog =StateUtil.getRememberSaveableState(initValue = false)
+    val deleteFilesForDeleteDialog =StateUtil.getRememberSaveableState(initValue = false)
+    val showDeleteDialog = StateUtil.getRememberSaveableState(initValue = false)
 
-        showTagFetchPushDialog.value = true
+    val initDelDialog = {
+        deleteConfigForDeleteDialog.value = false
+        deleteFilesForDeleteDialog.value = false
 
+        showDeleteDialog.value = true
+    }
+
+    if(showDeleteDialog.value) {
+        ConfirmDialog2(title = appContext.getString(R.string.delete),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    MyCheckBox(text = stringResource(R.string.del_config), value = deleteConfigForDeleteDialog)
+                    if(deleteConfigForDeleteDialog.value) {
+                        Text(stringResource(R.string.submodule_del_config_info_note), fontWeight = FontWeight.Light)
+                    }
+
+                    Spacer(Modifier.height(15.dp))
+
+                    MyCheckBox(text = stringResource(R.string.del_files), value = deleteFilesForDeleteDialog)
+                    if(deleteFilesForDeleteDialog.value) {
+                        Text(stringResource(R.string.submodule_del_files_on_disk_note), fontWeight = FontWeight.Light)
+                    }
+                }
+            },
+            okBtnEnabled = deleteConfigForDeleteDialog.value || deleteFilesForDeleteDialog.value,
+            onCancel = {showDeleteDialog.value = false}
+
+        ) {
+            showDeleteDialog.value=false
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.deleting)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        val repoWorkDirPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+                        selectedItemList.value.toList().forEach { smdto ->
+                            try {
+                                // del files on disk
+                                if(deleteFilesForDeleteDialog.value) {
+                                    val dotGitFile = File(smdto.fullPath, ".git")
+                                    //delete .git folder of submodule
+                                    val relativePathFromSmWorkdirToDotGitFolder = Libgit2Helper.readPathFromDotGitFile(dotGitFile)
+                                    if(relativePathFromSmWorkdirToDotGitFolder.isNotBlank()) {
+                                        //absolute path + relative path = submodule's real .git folder path
+                                        val dotGitRealFolder = File(smdto.fullPath, relativePathFromSmWorkdirToDotGitFolder)
+                                        MyLog.d(TAG, "dotGitRealFolder.canonicalPath=${dotGitRealFolder.canonicalPath}")
+
+                                        if(dotGitRealFolder.exists()) {
+                                            MyLog.d(TAG, "will delete submodule .git folder at: ${dotGitRealFolder.canonicalPath}")
+
+                                            dotGitRealFolder.deleteRecursively()
+                                        }
+                                    }else {
+                                        MyLog.d(TAG, "invalid path (blank) in dotGitFile, dotGitFile.exist=${dotGitFile.exists()}, dotGitFile.canonicalPath=${dotGitFile.canonicalPath}")
+                                    }
+
+                                    // delete workdir
+                                    val smWorkdir = File(smdto.fullPath)
+                                    if(smWorkdir.exists()) {
+                                        MyLog.d(TAG, "will delete submodule workdir files at: ${smWorkdir.canonicalPath}")
+                                        smWorkdir.deleteRecursively()
+                                    }
+                                }
+
+
+                                // del config entry
+                                if(deleteConfigForDeleteDialog.value) {
+                                    // delete submodule info in parent .git/config
+                                    val parentConfig = Libgit2Helper.getRepoConfigFilePath(repo)
+                                    if(parentConfig.isNotBlank()) {
+                                        val parentConfigFile = File(parentConfig)
+                                        if(parentConfigFile.exists()) {
+                                            MyLog.d(TAG, "will delete submodule key from parent repo config at: ${parentConfigFile.canonicalPath}")
+
+                                            Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(parentConfigFile, smdto.name)
+                                        }
+                                    }
+
+                                    // delete submodule inff in .gitmodules file
+                                    val gitmoduleFile = File(repoWorkDirPath, Cons.gitDotModules)
+                                    if(gitmoduleFile.exists()) {
+                                        MyLog.d(TAG, "will delete submodule key from submodule config at: ${gitmoduleFile.canonicalPath}")
+
+                                        Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(gitmoduleFile, smdto.name)
+                                    }
+
+                                }
+
+                            }catch (e:Exception) {
+                                val errPrefix = "del submodule err: delConfig=${deleteConfigForDeleteDialog.value}, delFiles=${deleteFilesForDeleteDialog.value}, err="
+                                val errMsg = e.localizedMessage
+                                Msg.requireShowLongDuration(errMsg ?: "err")
+                                createAndInsertError(curRepo.value.id, errPrefix+errMsg)
+
+                                MyLog.e(TAG, "#DeleteDialog err: delConfig=${deleteConfigForDeleteDialog.value}, delFiles=${deleteFilesForDeleteDialog.value}, err=${e.stackTraceToString()}")
+                            }
+                        }
+
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+
+            }
+        }
     }
 
     val initCloneDialog= {
@@ -661,7 +823,7 @@ fun SubmoduleListScreen(
                     selectedList.forEach { selectedItem ->
                         val resultMsg = try {
                             //test
-                            val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffffffffffffffffffffff")
+                            val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffffffffffffffffff")
                             //test
 
                             // clone submodule
@@ -737,7 +899,7 @@ fun SubmoduleListScreen(
 
     val iconOnClickList:List<()->Unit> = listOf(  //index页面的底栏选项
         delete@{
-            initDelTagDialog()
+            initDelDialog()
         },
 
         clone@{
@@ -747,7 +909,7 @@ fun SubmoduleListScreen(
             //TODO 为待更新的条目设置临时状态
             doJobThenOffLoading {
                 val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffff")
+                val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffffffffffffffffffff")
                 Repository.open(curRepo.value.fullSavePath).use { repo->
                     selectedItemList.value.toList().forEach {
                         Libgit2Helper.updateSubmodule(repo,credential, CredentialStrategy.SPECIFIED, it.name)

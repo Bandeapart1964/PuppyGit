@@ -867,5 +867,19 @@
     <string name="updating">Updating…</string>
     <string name="resolve_submodule_failed">resolve submodule failed</string>
     <string name="sync_configs">Sync Configs</string>
+    <string name="del_config">Del Config</string>
+    <string name="del_files">Del Files</string>
+    <string name="submodule_del_config_info_note">will delete submodule\'s info from \'.gitmodules\' and \'.git/config\' of parent repo</string>
+    <string name="submodule_del_files_on_disk_note">will delete submodule\'s files on disk, include it\'s workdir and .git folder</string>
+    <string name="parent_config">Parent Config</string>
+    <string name="submodule_config">Submodule Config</string>
+    <string name="will_do_init_repo_for_selected_submodules">Will do init repo for selected submodules.</string>
+    <string name="most_time_need_not_do_init_repo_by_yourself">note: most time you need not init repo by yourself, it should did when you cloning repo.</string>
+    <string name="will_try_restore_git_file_for_selected_submodules">Will try restore .git file for selected submodules.</string>
+    <string name="most_time_need_not_restore_dot_git_file_by_yourself">note: most time you need not restore .git file by yourself, it should auto restore when need but lost.</string>
+    <string name="restoring">Restoring…</string>
+    <string name="go_parent">Go Parent</string>
+    <string name="will_import_selected_submodules_to_repos">Will import selected submodules to Repos, then you can manage them just like manage normal Repos.</string>
+    <string name="submodule_invalid_url_err">err: invalid url, if you deleted submodule, maybe need go to ChangeList to commit changes</string>
 
 </resources>

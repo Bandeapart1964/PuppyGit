@@ -13,6 +13,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,10 +29,13 @@ import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.style.MyStyleKt
+import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -45,12 +49,17 @@ fun ErrRepoCard(
 
     idx: Int,
     needRefreshList: MutableState<String>,
-    requireDelRepo:(RepoEntity)->Unit
+    requireDelRepo:(RepoEntity)->Unit,
+    requireBlinkIdx: MutableIntState,
 ) {
     val navController = AppModel.singleInstanceHolder.navController
     val haptic = AppModel.singleInstanceHolder.haptic
 
     val appContext = LocalContext.current
+    val inDarkTheme = Theme.inDarkTheme
+
+    val cardColor = MaterialTheme.colorScheme.surface
+    val highlightColor = if(inDarkTheme) Color(0xFF9D9C9C) else Color(0xFFFFFFFF)
 
     val dbContainer = AppModel.singleInstanceHolder.dbContainer
     val lineHeight = 30
@@ -78,7 +87,18 @@ fun ErrRepoCard(
 
             ,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                //如果是请求闪烁的索引，闪烁一下
+                containerColor = if (requireBlinkIdx.intValue != -1 && requireBlinkIdx.intValue == idx) {
+                    //高亮2s后解除
+                    doJobThenOffLoading {
+                        delay(UIHelper.getHighlightingTimeInMills())  //解除高亮倒计时
+                        requireBlinkIdx.intValue = -1  //解除高亮
+                    }
+                    highlightColor
+                } else {
+                    cardColor
+                }
+
             ),
 //        border = BorderStroke(1.dp, Color.Black),
             elevation = CardDefaults.cardElevation(

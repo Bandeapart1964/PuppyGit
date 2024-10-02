@@ -4626,6 +4626,10 @@ class Libgit2Helper {
             return repo.workdir().toString().removeSuffix("/")
         }
 
+        fun getRepoConfigFilePath(repo: Repository): String {
+            return repo.itemPath(Repository.Item.CONFIG) ?: ""
+        }
+
         /**
          * create .git file under submodule workdir if it is not exist
          */
@@ -4696,7 +4700,11 @@ class Libgit2Helper {
 
         fun getSubmoduleDtoList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<SubmoduleDto> {
             val parentWorkdirPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
+            val parentDotGitModuleFile = File(parentWorkdirPathNoSlashSuffix, Cons.gitDotModules)
             val list = mutableListOf<SubmoduleDto>()
+            val appContext = AppModel.singleInstanceHolder.appContext
+            val invalidUrlAlertText = appContext.getString(R.string.submodule_invalid_url_err)
+
             Submodule.foreach(repo) { sm, name ->
                 if(!predicate(name)) {
                     return@foreach 0
@@ -4704,13 +4712,19 @@ class Libgit2Helper {
 
                 val smRelativePath = sm.path()
                 val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
+
+                // if call submodule.url() it will crashed when url invalid
+//                val smUrl = sm.url().toString()
+                val smUrl = getValueFromGitConfig(parentDotGitModuleFile, "submodule.$name.url")
+
                 list.add(
                     SubmoduleDto(
                         name=name,
                         relativePathUnderParent = smRelativePath,
                         fullPath = smFullPath,
                         cloned = isValidGitRepo(smFullPath),
-                        remoteUrl = sm.url().toString()
+                        remoteUrl = smUrl,
+                        tempStatus = if(smUrl.isBlank()) invalidUrlAlertText else ""
                     )
                 )
 
@@ -4720,6 +4734,7 @@ class Libgit2Helper {
 
             return list
         }
+
         fun getSubmoduleNameList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<String> {
             val list = mutableListOf<String>()
             Submodule.foreach(repo) { sm, name ->
@@ -4864,6 +4879,13 @@ class Libgit2Helper {
                 SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
 
+                // if don't call addFinalize, you submodule only in local, not tracked by git
+                try {
+                    sm.addFinalize()
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#cloneSubmodules: do addFinalize() err: ${e.localizedMessage}")
+                }
+
                 // recursive clone
                 // !! becareful with this, if repo contains nested-loops, will infinite clone !!
                 if(recursive) {
@@ -4945,9 +4967,190 @@ class Libgit2Helper {
                 MyLog.e(TAG, "#openSubmodule err: ${e.stackTraceToString()}")
                 return null
             }
-
         }
 
+        /**
+         * read path from .git file, content in .git file should like: "gitdir: ../../.git/modules/your/submodule/path",
+         *  it's relative path to it's ".git" folder
+         */
+        fun readPathFromDotGitFile(dotGitFile:File):String {
+            try {
+                MyLog.d(TAG, "#readPathFromDotGitFile: dotGitFile.canonicalPath=${dotGitFile.canonicalPath}")
+                if(dotGitFile.exists().not()) {
+                    return ""
+                }
+
+                // content should like: "gitdir: ../../.git/modules/your/submodule/path"
+                val keyword = "gitdir: "
+
+                dotGitFile.bufferedReader().use {
+                    var line = it.readLine()
+                    while (line != null) {
+                        val keywordIndex = line.indexOf(keyword)
+                        if(keywordIndex != -1) {
+                            return line.substring(keywordIndex+keyword.length)
+                        }
+                        line = it.readLine()
+                    }
+                }
+
+                return ""
+            }catch (e:Exception) {
+                return ""
+            }
+        }
+
+        fun deleteSubmoduleInfoFromGitConfigFile(gitConfigOrGitModuleFile:File, smname:String) {
+            val keyword = "[submodule \"$smname\"]"
+
+            deleteTopLevelItemFromGitConfig(gitConfigOrGitModuleFile, keyword)
+        }
+
+        /**
+         * delete top level item like [xxxx] and all it's sub items from git config style file
+         */
+        fun deleteTopLevelItemFromGitConfig(gitConfig:File, keyName:String) {
+            try {
+                val begin = keyName
+                val newLines = mutableListOf<String>()
+                var matched = false
+                // collective new lines no-matched and not subs of keyName
+                gitConfig.forEachLine{
+                    if(it != begin) {
+                        if(!matched) {
+                            newLines.add(it)
+                        }else if(it.startsWith("[")) {  // avoid repeat begin text
+                            newLines.add(it)
+                            matched = false
+                        }
+                    }else {
+                        matched=true
+                    }
+                }
+
+                // write new lines back to config file
+                gitConfig.bufferedWriter().use { writer ->
+                    if(newLines.isEmpty()) {
+                        writer.write("\n")
+                    }else {
+                        newLines.forEach { line->
+                            writer.write("$line\n")
+                        }
+                    }
+                }
+            }catch (_:Exception){
+
+            }
+        }
+
+        /**
+         * support most 3 levels, e.g. "submodule.abc.url" or "user.name" or "url", but is not perfect handle in-formal style,
+         * example: if your config's has [abc     "k1"], it will not handle correctly, because between abc and "k1" has more than 1 spaces
+         */
+        fun getValueFromGitConfig(configFile:File, key:String):String {
+            try {
+                val split = key.split(".")
+                return getValueFromGitConfigByKeyArr(configFile, split)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#getValueFromGitConfig err: ${e.stackTraceToString()}")
+                return ""
+            }
+        }
+
+        private fun getValueFromGitConfigByKeyArr(configFile: File, keyArr:List<String>):String {
+            if(keyArr.size >3 || keyArr.size<1) {
+                return ""
+            }
+
+            return if(keyArr.size == 3) {
+                getValueFromGitConfigByKeyArr3Level(configFile, keyArr)
+            }else if(keyArr.size==2) {
+                getValueFromGitConfigByKeyArr2Level(configFile, keyArr)
+            }else {
+                getValueFromGitConfigByKeyArr1Level(configFile, keyArr)
+            }
+        }
+
+        private fun getValueFromGitConfigByKeyArr3Level(configFile: File, keyArr:List<String>):String{
+            val l1 = keyArr[0]
+            val l2 = keyArr[1]
+            val l3 = keyArr[2]
+
+            val begin = "[$l1 \"$l2\"]"
+
+            return getValueFromGitConfigByKeyArr2or3Level(configFile, begin, l3)
+        }
+
+        private fun getValueFromGitConfigByKeyArr2Level(configFile: File, keyArr:List<String>):String{
+            val l1 = keyArr[0]
+            val l2 = keyArr[1]
+
+            val begin = "[$l1]"
+
+            return getValueFromGitConfigByKeyArr2or3Level(configFile, begin, l2)
+        }
+
+        private fun getValueFromGitConfigByKeyArr2or3Level(configFile: File, key1:String, key2:String):String{
+            val begin = key1
+            var matched = false
+
+            configFile.bufferedReader().use { br ->
+                var line = br.readLine()
+                while (line!=null) {
+                    line = line.trim()
+
+                    if(matched) {
+                        val idx = line.indexOf("=")
+                        val rightStartIdx = idx+1
+                        if(idx > 0 && rightStartIdx<line.length) {  // idx == 0 or < 0 are invalid, because left of "=" must  has at least 1 char
+                            val left = line.substring(0, idx).trim()
+                            val right = line.substring(rightStartIdx).trim()
+                            if(left == key2) {
+                                return right
+                            }
+                        }
+                    }
+
+                    if(begin == line) {
+                        matched = true
+                    }else if(line.startsWith("[")) {  //stars with "[" but is not begin
+                        matched = false
+                    }
+
+                    line = br.readLine()
+                }
+
+            }
+
+            return ""
+        }
+
+        private fun getValueFromGitConfigByKeyArr1Level(configFile: File, keyArr:List<String>):String{
+            val l1 = keyArr[0]
+
+            configFile.bufferedReader().use { br ->
+                var line = br.readLine()
+
+                while (line!=null) {
+                    line = line.trim()
+
+                    val idx = line.indexOf("=")
+                    val rightStartIdx = idx+1
+                    if(idx > 0 && rightStartIdx<line.length) {  // idx == 0 or < 0 are invalid, because left of "=" must  has at least 1 char
+                        val left = line.substring(0, idx).trim()
+                        val right = line.substring(rightStartIdx).trim()
+                        if(left == l1) {
+                            return right
+                        }
+                    }
+
+                    line = br.readLine()
+                }
+
+            }
+
+            return ""
+        }
     }
 
 }

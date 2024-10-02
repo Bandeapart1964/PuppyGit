@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
@@ -33,16 +34,19 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
+import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
+import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getFormatTimeFromSec
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.github.git24j.core.Repository
+import kotlinx.coroutines.delay
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -54,11 +58,14 @@ fun RepoCard(
     repoDto: RepoEntity,
     repoDtoIndex:Int,
     goToFilesPage:(path:String) -> Unit,
+    requireBlinkIdx:MutableIntState,
     workStatusOnclick:(clickedRepo:RepoEntity, status:Int)->Unit
 ) {
     val navController = AppModel.singleInstanceHolder.navController
     val haptic = AppModel.singleInstanceHolder.haptic
     val appContext = AppModel.singleInstanceHolder.appContext
+
+    val inDarkTheme = Theme.inDarkTheme
 
     val repoNotReady = Libgit2Helper.isRepoStatusNotReady(repoDto)
     val repoErr = Libgit2Helper.isRepoStatusErr(repoDto)
@@ -66,6 +73,10 @@ fun RepoCard(
     //如果仓库设了临时状态，说明仓库能正常工作，否则检查仓库状态
     //其实原本没判断临时状态，但是当仓库执行操作时，例如 fetching/pushing，gitRepoState会变成null，从而误认为仓库invalid，因此增加了临时状态的判断
     val repoStatusGood = !repoNotReady && (repoDto.tmpStatus.isNotBlank() || (repoDto.gitRepoState!=null && !repoErr))
+
+
+    val cardColor = MaterialTheme.colorScheme.surface
+    val highlightColor = if(inDarkTheme) Color(0xFF9D9C9C) else Color(0xFFFFFFFF)
 
     val clipboardManager = LocalClipboardManager.current
     val viewDialogText = rememberSaveable { mutableStateOf("") }
@@ -131,7 +142,18 @@ fun RepoCard(
 
             ,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                //如果是请求闪烁的索引，闪烁一下
+                containerColor = if (requireBlinkIdx.intValue != -1 && requireBlinkIdx.intValue == repoDtoIndex) {
+                    //高亮2s后解除
+                    doJobThenOffLoading {
+                        delay(UIHelper.getHighlightingTimeInMills())  //解除高亮倒计时
+                        requireBlinkIdx.intValue = -1  //解除高亮
+                    }
+                    highlightColor
+                } else {
+                    cardColor
+                }
+
             ),
 //        border = BorderStroke(1.dp, Color.Black),
             elevation = CardDefaults.cardElevation(
