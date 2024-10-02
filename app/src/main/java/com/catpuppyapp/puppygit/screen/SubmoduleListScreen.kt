@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -20,7 +21,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadForOffline
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
@@ -32,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -56,12 +57,12 @@ import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.BottomBar
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.CopyableDialog
-import com.catpuppyapp.puppygit.compose.CreateTagDialog
 import com.catpuppyapp.puppygit.compose.FilterTextField
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -76,11 +77,11 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
+import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
-import com.github.git24j.core.Submodule
 
 private val TAG = "SubmoduleListScreen"
 private val stateKeyTag = "SubmoduleListScreen"
@@ -123,31 +124,75 @@ fun SubmoduleListScreen(
 
 
 
-    val nameOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val overwriteIfNameExistOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val showDialogOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val hashOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val msgOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-//    val requireUserInputHashOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val annotateOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val initNewTagDialog = { hash:String ->
-//        hashOfNewTag.value = hash  //这里不重置hash值了，感觉不重置用户体验更好？
-
-        overwriteIfNameExistOfNewTag.value = false
-        showDialogOfNewTag.value = true
+    val showCreateDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val remoteUrlForCreate = StateUtil.getRememberSaveableState(initValue = "")
+    val pathForCreate = StateUtil.getRememberSaveableState(initValue = "")
+    val initCreateDialog = {
+        showCreateDialog.value = true
     }
 
-    if(showDialogOfNewTag.value) {
-        CreateTagDialog(
-            showDialog = showDialogOfNewTag,
-            curRepo = curRepo.value,
-            tagName = nameOfNewTag,
-            commitHashShortOrLong = hashOfNewTag,
-            annotate = annotateOfNewTag,
-            tagMsg = msgOfNewTag,
-            force = overwriteIfNameExistOfNewTag
+    if(showCreateDialog.value) {
+        ConfirmDialog(
+            title = stringResource(R.string.create),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn{
+                    //remoteUrl
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        value = remoteUrlForCreate.value,
+                        singleLine = true,
+                        onValueChange = {
+                            remoteUrlForCreate.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.url))
+                        },
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    //path
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        value = pathForCreate.value,
+                        singleLine = true,
+                        onValueChange = {
+                            pathForCreate.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.path))
+                        },
+                    )
+                }
+            },
+
+            onCancel = {showCreateDialog.value = false}
         ) {
-            changeStateTriggerRefreshPage(needRefresh)
+            showCreateDialog.value = false
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.creating)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        Libgit2Helper.addSubmodule(
+                            repo = repo,
+                            remoteUrl = remoteUrlForCreate.value,
+                            relativePathUnderParentRepo = pathForCreate.value
+                        )
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    val errPrefix = "create submodule '${pathForCreate.value}' err: "
+                    val errMsg = e.localizedMessage
+                    Msg.requireShowLongDuration(errMsg ?: errPrefix)
+                    createAndInsertError(curRepo.value.id, "$errPrefix$errMsg")
+                    MyLog.e(TAG, "#CreateDialog err: path=$pathForCreate, url=$remoteUrlForCreate, err=${e.stackTraceToString()}")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
         }
     }
 
@@ -213,11 +258,11 @@ fun SubmoduleListScreen(
 
     val getDetail = { item:SubmoduleDto ->
         val sb = StringBuilder()
-        sb.appendLine(appContext.getString(R.string.name)+":"+item.name).appendLine()
-            .appendLine(appContext.getString(R.string.url)+":"+item.remoteUrl).appendLine()
-            .appendLine(appContext.getString(R.string.path_under_repo)+":"+item.relativePathUnderParent).appendLine()
-            .appendLine(appContext.getString(R.string.path)+":"+item.fullPath).appendLine()
-            .appendLine(appContext.getString(R.string.status)+":"+item.getStatus())
+        sb.appendLine(appContext.getString(R.string.name)+": "+item.name).appendLine()
+            .appendLine(appContext.getString(R.string.url)+": "+item.remoteUrl).appendLine()
+            .appendLine(appContext.getString(R.string.path_under_repo)+": "+item.relativePathUnderParent).appendLine()
+            .appendLine(appContext.getString(R.string.path)+": "+item.fullPath).appendLine()
+            .appendLine(appContext.getString(R.string.status)+": "+item.getStatus())
 
         sb.toString()
 
@@ -527,7 +572,7 @@ fun SubmoduleListScreen(
                         }){
                             Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
                                 Text(
-                                    text= stringResource(R.string.tags),
+                                    text= stringResource(R.string.submodules),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -586,20 +631,11 @@ fun SubmoduleListScreen(
                         }
 
                         LongPressAbleIconBtn(
-                            tooltipText = stringResource(R.string.fetch_tags),
-                            icon =  Icons.Filled.Download,
-                            iconContentDesc = stringResource(R.string.fetch_tags),
-                        ) {
-                            initFetchTagDialog()
-                        }
-
-                        LongPressAbleIconBtn(
-                            tooltipText = stringResource(R.string.create_tag),
+                            tooltipText = stringResource(R.string.create),
                             icon =  Icons.Filled.Add,
-                            iconContentDesc = stringResource(R.string.create_tag),
+                            iconContentDesc = stringResource(R.string.create),
                         ) {
-                            val hash = ""
-                            initNewTagDialog(hash)
+                            initCreateDialog()
                         }
                     }
                 },
@@ -646,7 +682,7 @@ fun SubmoduleListScreen(
                     ,
                 ) {
                     Text(
-                        text = stringResource(R.string.no_tags_found),
+                        text = stringResource(R.string.no_submodules_found),
                     )
                 }
                 Row(
@@ -657,25 +693,12 @@ fun SubmoduleListScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.fetch),
-                        color = MyStyleKt.ClickableText.color,
-                        style = MyStyleKt.ClickableText.style,
-                        modifier = MyStyleKt.ClickableText.modifierNoPadding
-                            .clickable {
-                                initFetchTagDialog()
-                            },
-                    )
-                    Text(
-                        text =  " "+stringResource(R.string.or_str)+" ",
-                    )
-                    Text(
                         text =  stringResource(R.string.create),
                         color = MyStyleKt.ClickableText.color,
                         style = MyStyleKt.ClickableText.style,
                         modifier = MyStyleKt.ClickableText.modifierNoPadding
                             .clickable {
-                                val hash = ""
-                                initNewTagDialog(hash)
+                                initCreateDialog()
                             }
                         ,
                     )

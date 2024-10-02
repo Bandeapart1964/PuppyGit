@@ -194,26 +194,43 @@ class Libgit2Helper {
     }
 
     object SubmoduleDotGitFileMan {
-        fun backupDotGitFileForSubmodule(submoduleDotGitFullPath:String) {
+        private fun genSubmoduleDotGitFilePath(parentFullPath:String, submodulePathUnderParent:String):String {
+            return File(parentFullPath, File(submodulePathUnderParent, ".git").canonicalPath).canonicalPath
+        }
+
+        fun backupDotGitFileForSubmodule(parentFullPath:String, submodulePathUnderParent:String) {
+            val submoduleDotGitFullPath = genSubmoduleDotGitFilePath(parentFullPath, submodulePathUnderParent)
             try {
+                // if src not exist, return
+                if(!File(submoduleDotGitFullPath).exists()) {
+                    return
+                }
+
                 val backup = File(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir(), submoduleDotGitFullPath)
                 backup.parentFile?.mkdirs()  // create parent dirs
-                File(submoduleDotGitFullPath).copyTo(backup)
+                File(submoduleDotGitFullPath).copyTo(backup, overwrite = true)
             }catch (e:Exception) {
                 MyLog.e(TAG, "#backupDotGitFileForSubmodule: backup git file failed, path=$submoduleDotGitFullPath")
             }
         }
 
-        fun restoreDotGitFileForSubmodule(submoduleDotGitFullPath:String) {
-            if(File(submoduleDotGitFullPath).exists()) {
-                return
+        fun restoreDotGitFileForSubmodule(parentFullPath:String, submodulePathUnderParent:String) {
+            val submoduleDotGitFullPath = genSubmoduleDotGitFilePath(parentFullPath, submodulePathUnderParent)
+            try {
+                // if target already exist, return
+                if(File(submoduleDotGitFullPath).exists()) {
+                    return
+                }
+
+                // if submodule's .git file non-exists , try restore
+                val backup = File(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir(), submoduleDotGitFullPath)
+                if(backup.exists()) {
+                    backup.copyTo(File(submoduleDotGitFullPath), overwrite = true)
+                }
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#restoreDotGitFileForSubmodule: restore git file failed, path=$submoduleDotGitFullPath")
             }
 
-            // if submodule's .git file non-exists , try restore
-            val backup = File(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir(), submoduleDotGitFullPath)
-            if(backup.exists()) {
-                backup.copyTo(File(submoduleDotGitFullPath), overwrite = true)
-            }
         }
 
     }
@@ -4571,8 +4588,11 @@ class Libgit2Helper {
                 // because when a repo is a submodule, maybe it will haven't .git folder, but has .git file,
                 // the .git file include a relative path to ".git" folder(maybe is not named .git folder, but meant same)
                 // and the repoFullPath should be .git files folder
-                Repository.open(repoFullPath).use {}
-                return true
+                Repository.open(repoFullPath).use { repo ->
+                    return !repo.headUnborn()
+                    // or
+//                    return resolveHEAD(repo) != null
+                }
             }catch (e:Exception) {
                 return false
             }
@@ -4669,7 +4689,12 @@ class Libgit2Helper {
          * @param useGitlink if true, will create .git file under submodule, else will create .git folder, pc git default create .git file, so recommand set it to true
          */
         fun addSubmodule(repo: Repository, remoteUrl: String, relativePathUnderParentRepo:String, useGitlink:Boolean=true) {
-            Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink);
+            Submodule.addSetup(repo, URI.create(remoteUrl), relativePathUnderParentRepo, useGitlink)
+
+            SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(
+                    getRepoWorkdirNoEndsWithSlash(repo),
+                    relativePathUnderParentRepo
+            )
         }
 
         fun getSubmoduleDtoList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<SubmoduleDto> {
@@ -4812,10 +4837,7 @@ class Libgit2Helper {
                 try {
                     MyLog.d(TAG,"#cloneSubmodules: will update submodule '$name'")
 
-                    val smDotGitFile = File(repoFullPathNoSlashSuffix, submodulePath+Cons.slash+".git")
-                    if(!smDotGitFile.exists()) {
-                        SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(smDotGitFile.canonicalPath)
-                    }
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
                     val init = true
                     sm.update(init, updateOpts)
@@ -4839,7 +4861,7 @@ class Libgit2Helper {
             try {
                 sm.repoInit(true)
                 // if init repo success, backup the .git file, because it may delete by libgit2...................
-                SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(File(parentRepoFullPath, sm.path()+Cons.slash+".git").canonicalPath)
+                SubmoduleDotGitFileMan.backupDotGitFileForSubmodule(parentRepoFullPath, sm.path())
             }catch (e:Exception) {
                 MyLog.e(TAG, "#submoduleRepoInit: repoInit err: ${e.localizedMessage}")
             }
@@ -4854,10 +4876,8 @@ class Libgit2Helper {
                     return
                 }
                 val submodulePath = sm.path()
-                val smDotGitFile = File(repoFullPathNoSlashSuffix, submodulePath+Cons.slash+".git")
-                if(!smDotGitFile.exists()) {
-                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(smDotGitFile.canonicalPath)
-                }
+
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
