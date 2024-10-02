@@ -112,7 +112,8 @@ fun SubmoduleItem(
             Text(text = thisObj.getStatus(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Light
+                fontWeight = FontWeight.Light,
+                color = thisObj.getStatusColor()
             )
         }
 

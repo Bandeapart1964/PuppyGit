@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.git
 
+import androidx.compose.ui.graphics.Color
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.utils.AppModel
 
@@ -22,5 +23,15 @@ data class SubmoduleDto (
 
     fun getStatus():String {
         return tempStatus.ifBlank { getClonedText() }
+    }
+
+    fun getStatusColor(): Color {
+        return if(tempStatus.isNotBlank()) {
+            Color.Red
+        }else if(cloned) {
+            Color(0xFF4CAF50)
+        }else {
+            Color.Unspecified
+        }
     }
 }
