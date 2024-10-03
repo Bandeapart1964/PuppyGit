@@ -884,5 +884,7 @@
     <string name="ignore">Ignore</string>
     <string name="will_ignore_selected_files_are_you_sure">Will ignore selected files, are you sure?</string>
     <string name="edit_ignore_file">Edit Ignore File</string>
+    <string name="will_init_selected_folders_to_git_repos_are_you_sure">Will init selected folders to git repos, are you sure?</string>
+    <string name="n_inited">ph_a3f241dc_1 inited</string>
 
 </resources>

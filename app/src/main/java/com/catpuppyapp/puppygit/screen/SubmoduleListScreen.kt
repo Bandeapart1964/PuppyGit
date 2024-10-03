@@ -143,6 +143,22 @@ fun SubmoduleListScreen(
             requireShowTextCompose = true,
             textCompose = {
                 ScrollableColumn{
+                    //path
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        value = pathForCreate.value,
+                        singleLine = true,
+                        onValueChange = {
+                            pathForCreate.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.path))
+                        },
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
                     //remoteUrl
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
@@ -157,21 +173,6 @@ fun SubmoduleListScreen(
                         },
                     )
 
-                    Spacer(Modifier.height(10.dp))
-
-                    //path
-                    TextField(
-                        modifier = Modifier.fillMaxWidth(),
-
-                        value = pathForCreate.value,
-                        singleLine = true,
-                        onValueChange = {
-                            pathForCreate.value = it
-                        },
-                        label = {
-                            Text(stringResource(R.string.path))
-                        },
-                    )
                 }
             },
             okBtnEnabled = pathForCreate.value.isNotBlank() &&remoteUrlForCreate.value.isNotBlank(),

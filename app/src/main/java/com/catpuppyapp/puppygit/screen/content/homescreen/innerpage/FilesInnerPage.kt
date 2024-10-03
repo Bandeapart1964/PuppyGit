@@ -72,6 +72,7 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dev.applyPatchTestPassed
 import com.catpuppyapp.puppygit.dev.importReposFromFilesTestPassed
+import com.catpuppyapp.puppygit.dev.initRepoFromFilesPageTestPassed
 import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dto.FileItemDto
 import com.catpuppyapp.puppygit.etc.Ret
@@ -1186,6 +1187,46 @@ fun FilesInnerPage(
         }
     }
 
+    val showInitRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
+    if(showInitRepoDialog.value) {
+        val selctedDirs = selectedItems.value.filter { it.isDir }
+
+        if(selctedDirs.isEmpty()) {
+            showInitRepoDialog.value = false
+            Msg.requireShow(stringResource(R.string.no_dir_selected))
+        }else {
+            ConfirmDialog(
+                title = stringResource(R.string.init_repo),
+                text = stringResource(R.string.will_init_selected_folders_to_git_repos_are_you_sure),
+                okBtnEnabled = selctedDirs.isNotEmpty(),
+                onCancel = { showInitRepoDialog.value = false}
+            ) {
+                showInitRepoDialog.value=false
+                doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
+                    try {
+                        var successCnt = 0
+                        selctedDirs.forEach {
+                            try {
+                                if(it.isDir) {
+                                    Libgit2Helper.initGitRepo(it.fullPath)
+                                    successCnt++
+                                }
+                            }catch (e:Exception) {
+//                            Msg.requireShowLongDuration(e.localizedMessage ?: "err")
+                                MyLog.e(TAG, "init repo in FilesPage err: path=${it.fullPath}, err=${e.localizedMessage}")
+                            }
+                        }
+
+                        Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_inited), listOf(""+successCnt)))
+                    }finally {
+                        changeStateTriggerRefreshPage(needRefreshFilesPage)
+                    }
+                }
+            }
+        }
+
+    }
+
     val showImportAsRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
     val isReposParentFolderForImport = StateUtil.getRememberSaveableState(initValue = false)
     if(showImportAsRepoDialog.value) {
@@ -1392,6 +1433,7 @@ fun FilesInnerPage(
             stringResource(id = R.string.remove_from_git),  //列表显示顺序就是这里的排序，上到下
             stringResource(id = R.string.details),
             if(proFeatureEnabled(importReposFromFilesTestPassed)) stringResource(id = R.string.import_as_repo) else "",  // empty string will be ignore when display menu items
+            if(proFeatureEnabled(initRepoFromFilesPageTestPassed)) stringResource(id = R.string.init_repo) else "",
         )
         val selectionModeMoreItemOnClickList = listOf(
             export@{
@@ -1434,13 +1476,18 @@ fun FilesInnerPage(
             importAsRepo@{
                 isReposParentFolderForImport.value = false
                 showImportAsRepoDialog.value = true
+            },
+            initRepo@{
+                showInitRepoDialog.value = true
             }
         )
         val selectionModeMoreItemEnableList = listOf(
             {getSelectedFilesCount()>0}, //是否启用export
             {getSelectedFilesCount()>0}, //是否启用remove from git
             {getSelectedFilesCount()>0}, //是否启用details
-            {selectedItems.value.indexOfFirst{it.isDir} != -1}  //enable import as repo. (if has dirs in selected items, then enable else disbale)
+//            {selectedItems.value.indexOfFirst{it.isDir} != -1}  //enable import as repo. (if has dirs in selected items, then enable else disbale) (after clicked then check better than check at every time selected list change)
+            {getSelectedFilesCount()>0},  // import as repos
+            {getSelectedFilesCount()>0}, // init repo
         )
 
 

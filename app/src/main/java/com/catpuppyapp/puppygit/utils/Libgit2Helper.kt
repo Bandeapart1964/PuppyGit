@@ -2055,12 +2055,13 @@ class Libgit2Helper {
 //            }
 
 
-            val needQueryRefNameByFunc = branchFullRefName.isEmpty()
-            val needAddParentsByFunc = (parents == null)  //parent若为null将自动添加parents (ps:会处理merge时多head的情况)
-            val parents = if(needAddParentsByFunc) mutableListOf<Commit>() else parents!!
+            val firstCommit = repo.headUnborn()
+            val needQueryRefNameByFunc = branchFullRefName.isEmpty() && !firstCommit
+            val needAddParentsByFunc = (parents == null && !firstCommit)  //parent若为null将自动添加parents (ps:会处理merge时多head的情况)
+            val parents = if(needAddParentsByFunc || firstCommit) mutableListOf<Commit>() else parents!!
             var branchFullRefName = branchFullRefName  //非detached HEAD时为分支名，否则为"HEAD"
 
-            if(needAddParentsByFunc || needQueryRefNameByFunc) {  //只有这两种情况需要查询head，所以判断一下
+            if(firstCommit.not() && (needAddParentsByFunc || needQueryRefNameByFunc)) {  //只有这两种情况需要查询head，所以判断一下
                 //取出head 引用名，创建提交后会更新引用
                 // 这是个普通的创建提交的案例，如果是merge成功后创建的提交应该有两个父提交： HEAD 和 targetBranch.
                 val headRef = resolveRefByName(repo, "HEAD")
@@ -2116,6 +2117,11 @@ class Libgit2Helper {
                 cmtmsg
             }else {
                 msg
+            }
+
+            // born HEAD for first commit
+            if(firstCommit) {
+                branchFullRefName = "HEAD"
             }
 
             return doCreateCommit(repo,msg,username,email,branchFullRefName,parents, amend, overwriteAuthorWhenAmend, cleanRepoStateIfSuccess)
@@ -5330,6 +5336,14 @@ class Libgit2Helper {
             }
 
             return ""
+        }
+
+        /**
+         * init git repo, if do init for a inited repo, nothing change
+         */
+        fun initGitRepo(path: String) {
+            val isBare = false
+            Repository.init(path, isBare)
         }
     }
 
