@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.compose
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,9 +25,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 
-//下拉单选框，不过好像在弹窗使用会崩溃，可能是谷歌bug
-@OptIn(ExperimentalFoundationApi::class)
-@Deprecated("may crashed if use this in dialog")
+//下拉单选框，不过好像在弹窗使用会崩溃，可能是谷歌bug(20241003 fixed)
+//@OptIn(ExperimentalFoundationApi::class)
+//@Deprecated("may crashed if use this in dialog")  // 20241003 update: new version of jetpack compose are fixed this bug
 @Composable
 fun<T> SingleSelectList(
     outterModifier: Modifier = Modifier.fillMaxWidth(),
