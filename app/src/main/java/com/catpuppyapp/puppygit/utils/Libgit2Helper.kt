@@ -2872,8 +2872,13 @@ class Libgit2Helper {
          */
         fun push(repo: Repository, remoteName: String, pushRefSpec: String, credential: CredentialEntity?, force: Boolean=false):Ret<String?> {
             //head detached没有上游，不能push
-            if(repo.headDetached()) {
-                return Ret.createError(null, "push failed: head detached!", Ret.ErrCode.headDetached)
+            //publish a branch which is not current active, even head detached, still should can be pushing
+//            if(repo.headDetached()) {
+//                return Ret.createError(null, "push failed: head detached!", Ret.ErrCode.headDetached)
+//            }
+
+            if(pushRefSpec.isBlank()) {
+                return Ret.createError(null, "invalid push refspec")
             }
 
             //+的作用是force push，如果带+，当本地和远程不一致时（无法fast-forward)，会强制用本地覆盖远程提交列表，但一般远程仓库主分支都有覆盖保护，所以可能会push失败
