@@ -655,7 +655,7 @@ fun CloneScreen(
                     outterModifier = Modifier.fillMaxWidth(.8f),
                     dropDownMenuModifier = Modifier.fillMaxWidth(.8f),
                     optionsList=storagePathList.value,
-                    selectedOptionIndex=storagePathSelectedIndex.intValue,
+                    selectedOptionIndex=storagePathSelectedIndex,
                     selectedOptionValue = storagePathSelectedPath.value,
                     menuItemFormatter = {value ->
                         FsUtils.getPathWithInternalOrExternalPrefix(value)

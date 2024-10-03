@@ -74,6 +74,7 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ResetDialog
+import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -752,46 +753,58 @@ fun CommitListScreen(
                     Row(modifier = Modifier.padding(padding)) {
                         Text(text = stringResource(R.string.select_a_parent_for_find_changes)+":")
                     }
-                    //下拉列表，弹窗显示这个会崩溃，日后不崩溃了再启用
-                    //SingleSelectList(optionsList = optionsList, selectedOption = selectedOption)
 
-                    MyLazyColumn(
-                        modifier = Modifier.heightIn(max=150.dp),
-                        requireUseParamModifier = true,
-                        contentPadding = PaddingValues(0.dp),
-                        list = createPatchParentList.value,
-                        listState = StateUtil.getRememberLazyListState(),
-                        requireForEachWithIndex = true,
-                        requirePaddingAtBottom =false
-                    ) {k, optext ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
-
-                                .selectable(
-                                    selected = createPatchParentHash.value == optext,
-                                    onClick = {
-                                        //更新选择值
-                                        createPatchParentHash.value = optext
-                                    },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = padding),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = createPatchParentHash.value == optext,
-                                onClick = null // null recommended for accessibility with screenreaders
-                            )
-                            Text(
-                                text = Libgit2Helper.getShortOidStrByFull(optext),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = padding)
-                            )
+                    SingleSelectList(
+                        optionsList = createPatchParentList.value,
+                        selectedOptionIndex = null,
+                        selectedOptionValue = createPatchParentHash.value,
+                        menuItemSelected = {_, value-> value==createPatchParentHash.value},
+                        menuItemOnClick = {idx, value ->
+                            createPatchParentHash.value = value
+                        },
+                        menuItemFormatter = {
+                            Libgit2Helper.getShortOidStrByFull(it)
                         }
+                    )
 
-                    }
+//
+//                    MyLazyColumn(
+//                        modifier = Modifier.heightIn(max=150.dp),
+//                        requireUseParamModifier = true,
+//                        contentPadding = PaddingValues(0.dp),
+//                        list = createPatchParentList.value,
+//                        listState = StateUtil.getRememberLazyListState(),
+//                        requireForEachWithIndex = true,
+//                        requirePaddingAtBottom =false
+//                    ) {k, optext ->
+//                        Row(
+//                            Modifier
+//                                .fillMaxWidth()
+//                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
+//
+//                                .selectable(
+//                                    selected = createPatchParentHash.value == optext,
+//                                    onClick = {
+//                                        //更新选择值
+//                                        createPatchParentHash.value = optext
+//                                    },
+//                                    role = Role.RadioButton
+//                                )
+//                                .padding(horizontal = padding),
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            RadioButton(
+//                                selected = createPatchParentHash.value == optext,
+//                                onClick = null // null recommended for accessibility with screenreaders
+//                            )
+//                            Text(
+//                                text = Libgit2Helper.getShortOidStrByFull(optext),
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                modifier = Modifier.padding(start = padding)
+//                            )
+//                        }
+//
+//                    }
                 }
             },
             onCancel = { showCreatePatchDialog.value = false }
@@ -898,46 +911,59 @@ fun CommitListScreen(
                     Row(modifier = Modifier.padding(padding)) {
                         Text(text = stringResource(R.string.select_a_parent_for_find_changes)+":")
                     }
-                    //下拉列表，弹窗显示这个会崩溃，日后不崩溃了再启用
-                    //SingleSelectList(optionsList = optionsList, selectedOption = selectedOption)
 
-                    MyLazyColumn(
-                        modifier = Modifier.heightIn(max=150.dp),
-                        requireUseParamModifier = true,
-                        contentPadding = PaddingValues(0.dp),
-                        list = cherrypickParentList.value,
-                        listState = StateUtil.getRememberLazyListState(),
-                        requireForEachWithIndex = true,
-                        requirePaddingAtBottom =false
-                    ) {k, optext ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
 
-                                .selectable(
-                                    selected = cherrypickParentHash.value == optext,
-                                    onClick = {
-                                        //更新选择值
-                                        cherrypickParentHash.value = optext
-                                    },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = padding),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = cherrypickParentHash.value == optext,
-                                onClick = null // null recommended for accessibility with screenreaders
-                            )
-                            Text(
-                                text = Libgit2Helper.getShortOidStrByFull(optext),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = padding)
-                            )
+                    SingleSelectList(
+                        optionsList = cherrypickParentList.value,
+                        selectedOptionIndex = null,
+                        selectedOptionValue = cherrypickParentHash.value,
+                        menuItemSelected = {_, value-> value==cherrypickParentHash.value},
+                        menuItemOnClick = {idx, value ->
+                            cherrypickParentHash.value = value
+                        },
+                        menuItemFormatter = {
+                            Libgit2Helper.getShortOidStrByFull(it)
                         }
+                    )
 
-                    }
+//
+//                    MyLazyColumn(
+//                        modifier = Modifier.heightIn(max=150.dp),
+//                        requireUseParamModifier = true,
+//                        contentPadding = PaddingValues(0.dp),
+//                        list = cherrypickParentList.value,
+//                        listState = StateUtil.getRememberLazyListState(),
+//                        requireForEachWithIndex = true,
+//                        requirePaddingAtBottom =false
+//                    ) {k, optext ->
+//                        Row(
+//                            Modifier
+//                                .fillMaxWidth()
+//                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
+//
+//                                .selectable(
+//                                    selected = cherrypickParentHash.value == optext,
+//                                    onClick = {
+//                                        //更新选择值
+//                                        cherrypickParentHash.value = optext
+//                                    },
+//                                    role = Role.RadioButton
+//                                )
+//                                .padding(horizontal = padding),
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            RadioButton(
+//                                selected = cherrypickParentHash.value == optext,
+//                                onClick = null // null recommended for accessibility with screenreaders
+//                            )
+//                            Text(
+//                                text = Libgit2Helper.getShortOidStrByFull(optext),
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                modifier = Modifier.padding(start = padding)
+//                            )
+//                        }
+//
+//                    }
 
 
 

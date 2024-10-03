@@ -74,43 +74,47 @@ fun SetUpstreamDialog(
                     Text(text = stringResource(R.string.err_remote_list_is_empty),
                         color = MyStyleKt.TextColor.error)
                 }else{
-                    MyLazyColumn(
-                        modifier = Modifier.heightIn(max=150.dp),
-                        requireUseParamModifier = true,
-                        contentPadding = PaddingValues(0.dp),
-                        list = remoteList,
-                        listState = StateUtil.getRememberLazyListState(),
-                        requireForEachWithIndex = true,
-                        requirePaddingAtBottom =false
-                    ) {k, optext ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
 
-                                .selectable(
-                                    selected = selectedOption.intValue == k,
-                                    onClick = {
-                                        //更新选择值
-                                        selectedOption.intValue = k
-                                    },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selectedOption.intValue==k,
-                                onClick = null // null recommended for accessibility with screenreaders
-                            )
-                            Text(
-                                text = optext,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 10.dp)
-                            )
-                        }
+                    SingleSelectList(optionsList = remoteList, selectedOptionIndex = selectedOption)
 
-                    }
+//
+//                    MyLazyColumn(
+//                        modifier = Modifier.heightIn(max=150.dp),
+//                        requireUseParamModifier = true,
+//                        contentPadding = PaddingValues(0.dp),
+//                        list = remoteList,
+//                        listState = StateUtil.getRememberLazyListState(),
+//                        requireForEachWithIndex = true,
+//                        requirePaddingAtBottom =false
+//                    ) {k, optext ->
+//                        Row(
+//                            Modifier
+//                                .fillMaxWidth()
+//                                .heightIn(min = MyStyleKt.RadioOptions.minHeight)
+//
+//                                .selectable(
+//                                    selected = selectedOption.intValue == k,
+//                                    onClick = {
+//                                        //更新选择值
+//                                        selectedOption.intValue = k
+//                                    },
+//                                    role = Role.RadioButton
+//                                )
+//                                .padding(horizontal = 10.dp),
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            RadioButton(
+//                                selected = selectedOption.intValue==k,
+//                                onClick = null // null recommended for accessibility with screenreaders
+//                            )
+//                            Text(
+//                                text = optext,
+//                                style = MaterialTheme.typography.bodyLarge,
+//                                modifier = Modifier.padding(start = 10.dp)
+//                            )
+//                        }
+//
+//                    }
                 }
 
                 Row(modifier = Modifier.padding(5.dp)) {

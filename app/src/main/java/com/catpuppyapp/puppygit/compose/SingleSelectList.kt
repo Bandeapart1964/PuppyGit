@@ -18,11 +18,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.utils.UIHelper
+import com.catpuppyapp.puppygit.utils.isGoodIndexForList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 //下拉单选框，不过好像在弹窗使用会崩溃，可能是谷歌bug(20241003 fixed)
@@ -34,11 +36,12 @@ fun<T> SingleSelectList(
     dropDownMenuModifier:Modifier=Modifier.fillMaxWidth(),
 
     optionsList:List<T>,
-    selectedOptionIndex:Int,
-    selectedOptionValue:T,
+    selectedOptionIndex:MutableIntState?,
+    selectedOptionValue:T? = if(selectedOptionIndex!=null && isGoodIndexForList(selectedOptionIndex.intValue, optionsList)) optionsList[selectedOptionIndex.intValue] else null,
 
     menuItemFormatter:(value:T)->String = {value-> ""+value},
-    menuItemOnClick:(index:Int, value:T)->Unit = {index, value->},
+    menuItemOnClick:(index:Int, value:T)->Unit = {index, value-> selectedOptionIndex?.intValue = index},
+    menuItemSelected:(index:Int, value:T) -> Boolean = {index, value -> selectedOptionIndex?.intValue == index},
 
     menuItemTrailIcon:ImageVector?=null,
     menuItemTrailIconDescription:String?=null,
@@ -58,7 +61,7 @@ fun<T> SingleSelectList(
             containerColor = UIHelper.defaultCardColor(),
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 6.dp
+            defaultElevation = 3.dp
         )
 
     ) {
@@ -73,7 +76,7 @@ fun<T> SingleSelectList(
                     .align(Alignment.CenterStart)
 
             ) {
-                Text(text = menuItemFormatter(selectedOptionValue))
+                Text(text = if(selectedOptionValue==null) "null" else menuItemFormatter(selectedOptionValue))
             }
 
             Row(
@@ -105,7 +108,7 @@ fun<T> SingleSelectList(
                 ){
                     //列出其余条目
                     DropdownMenuItem(
-                        text = { Text(if(selectedOptionIndex == index) "*${menuItemFormatter(value)}" else menuItemFormatter(value)) },
+                        text = { Text(if(menuItemSelected(index, value)) "*${menuItemFormatter(value)}" else menuItemFormatter(value)) },
                         onClick ={
                             expandDropdownMenu.value=false
 
