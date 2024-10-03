@@ -1098,40 +1098,6 @@ fun RepoInnerPage(
 //                    goToFilesPage(curRepo.value.fullSavePath)
 //                }
 
-                //show jump to parent repo if has parentRepoId
-                if(curRepo.value.parentRepoId.isNotBlank()) {
-                    val parentRepoId = curRepo.value.parentRepoId
-                    BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.go_parent)) {
-                        doJobThenOffLoading {
-                            val list = getCurActiveList()
-                            val listState = getCurActiveListState()
-                            val parentIndex = list.toList().indexOfFirst { it.id == parentRepoId }
-                            if(parentIndex != -1) {  // found in current active list
-                                requireBlinkIdx.intValue = parentIndex
-                                UIHelper.scrollToItem(scope, listState, parentIndex)
-                            }else{
-                                if(repoPageFilterModeOn.value) {
-                                    //从源列表找
-                                    val indexInOriginList = repoList.value.toList().indexOfFirst { it.id == parentRepoId }
-
-                                    if(indexInOriginList != -1){  // found in origin list
-                                        repoPageFilterModeOn.value = false  //关闭过滤模式
-                                        showBottomSheet.value = false  //关闭菜单
-
-                                        //定位条目
-                                        UIHelper.scrollToItem(scope, repoPageListState, indexInOriginList)
-                                        requireBlinkIdx.intValue = indexInOriginList  //设置条目闪烁以便用户发现
-                                    }else {
-                                        Msg.requireShow(appContext.getString(R.string.not_found))
-                                    }
-                                }else {
-                                    Msg.requireShow(appContext.getString(R.string.not_found))
-                                }
-                            }
-
-                        }
-                    }
-                }
 
                 //go to changelist，避免侧栏切换到changelist时刚好某个仓库加载很慢导致无法切换其他仓库
                 BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.changelist)) {
@@ -1163,6 +1129,43 @@ fun RepoInnerPage(
                     showRenameDialog.value = true
                 }
             }
+
+
+            //show jump to parent repo if has parentRepoId
+            if(curRepo.value.parentRepoId.isNotBlank()) {
+                val parentRepoId = curRepo.value.parentRepoId
+                BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.go_parent)) {
+                    doJobThenOffLoading {
+                        val list = getCurActiveList()
+                        val listState = getCurActiveListState()
+                        val parentIndex = list.toList().indexOfFirst { it.id == parentRepoId }
+                        if(parentIndex != -1) {  // found in current active list
+                            requireBlinkIdx.intValue = parentIndex
+                            UIHelper.scrollToItem(scope, listState, parentIndex)
+                        }else{
+                            if(repoPageFilterModeOn.value) {
+                                //从源列表找
+                                val indexInOriginList = repoList.value.toList().indexOfFirst { it.id == parentRepoId }
+
+                                if(indexInOriginList != -1){  // found in origin list
+                                    repoPageFilterModeOn.value = false  //关闭过滤模式
+                                    showBottomSheet.value = false  //关闭菜单
+
+                                    //定位条目
+                                    UIHelper.scrollToItem(scope, repoPageListState, indexInOriginList)
+                                    requireBlinkIdx.intValue = indexInOriginList  //设置条目闪烁以便用户发现
+                                }else {
+                                    Msg.requireShow(appContext.getString(R.string.not_found))
+                                }
+                            }else {
+                                Msg.requireShow(appContext.getString(R.string.not_found))
+                            }
+                        }
+
+                    }
+                }
+            }
+
             BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.delete), textColor = MyStyleKt.TextColor.danger) {
                 requireDelRepo(curRepo.value)
             }
