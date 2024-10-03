@@ -179,7 +179,7 @@ object UIHelper {
 
     @Composable
     fun defaultCardColor():Color {
-        return MaterialTheme.colorScheme.surfaceBright
+        return if(Theme.inDarkTheme) MaterialTheme.colorScheme.surfaceBright else Color(0xFFDBE9F3)
     }
 
     fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
