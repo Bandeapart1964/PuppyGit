@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
+import com.catpuppyapp.puppygit.utils.UIHelper
 
 @Composable
 fun LoadMore(
@@ -35,6 +35,8 @@ fun LoadMore(
 ) {
     val inDarkTheme = Theme.inDarkTheme
 
+    val cardColor = UIHelper.defaultCardColor()
+
     Column(modifier= Modifier
         .fillMaxWidth()
         .padding(paddingValues)
@@ -48,7 +50,7 @@ fun LoadMore(
                 }
             ,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = cardColor,
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
@@ -82,7 +84,7 @@ fun LoadMore(
                     }
                 ,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = cardColor,
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 6.dp

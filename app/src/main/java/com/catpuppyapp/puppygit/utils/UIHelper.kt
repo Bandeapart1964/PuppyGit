@@ -177,6 +177,11 @@ object UIHelper {
         return baseColor.copy(alpha = 0.4f)
     }
 
+    @Composable
+    fun defaultCardColor():Color {
+        return MaterialTheme.colorScheme.surfaceBright
+    }
+
     fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
         return if(text.startsWith(settings.editor.conflictStartStr)) {
             if(inDarkTheme) Color(0xFF0C4B0C) else Color.Green.copy(alpha = 0.6f)

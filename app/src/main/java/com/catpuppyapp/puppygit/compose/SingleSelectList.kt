@@ -16,13 +16,13 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 //下拉单选框，不过好像在弹窗使用会崩溃，可能是谷歌bug(20241003 fixed)
@@ -55,7 +55,7 @@ fun<T> SingleSelectList(
             }
         ,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = UIHelper.defaultCardColor(),
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp
