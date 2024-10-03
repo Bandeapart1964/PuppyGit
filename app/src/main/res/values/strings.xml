@@ -881,5 +881,8 @@
     <string name="go_parent">Go Parent</string>
     <string name="will_import_selected_submodules_to_repos">Will import selected submodules to Repos, then you can manage them just like manage normal Repos.</string>
     <string name="submodule_invalid_url_err">err: invalid url, if you deleted submodule, maybe need go to ChangeList to commit changes</string>
+    <string name="ignore">Ignore</string>
+    <string name="will_ignore_selected_files_are_you_sure">Will ignore selected files, are you sure?</string>
+    <string name="edit_ignore_file">Edit Ignore File</string>
 
 </resources>

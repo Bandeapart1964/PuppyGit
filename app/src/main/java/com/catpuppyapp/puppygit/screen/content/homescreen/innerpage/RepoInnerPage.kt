@@ -1626,7 +1626,7 @@ private fun getInit(
                                     repo2ndQuery.isShallow = boolToDbInt(isRepoShallow)
                                     if(isRepoShallow) {
                                         //创建shallow文件备份，目前20240509 libgit2有bug
-                                        Libgit2Helper.ShallowManage.createShallowBak(repo2ndQuery.fullSavePath+File.separator+".git")
+                                        Libgit2Helper.ShallowManage.createShallowBak(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(clonedRepo))
                                     }
 
                                     //设置当前分支关联的上游分支，例如 main 关联的默认是 origin/main。下面两种方法都行，因为刚克隆的分支肯定有上游，所以用哪个都能取出值

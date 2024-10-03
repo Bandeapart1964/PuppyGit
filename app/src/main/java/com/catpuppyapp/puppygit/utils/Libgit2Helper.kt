@@ -16,7 +16,6 @@ import com.catpuppyapp.puppygit.dto.createCommitDto
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.BranchNameAndTypeDto
 import com.catpuppyapp.puppygit.git.CommitDto
-import com.catpuppyapp.puppygit.git.CredentialStrategy
 import com.catpuppyapp.puppygit.git.DiffItemSaver
 import com.catpuppyapp.puppygit.git.PuppyHunkAndLines
 import com.catpuppyapp.puppygit.git.PuppyLine
@@ -65,6 +64,7 @@ import com.github.git24j.core.Submodule
 import com.github.git24j.core.Tag
 import com.github.git24j.core.Tree
 import java.io.File
+import java.io.FileWriter
 import java.net.URI
 import java.nio.charset.Charset
 import java.time.ZoneOffset
@@ -99,26 +99,26 @@ class Libgit2Helper {
         val bak2 = "shallow.2.bak"  //可手动用于恢复的shallow文件，主要是我用来测试的
 
         fun createShallowBak(repoDotGitDir:String) {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
+            val originShallowFile = File(repoDotGitDir, originShallow)  // repo/.git/shallow
 
             val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")  // repo/.git/puppygit目录/shallow.1.bak
-            val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")  // repo/.git/puppygit目录/shallow.2.bak
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath, bak1)  // repo/.git/puppygit目录/shallow.1.bak
+            val bak2File = File(puppyGitDirUnderGitCanonicalPath, bak2)  // repo/.git/puppygit目录/shallow.2.bak
             originShallowFile.copyTo(bak1File, overwrite = true)
             originShallowFile.copyTo(bak2File, overwrite = true)
         }
 
         fun restoreShallowFile(repoDotGitDir:String) {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")
+            val originShallowFile = File(repoDotGitDir, originShallow)
 
             val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath, bak1)
 
             //如果bak1存在，用它恢复shallow文件；如果不存在，用bak2恢复bak1和shallow文件
             if(bak1File.exists()) {
                 bak1File.copyTo(originShallowFile, overwrite = true)
             }else {  //bak1不存在，用bak2恢复bak1和原始shallow文件
-                val bak2File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak2")
+                val bak2File = File(puppyGitDirUnderGitCanonicalPath, bak2)
                 bak2File.copyTo(bak1File, overwrite = true)
                 bak2File.copyTo(originShallowFile, overwrite = true)
             }
@@ -127,7 +127,7 @@ class Libgit2Helper {
         fun deleteBak1(repoDotGitDir:String) {
             val puppyGitDirUnderGitCanonicalPath = AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath
 
-            val bak1File = File(puppyGitDirUnderGitCanonicalPath+"${File.separator}$bak1")
+            val bak1File = File(puppyGitDirUnderGitCanonicalPath, bak1)
             if(bak1File.exists()) {
                 bak1File.delete()
             }
@@ -141,13 +141,98 @@ class Libgit2Helper {
 
         //在提交页面显示仓库是否grafted的时候用到这个方法
         fun getShallowOidList(repoDotGitDir: String):List<String> {
-            val originShallowFile = File(repoDotGitDir+"${File.separator}$originShallow")  // repo/.git/shallow
+            val originShallowFile = File(repoDotGitDir, originShallow)  // repo/.git/shallow
             if(!originShallowFile.exists()) {
                 return emptyList()
             }
             //返回原始文件中的非空行
             return originShallowFile.readLines().filter { it.isNotBlank() }
         }
+    }
+
+    /**
+     * app specified ignore files manager, it under every repo's ".git/PuppyGit/ignores.txt"
+     *
+     * usage:
+     *   1 call `getAllValidPattern()` get a rules list
+     *   2 for each file path call `matchedPatternList(input, rules)`, if return true, means should be ignore
+     */
+    object IgnoreMan {
+        private val newFileContent = "# per line one relative path under repo, a line start with # will ignore, support simple wildcard like *.log match all files has .log suffix\n\n"
+        private const val fileName = "ignores.txt"
+
+        private fun getFile(repoDotGitDir: String):File {
+            val f = File(AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath, fileName)
+            if(!f.exists()){
+                f.createNewFile()
+                f.bufferedWriter().use {
+                    it.write(newFileContent)
+                }
+            }
+
+            return f
+        }
+
+        fun getAllValidPattern(repoDotGitDir: String):List<String> {
+            val f = getFile(repoDotGitDir)
+            val retList = mutableListOf<String>()
+            val br = f.bufferedReader()
+            var rline = br.readLine()
+            while (rline!=null){
+                if(isValidLine(rline)){
+                    retList.add(rline)
+                }
+
+                rline = br.readLine()
+            }
+
+            return retList
+        }
+
+        fun matchedPatternList(input:String, patternList:List<String>):Boolean {
+            if(patternList.isEmpty()) {
+                return false
+            }
+
+            for(i in patternList.indices) {
+                if(RegexUtil.matchForIgnoreFile(input, patternList[i])) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
+        private fun isComment(str:String):Boolean {
+            return str.startsWith("#")
+        }
+
+        private fun isValidLine(line:String):Boolean {
+            return line.isNotBlank() && isComment(line).not()
+        }
+
+        fun getFileFullPath(repoDotGitDir: String):String {
+            return getFile(repoDotGitDir).canonicalPath
+        }
+
+        fun appendLinesToIgnoreFile(repoDotGitDir: String, lines:List<String>) {
+            if(lines.isEmpty()) {
+                return
+            }
+            val curTime = getNowInSecFormatted()
+            val ignoreFile = getFile(repoDotGitDir)
+            val append = true
+            val filerWriter = FileWriter(ignoreFile, append)
+            filerWriter.buffered().use { writer ->
+                // if no this head line and file was not ends with new line, content will concat as unexpected
+                writer.write("\n# $curTime\n")  // newLine + timestamp
+                lines.forEach { ln ->
+                    writer.write(ln+"\n")
+                }
+            }
+        }
+
+
     }
 
     object RebaseHelper {
@@ -1508,10 +1593,11 @@ class Libgit2Helper {
         /**
          * return .git folder, no ends with slash
          * note: sometimes a folder meaning regular .git folder, but is not named .git,
-         *  so, should NOT simple concat "repoPath/.git" as repos .git path
+         *  and sometimes .git is a file include relative path to real .git foler,
+         *  so, should NOT simple concat "repoWorkdirPath/.git" as repos .git path
          */
         fun getRepoGitDirPathNoEndsWithSlash(repo:Repository):String {
-            // I am not sure, but in my tests, this api always ends with "/" even in windows
+            // I am not sure, but in my tests, this api always ends with "/" even in windows(windows default separator is "\")
             return repo.itemPath(Repository.Item.GITDIR)?.removeSuffix("/") ?: ""
         }
 

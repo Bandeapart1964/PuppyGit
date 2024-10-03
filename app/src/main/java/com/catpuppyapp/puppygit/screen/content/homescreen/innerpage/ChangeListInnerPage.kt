@@ -75,6 +75,7 @@ import com.catpuppyapp.puppygit.dev.checkoutFilesTestPassed
 import com.catpuppyapp.puppygit.dev.cherrypickTestPassed
 import com.catpuppyapp.puppygit.dev.createPatchTestPassed
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
+import com.catpuppyapp.puppygit.dev.ignoreWorktreeFilesTestPassed
 import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.dev.treeToTreeBottomBarActAtLeastOneTestPassed
@@ -105,6 +106,7 @@ import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Repository
 import com.github.git24j.core.Tree
 
@@ -360,6 +362,7 @@ fun ChangeListInnerPage(
             selectedListIsNotEmpty,  //stage
             selectedListIsNotEmpty,  //revert
             selectedListIsNotEmpty, // create patch
+            selectedListIsNotEmpty, // ignore
         ) else listOf(
             selectedListIsNotEmpty,  // unstage
             selectedListIsNotEmpty, // create patch
@@ -1192,6 +1195,18 @@ fun ChangeListInnerPage(
         }
     }
 
+
+    val openFileWithInnerEditor = { filePath:String, initMergeMode:Boolean ->
+        val filePathKey = Cache.setThenReturnKey(filePath)
+        val goToLine = LineNum.lastPosition
+        val initMergeMode = if(initMergeMode) "1" else "0"
+        val initReadOnly = "0"  //cl页面不可能打开app内置目录下的文件，所以read only初始化为关闭即可
+
+        navController.navigate(Cons.nav_SubPageEditor + "/$filePathKey" + "/$goToLine" + "/$initMergeMode" +"/$initReadOnly")
+    }
+
+
+
     //有两层防止重复执行的保险：一层是立刻改状态；二层是用加锁的缓存取出请求执行操作的key后就清掉，这样即使第一层破防，第二层也能阻止重复执行。
     //不过第二层保险的必要性可能不是很大，有点带安全帽撞棉花的感觉，有意义，但不大，不过对性能开销影响也不大，所以就不删了。
     //顶栏action请求执行pull/push/sync
@@ -1207,8 +1222,24 @@ fun ChangeListInnerPage(
         }, requireDoActFromParentShowTextWhenDoingAct.value) {
             val requireAct = Cache.syncGetThenDel(Cache.Key.changeListInnerPage_requireDoActFromParent)
             //防止重复执行的第二层保险，取出请求执行操作的key后就删除，这样即使状态变量没及时更新导致重复执行，执行到这时也会取出null而终止操作
-            // pull(fetch+merge)
-            if(requireAct==PageRequest.pull) {
+
+
+            if(requireAct==PageRequest.editIgnoreFile) {
+                try {
+                    Repository.open(curRepoFromParentPage.value.fullSavePath).use { repo->
+                        val ignoreFilePath = Libgit2Helper.IgnoreMan.getFileFullPath(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(repo))
+
+                        withMainContext {
+                            val initMergeMode = false
+                            openFileWithInnerEditor(ignoreFilePath, initMergeMode)
+                        }
+                    }
+                }catch (e:Exception) {
+                    Msg.requireShowLongDuration(e.localizedMessage ?: "err")
+                }
+
+
+            }else if(requireAct==PageRequest.pull) { // pull(fetch+merge)
                 doPull()
 
             }else if(requireAct==PageRequest.fetch) {
@@ -1882,6 +1913,36 @@ fun ChangeListInnerPage(
         }
     }
 
+    val showIgnoreDialog = StateUtil.getRememberSaveableState(initValue = false)
+    if(showIgnoreDialog.value) {
+        ConfirmDialog(
+            title = stringResource(R.string.ignore),
+            text = stringResource(R.string.will_ignore_selected_files_are_you_sure),
+            onCancel = { showIgnoreDialog.value = false }
+        ) {
+            showIgnoreDialog.value=false
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
+                try {
+                    Repository.open(curRepoFromParentPage.value.fullSavePath).use { repo ->
+                        val repoDotGitPath = Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(repo)
+                        val linesWillIgnore = selectedItemList.value.map { it.relativePathUnderRepo }
+                        Libgit2Helper.IgnoreMan.appendLinesToIgnoreFile(repoDotGitPath, linesWillIgnore)
+                    }
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }catch (e:Exception) {
+                    val errMsg = e.localizedMessage
+                    Msg.requireShowLongDuration(errMsg ?: "err")
+                    createAndInsertError(curRepoFromParentPage.value.id, "ignore files err: $errMsg")
+                }finally {
+                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
+                }
+
+            }
+        }
+    }
+
+
+
     val showCreatePatchDialog = StateUtil.getRememberSaveableState(initValue = false)
     val savePatchPath= StateUtil.getRememberSaveableState(initValue = "")  //给这变量一赋值app就崩溃，原因不明，报的是"java.lang.VerifyError: Verifier rejected class"之类的错误，日，后来升级gradle解决了
     val showSavePatchSuccessDialog = StateUtil.getRememberSaveableState(initValue = false)
@@ -2232,6 +2293,7 @@ fun ChangeListInnerPage(
         stringResource(R.string.stage),
         stringResource(R.string.revert),
         stringResource(R.string.create_patch),
+        if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) stringResource(R.string.ignore) else "",
 
     )  //按元素添加顺序在列表中会呈现为从上到下
     else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage), stringResource(R.string.create_patch),)
@@ -2243,6 +2305,7 @@ fun ChangeListInnerPage(
         {true},  // stage
         {true},  // revert
         {true},  // create patch
+        {true},  // ignore
     ) else listOf()  // empty list, always visible
 
     val showRevertAlert = StateUtil.getRememberSaveableState(initValue = false)
@@ -2361,6 +2424,9 @@ fun ChangeListInnerPage(
         },
         createPatch@{
             showCreatePatchDialog.value = true
+        },
+        ignore@{
+            showIgnoreDialog.value = true
         }
     ) else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(
         unstage@{
@@ -2409,15 +2475,6 @@ fun ChangeListInnerPage(
         stringResource(R.string.show_in_files),
         stringResource(R.string.copy_real_path),
     )
-
-    val openFileWithInnerEditor = { filePath:String, initMergeMode:Boolean ->
-        val filePathKey = Cache.setThenReturnKey(filePath)
-        val goToLine = LineNum.lastPosition
-        val initMergeMode = if(initMergeMode) "1" else "0"
-        val initReadOnly = "0"  //cl页面不可能打开app内置目录下的文件，所以read only初始化为关闭即可
-
-        navController.navigate(Cons.nav_SubPageEditor + "/$filePathKey" + "/$goToLine" + "/$initMergeMode" +"/$initReadOnly")
-    }
 
     val menuKeyActList = listOf(
         open@{ item:StatusTypeEntrySaver ->
@@ -3330,8 +3387,17 @@ private fun getInit(
                             statusMap[Cons.gitStatusKeyConflict]?.let {  //先添加冲突条目，让冲突条目显示在列表前面
                                 itemList.value.addAll(it)
                             }
+
+                            // conflicts are hold ever, but normal types file will filter by app's ignore file
                             statusMap[Cons.gitStatusKeyWorkdir]?.let {  //后添加其他条目
-                                itemList.value.addAll(it)
+                                val validIgnoreRules = Libgit2Helper.IgnoreMan.getAllValidPattern(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(gitRepository))
+                                it.forEach { item ->
+                                    // add items are not matched with ignore rules
+                                    if(Libgit2Helper.IgnoreMan.matchedPatternList(item.relativePathUnderRepo, validIgnoreRules).not()){
+                                        itemList.value.add(item)
+                                    }
+                                }
+
                             }
 
                         }

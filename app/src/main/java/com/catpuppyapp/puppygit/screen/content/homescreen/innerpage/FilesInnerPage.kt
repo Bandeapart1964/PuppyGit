@@ -266,7 +266,7 @@ fun FilesInnerPage(
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
                         value = pathToGo.value,
-                        singleLine = true,
+//                        singleLine = true,
                         onValueChange = {
                             pathToGo.value = it
                         },
@@ -296,13 +296,13 @@ fun FilesInnerPage(
 //                }
 
                 // handle path to absolute path, btw: internal path must before external path, because internal actually starts with external, if swap order, code block of internal path will ignore ever
-                val finallyPath = if(pathToGo.value.startsWith(FsUtils.internalPathPrefix)) {
+                val finallyPath = (if(pathToGo.value.startsWith(FsUtils.internalPathPrefix)) {
                         FsUtils.getInternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeInternalStoragePrefix(pathToGo.value)
                     }else if(pathToGo.value.startsWith(FsUtils.externalPathPrefix)) {
                         FsUtils.getExternalStorageRootPathNoEndsWithSeparator()+"/"+FsUtils.removeExternalStoragePrefix(pathToGo.value)
                     }else {  // absolute path like "/storage/emulate/0/abc"
                         pathToGo.value
-                    }
+                    }).trim('\n')
 
                 val f = File(finallyPath)
                 if(f.canRead()) {
@@ -810,11 +810,14 @@ fun FilesInnerPage(
 //                breadCrumbList = currentPathBreadCrumbList2
 //            }
                     //面包屑 (breadcrumb)
-                    currentPathBreadCrumbList.value.toList().forEach {
+                    val breadList = currentPathBreadCrumbList.value.toList()
+                    val lastIndex = breadList.size - 1
+                    breadList.forEachIndexed { idx, it ->
                         item {
                             //如果是所有仓库的根目录，返回 "/"，否则返回 "路径+/"
                             Text(text = File.separator)
                             Text(text =it.name,
+                                fontWeight = if(idx==lastIndex) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.combinedClickable (
                                     onLongClick = {  //long press will copy path
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)

@@ -11,6 +11,7 @@ object PageRequest {
     //注意：同一条渲染链上不同组件不可使用相同的请求值，否则只有第一个匹配的组件会执行request，换句话说，再同一渲染链上请求值必须唯一且只有一个消费者
 
 
+    const val editIgnoreFile = "editIgnoreFile"
     const val goToInternalStorage = "goToInternalStorage"
     const val goToExternalStorage = "goToExternalStorage"
     const val showDetails = "showDetails"

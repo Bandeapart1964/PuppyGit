@@ -22,6 +22,7 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.dev.ignoreWorktreeFilesTestPassed
 import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.pushForceTestPassed
 import com.catpuppyapp.puppygit.dev.rebaseTestPassed
@@ -269,6 +270,24 @@ fun ChangeListPageActions(
                 )
 
             }
+
+            if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) {
+                DropdownMenuItem(
+//                    enabled = enableRepoAction,
+                    enabled = enableMenuItem,
+
+                    text = { Text(stringResource(R.string.edit_ignore_file)) },
+                    onClick = {
+                        Cache.set(Cache.Key.changeListInnerPage_requireDoActFromParent, PageRequest.editIgnoreFile)
+                        requireDoActFromParentShowTextWhenDoingAct.value= appContext.getString(R.string.loading)
+                        requireDoActFromParent.value = true
+                        enableAction.value=false
+
+                        dropDownMenuExpendState.value=false
+                    }
+                )
+            }
+
 
             //merge相关
             if(repoUnderMerge) {
