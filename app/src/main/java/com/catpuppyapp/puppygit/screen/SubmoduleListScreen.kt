@@ -504,7 +504,8 @@ fun SubmoduleListScreen(
             doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
                 val repoNameSuffix = "_of_${curRepo.value.repoName}"
                 val parentRepoId = curRepo.value.id
-                val importList = selectedItemList.value.toList().filter { it.cloned }
+//                val importList = selectedItemList.value.toList().filter { it.cloned }
+                val importList = selectedItemList.value.toList()  // just import all selected, will fail if must fail
 
                 val selectedCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
 
@@ -769,7 +770,7 @@ fun SubmoduleListScreen(
                 try {
 
                     val recursive = recursiveClone.value
-                    val selectedList = selectedItemList.value.toList()
+                    val willCloneList = selectedItemList.value.toList()
 //                val allItems = list.value
 //                val cloningStr = appContext.getString(R.string.cloning)
 
@@ -780,7 +781,7 @@ fun SubmoduleListScreen(
 //                val defaultInvalidIdx = -1
 
                     //not cloned, and not do other job for submodule
-                    val willCloneList = selectedList.filter{!it.cloned && it.tempStatus.isBlank()}
+//                    val willCloneList = selectedList.filter{!it.cloned && it.tempStatus.isBlank()}
 
 //                val nameIndexMap = mutableMapOf<String, Int>()
                     // set status to cloning for selected items

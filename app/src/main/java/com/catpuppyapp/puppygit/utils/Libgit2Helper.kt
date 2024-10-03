@@ -4882,14 +4882,20 @@ class Libgit2Helper {
                 val submodulePath = sm.path()
                 val overwriteForInit = true
 //                Submodule.setUpdate(repo, name, Submodule.UpdateT.CHECKOUT)
+                val submoduleFullPath = File(repoFullPathNoSlashSuffix, submodulePath).canonicalPath
+
+                // if repo already cloned, will not clone again, if want to re-clone, should delete then do clone again
+                val isCloned = isValidGitRepo(submoduleFullPath)
 
 
                 try {
                     //copy submodule info from .gitmodules to parent repo's .git/config
                     sm.init(overwriteForInit)
 
-                    // init repo before clone
-                    submoduleRepoInit(repoFullPathNoSlashSuffix, sm)
+                    if(!isCloned) {
+                        // init repo before clone, if clone, do this will get err
+                        submoduleRepoInit(repoFullPathNoSlashSuffix, sm)
+                    }
 
                     // copy submodule info from .gitmodules to submodule's .git/config
                     sm.sync()
@@ -4905,32 +4911,33 @@ class Libgit2Helper {
                 }
 
 
+                // may delete .git file if sm.clone() failed, so try restore it
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
                 // clone repo
-                val subRepo:Repository? = try {
-                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
-
-//                    createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
-                    MyLog.d(TAG,"#cloneSubmodules: will clone submodule '$name'")
-                    sm.clone(updateOpts)
-                } catch (e: Exception) {
-                    // may delete .git file if sm.clone() failed, so try restore it
-                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
-
-                    MyLog.e(TAG,"#cloneSubmodules: clone submodule '$name' err: ${e.localizedMessage}")
-
+                // if submodule is valid, return reference, else return null
+                val subRepo:Repository? = if(isCloned) {
                     try {
-                        val submoduleFullPath = File(repoFullPathNoSlashSuffix, submodulePath).canonicalPath
-                        // if submodule is valid, return reference, else return null
-                        if(isValidGitRepo(submoduleFullPath)) {
-                            Repository.open(submoduleFullPath)
-                        }else{
-                            null
-                        }
+                        Repository.open(submoduleFullPath)
+
                     }catch (e2:Exception) {
                         MyLog.e(TAG,"#cloneSubmodules: open submodule '$name' err: ${e2.localizedMessage}")
                         null
                     }
+                }else{  // do clone
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
+//                    createDotGitFileIfNeed(repoFullPathNoSlashSuffix, submodulePath.removePrefix(Cons.slash).removeSuffix(Cons.slash), force = false)
+                    MyLog.d(TAG,"#cloneSubmodules: will clone submodule '$name'")
+                    try {
+                        sm.clone(updateOpts)
+                    }catch (e:Exception) {
+                        MyLog.e(TAG,"#cloneSubmodules: clone submodule '$name' err: ${e.localizedMessage}")
+                        null
+                    }
                 }
+
+
 
                 SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
@@ -4942,7 +4949,7 @@ class Libgit2Helper {
                 }
 
 
-                // clone succeed!
+                // clone succeed! subRepo is no null
 
                 // checkout submodule to specific commit which parent repo recorded
                 // 将子仓库检出到父仓库记录的提交号上
@@ -4960,9 +4967,11 @@ class Libgit2Helper {
 
                 // if don't call addFinalize, you submodule only in local, not tracked by git
                 try {
+                    MyLog.d(TAG, "#cloneSubmodules: will do addFinalize() for submodule '$name'")
+
                     sm.addFinalize()
                 }catch (e:Exception) {
-                    MyLog.e(TAG, "#cloneSubmodules: do addFinalize() err: ${e.localizedMessage}")
+                    MyLog.e(TAG, "#cloneSubmodules: do addFinalize() for submodule '$name' err: ${e.localizedMessage}")
                 }
 
                 SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
