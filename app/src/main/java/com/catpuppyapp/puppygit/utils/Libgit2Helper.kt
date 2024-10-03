@@ -4713,9 +4713,10 @@ class Libgit2Helper {
                 val smRelativePath = sm.path()
                 val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
 
-                // if call submodule.url() it will crashed when url invalid
-//                val smUrl = sm.url().toString()
-                val smUrl = getValueFromGitConfig(parentDotGitModuleFile, "submodule.$name.url")
+                // [fixed, the reason was pass NULL to jni StringUTF method in c codes] if call submodule.url() it will crashed when url invalid
+                val smUrl = sm.url()?.toString() ?: ""
+                //another way to get url from .gitsubmodules, is read info by kotlin, 100% safe
+//                val smUrl = getValueFromGitConfig(parentDotGitModuleFile, "submodule.$name.url")
 
                 list.add(
                     SubmoduleDto(
@@ -4886,6 +4887,8 @@ class Libgit2Helper {
                     MyLog.e(TAG, "#cloneSubmodules: do addFinalize() err: ${e.localizedMessage}")
                 }
 
+                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
                 // recursive clone
                 // !! becareful with this, if repo contains nested-loops, will infinite clone !!
                 if(recursive) {
@@ -5007,28 +5010,34 @@ class Libgit2Helper {
         }
 
         /**
-         * delete top level item like [xxxx] and all it's sub items from git config style file
+         * delete top level item like [xxxx] or [xxx "abc"] and all it's sub items from git config style file
          */
         fun deleteTopLevelItemFromGitConfig(gitConfig:File, keyName:String) {
             try {
                 val begin = keyName
                 val newLines = mutableListOf<String>()
                 var matched = false
-                // collective new lines no-matched and not subs of keyName
-                gitConfig.forEachLine{
-                    if(it != begin) {
+
+                // collect new lines no-matched and not subs of keyName
+                val br = gitConfig.bufferedReader()
+                var rLine = br.readLine()
+                while(rLine!=null) {
+                    if(rLine != begin) {
                         if(!matched) {
-                            newLines.add(it)
-                        }else if(it.startsWith("[")) {  // avoid repeat begin text
-                            newLines.add(it)
+                            newLines.add(rLine)
+                        }else if(rLine.startsWith("[")) {  // avoid repeat begin text
+                            newLines.add(rLine)
                             matched = false
                         }
                     }else {
                         matched=true
                     }
+
+                    rLine = br.readLine()
                 }
 
                 // write new lines back to config file
+                // the writer will 100% clear files, then write content
                 gitConfig.bufferedWriter().use { writer ->
                     if(newLines.isEmpty()) {
                         writer.write("\n")

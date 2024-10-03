@@ -193,7 +193,7 @@ fun SubmoduleListScreen(
                     val errMsg = e.localizedMessage
                     Msg.requireShowLongDuration(errMsg ?: errPrefix)
                     createAndInsertError(curRepo.value.id, "$errPrefix$errMsg")
-                    MyLog.e(TAG, "#CreateDialog err: path=$pathForCreate, url=$remoteUrlForCreate, err=${e.stackTraceToString()}")
+                    MyLog.e(TAG, "#CreateDialog err: path=${pathForCreate.value}, url=${remoteUrlForCreate.value}, err=${e.stackTraceToString()}")
                 }finally {
                     changeStateTriggerRefreshPage(needRefresh)
                 }
