@@ -181,8 +181,8 @@ object UIHelper {
     fun defaultCardColor():Color {
         // light blue `Color(0xFFDBE9F3)`
 
-//        return if(Theme.inDarkTheme) MaterialTheme.colorScheme.surfaceBright else MaterialTheme.colorScheme.surfaceDim
-        return MaterialTheme.colorScheme.surfaceBright
+        return if(Theme.inDarkTheme) MaterialTheme.colorScheme.surfaceBright else MaterialTheme.colorScheme.surfaceDim
+//        return MaterialTheme.colorScheme.surfaceBright
     }
 
     fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
