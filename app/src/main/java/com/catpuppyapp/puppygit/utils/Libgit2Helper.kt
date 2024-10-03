@@ -418,7 +418,7 @@ class Libgit2Helper {
         }
 
         fun getRepoCanonicalPath(repo: Repository, itemUnderRepoRelativePath: String): String {
-            return repo.workdir().pathString + File.separator + itemUnderRepoRelativePath
+            return repo.workdir().pathString.removeSuffix(File.separator) + File.separator + itemUnderRepoRelativePath.removePrefix(File.separator)
         }
 
         fun getRepoPathSpecType(path: String): Int {
@@ -478,6 +478,9 @@ class Libgit2Helper {
             val entryCnt: Int = statusList.entryCount()
             val repoIndex = repo.index()
             var isIndexChanged = false
+
+            val submodulePathList = getSubmoduleNameList(repo)  // submodule name == it's path, so this list is path list too
+
 
             //until， 左闭右开，左包含，右不包含
             for (i in 0 until entryCnt)  {
@@ -580,13 +583,20 @@ class Libgit2Helper {
                     }
                 }
 
+
+
                 //为目录递归添加文件
                 //xTODO 先改成检测status的时候把submodule排除
                 //xTODO(未来实现submodule的时候再做这个): 需要区分submodule和文件夹，如果是submodule，不遍历StatusEntry.itemType为submodule，当作文件夹条目列出来且不可diff
                 //xTODO: 如果path是个路径: 递归遍历，把里面所有文件都作为一个条目添加到map，每个条目的type都和路径的type一样，例如文件夹是untracked，则里面 所有的条目都是untracked
                 val canonicalPath = getRepoCanonicalPath(repo,path)
                 val fileType = getRepoPathSpecType(path)
-                statusTypeSaver.itemType = fileType
+//                statusTypeSaver.itemType = fileType
+
+//                statusTypeSaver.itemType= if(submodulePathList.contains(path) && File(canonicalPath).isDirectory) Cons.gitItemTypeSubmodule else fileType
+                statusTypeSaver.itemType= if(submodulePathList.contains(path)) Cons.gitItemTypeSubmodule else fileType
+
+
                 statusTypeSaver.canonicalPath = canonicalPath
                 statusTypeSaver.fileName = getFileNameFromCanonicalPath(canonicalPath)  // or File(canonicalPath).name
                 statusTypeSaver.relativePathUnderRepo = path
@@ -692,6 +702,8 @@ class Libgit2Helper {
             //注意比较的顺序是旧版本号 to 新版本号（父提交 to 新提交）
             val diff = if(treeToWorkTree) Diff.treeToWorkdir(repo, tree1, options) else Diff.treeToTree(repo, tree1, tree2, options)
 
+            val submodulePathList = getSubmoduleNameList(repo)  // submodule name == it's path
+
             diff.foreach(
                 { delta: Diff.Delta, progress: Float ->
                     val oldFile = delta.oldFile
@@ -715,7 +727,11 @@ class Libgit2Helper {
                     stes.relativePathUnderRepo = newFile.path  //不管新增还是删除还是重命名文件，新旧文件都有path而且都一样，所以用哪个都行
                     stes.canonicalPath = getRepoCanonicalPath(repo, stes.relativePathUnderRepo)
                     stes.fileName = getFileNameFromCanonicalPath(stes.relativePathUnderRepo)  //用相对路径或完整路径都能取出文件名
-                    stes.itemType=Cons.gitItemTypeFile
+
+                    // hm, if a folder was submodule dir, but users remove it, then create a same name file, the file type will become "type changed", and actually the file is not submodule anymore
+                    //   so, here check the path is dir or not, if not, dont set type to submodule, but this check may will create many File objects, wasted memory......
+//                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo) && File(stes.canonicalPath).isDirectory) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
+                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo)) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
 
                     if(oldFileOid.isNullOrEmptyOrZero && !newFileOid.isNullOrEmptyOrZero) {  //新增
                         stes.changeType = Cons.gitStatusNew
