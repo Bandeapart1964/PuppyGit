@@ -21,7 +21,7 @@
     <string name="branch_name">Branch Name</string>
     <string name="depth_optional">Depth (Optional)</string>
     <string name="depth">depth (e.g. 1)</string>
-    <string name="recursive_clone">Recursive Clone (Submodule)</string>
+    <string name="recursive_clone">Recursive Clone</string>
     <string name="single_branch">Single Branch</string>
     <string name="show_password">Show Password</string>
     <string name="hide_password">Hide Password</string>

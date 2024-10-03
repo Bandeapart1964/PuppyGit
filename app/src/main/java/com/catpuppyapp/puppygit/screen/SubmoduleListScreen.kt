@@ -64,11 +64,12 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
+import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
-import com.catpuppyapp.puppygit.git.CredentialStrategy
 import com.catpuppyapp.puppygit.git.ImportRepoResult
 import com.catpuppyapp.puppygit.git.SubmoduleDto
 import com.catpuppyapp.puppygit.play.pro.R
@@ -81,7 +82,6 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
-import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
@@ -127,6 +127,9 @@ fun SubmoduleListScreen(
         loading.value=false
     }
 
+
+    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
+    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
 
 
     val showCreateDialog = StateUtil.getRememberSaveableState(initValue = false)
@@ -481,7 +484,18 @@ fun SubmoduleListScreen(
             requireShowTextCompose = true,
             textCompose = {
                 ScrollableColumn {
-                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
+//                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
+
+                    Text(stringResource(R.string.select_credential)+": ")
+
+                    SingleSelectList(
+                        optionsList = credentialList.value,
+                        selectedOptionIndex = selectedCredentialIdx,
+                        menuItemFormatter = {it.name}
+                    )
+
+                    Spacer(Modifier.height(15.dp))
+
                 }
             },
             onCancel = { showImportToReposDialog.value = false },
@@ -494,12 +508,14 @@ fun SubmoduleListScreen(
                 val parentRepoId = curRepo.value.id
                 val importList = selectedItemList.value.toList().filter { it.cloned }
 
+                val selectedCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
+
                 val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
                 val importRepoResult = ImportRepoResult()
 
                 try {
                     importList.forEach {
-                        val result = repoDb.importRepos(dir=it.fullPath, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId)
+                        val result = repoDb.importRepos(dir=it.fullPath, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId, credentialId = selectedCredentialId)
                         importRepoResult.all += result.all
                         importRepoResult.success += result.success
                         importRepoResult.failed += result.failed
@@ -509,8 +525,10 @@ fun SubmoduleListScreen(
                     Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
                 }catch (e:Exception) {
                     //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
-                    MyLog.e(TAG, "import repo from SubmoduleListPage err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
-                    Msg.requireShowLongDuration("err:${e.localizedMessage}")
+                    val errMsg = e.localizedMessage
+                    Msg.requireShowLongDuration(errMsg ?: "import err")
+                    createAndInsertError(curRepo.value.id, "import repos err: $errMsg")
+                    MyLog.e(TAG, "import repos from SubmoduleListPage err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
                 }finally {
                     // because import doesn't change current page, so need not do anything yet
                 }
@@ -754,16 +772,9 @@ fun SubmoduleListScreen(
         showCloneDialog.value = true
     }
 
-    val initFetchTagDialog = {
-        requireDel.value = false
-        trueFetchFalsePush.value = true
-        fetchPushDialogTitle.value = appContext.getString(R.string.fetch_tags)
-        showForce.value = true
-
-        loadingTextForFetchPushDialog.value = appContext.getString(R.string.fetching)
-
-        showTagFetchPushDialog.value = true
-
+    val showUpdateDialog = StateUtil.getRememberSaveableState(false)
+    val initUpdateDialog = {
+        showUpdateDialog.value=true
     }
 
     if(showCloneDialog.value) {
@@ -771,14 +782,25 @@ fun SubmoduleListScreen(
             requireShowTextCompose = true,
             textCompose = {
                 ScrollableColumn {
-                    Text(stringResource(R.string.will_clone_selected_submodules_are_you_sure))
+//                    Text(stringResource(R.string.will_clone_selected_submodules_are_you_sure))
 
-                    Spacer(Modifier.height(10.dp))
 
-                    MyCheckBox(text = stringResource(R.string.recursive), value = recursiveClone)
+                    Text(stringResource(R.string.select_credential)+": ")
+
+                    SingleSelectList(
+                        optionsList = credentialList.value,
+                        selectedOptionIndex = selectedCredentialIdx,
+                        menuItemFormatter = {it.name}
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
+                    MyCheckBox(text = stringResource(R.string.recursive_clone), value = recursiveClone)
                     if(recursiveClone.value) {
                         Text(stringResource(R.string.recursive_clone_submodule_nested_loop_warn), color = MyStyleKt.TextColor.danger)
                     }
+                    Spacer(Modifier.height(10.dp))
+
                 }
             },
             onCancel = {showCloneDialog.value = false}
@@ -786,74 +808,80 @@ fun SubmoduleListScreen(
         ) {
             showCloneDialog.value=false
 
-            doJobThenOffLoading {
-                val recursive = recursiveClone.value
-                val selectedList = selectedItemList.value.toList()
-                val allItems = list.value
-                val cloningStr = appContext.getString(R.string.cloning)
-                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.cloning)) {
+                try {
 
-                val defaultInvalidIdx = -1
+                    val recursive = recursiveClone.value
+                    val selectedList = selectedItemList.value.toList()
+//                val allItems = list.value
+//                val cloningStr = appContext.getString(R.string.cloning)
 
-                //not cloned, and not do other job for submodule
-                val willCloneList = selectedList.filter{!it.cloned && it.tempStatus.isBlank()}
+                    val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                    val selectedCredential = credentialList.value[selectedCredentialIdx.intValue]
+                    val credential = credentialDb.getByIdWithDecrypt(selectedCredential.id)
 
-                val nameIndexMap = mutableMapOf<String, Int>()
-                // set status to cloning for selected items
-                willCloneList.forEach { selectedItem ->
-                    val curItemIdx = allItems.indexOfFirst { selectedItem.name == it.name }
-                    doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
-                        val newItem = itemWillUpdate.copy(tempStatus = cloningStr)
-                        allItems[curItemIdx] = newItem
-                        nameIndexMap.put(selectedItem.name, curItemIdx)
+//                val defaultInvalidIdx = -1
 
-                        // may cause ConcurrentException
-                        try {
-                            val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
-                            if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
-                                selectedItemList.value[selectedIdx] = newItem
-                            }
-                        }catch (_:Exception) {
+                    //not cloned, and not do other job for submodule
+                    val willCloneList = selectedList.filter{!it.cloned && it.tempStatus.isBlank()}
 
-                        }
-                    }
-                }
-
-                Repository.open(curRepo.value.fullSavePath).use { repo->
-                    selectedList.forEach { selectedItem ->
-                        val resultMsg = try {
-                            //test
-                            val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffffffffffffffffff")
-                            //test
-
-                            // clone submodule
-                            Libgit2Helper.cloneSubmodules(repo, recursive, specifiedCredential=credential, credentialStrategy= CredentialStrategy.SPECIFIED, submoduleNameList= listOf(selectedItem.name))
-
-
-                            // all ok, return empty str
-                            ""
-                        }catch (e:Exception) {
-                            e.localizedMessage ?: "clone err"
-                        }
-
-                        // clear status or set err to status
-                        val curItemIdx = nameIndexMap.getOrDefault(selectedItem.name, defaultInvalidIdx)
-                        doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
-                            val newItem = itemWillUpdate.copy(tempStatus = resultMsg, cloned = Libgit2Helper.isValidGitRepo(itemWillUpdate.fullPath))
-                            allItems[curItemIdx] = newItem
-
+//                val nameIndexMap = mutableMapOf<String, Int>()
+                    // set status to cloning for selected items
+//                willCloneList.forEach { selectedItem ->
+//                    val curItemIdx = allItems.indexOfFirst { selectedItem.name == it.name }
+//                    doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
+//                        val newItem = itemWillUpdate.copy(tempStatus = cloningStr)
+//                        allItems[curItemIdx] = newItem
+//                        nameIndexMap.put(selectedItem.name, curItemIdx)
+//
+//                        // may cause ConcurrentException
+//                        try {
+//                            val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
+//                            if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
+//                                selectedItemList.value[selectedIdx] = newItem
+//                            }
+//                        }catch (_:Exception) {
+//
+//                        }
+//                    }
+//                }
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        willCloneList.forEach { selectedItem ->
                             try {
-                                // make selectedList info more real-time, but may cause ConcurrentException, most time should be fine
-                                val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
-                                if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
-                                    selectedItemList.value[selectedIdx] = newItem
-                                }
-                            }catch (_:Exception) {
 
+                                // clone submodule
+                                Libgit2Helper.cloneSubmodules(repo, recursive, specifiedCredential=credential, submoduleNameList= listOf(selectedItem.name))
+
+                            }catch (e:Exception) {
+                                val errPrefix = "clone '${selectedItem.name}' err: "
+                                val errMsg = e.localizedMessage ?: "clone submodule err"
+                                Msg.requireShow(errMsg)
+                                createAndInsertError(curRepo.value.id, errPrefix+errMsg)
                             }
-                        }
 
+                            // clear status or set err to status
+//                        val curItemIdx = nameIndexMap.getOrDefault(selectedItem.name, defaultInvalidIdx)
+//                        doActIfIndexGood(curItemIdx, allItems) { itemWillUpdate ->
+//                            val newItem = itemWillUpdate.copy(tempStatus = resultMsg, cloned = Libgit2Helper.isValidGitRepo(itemWillUpdate.fullPath))
+//                            allItems[curItemIdx] = newItem
+//
+//                            try {
+//                                // make selectedList info more real-time, but may cause ConcurrentException, most time should be fine
+//                                val selectedIdx = selectedItemList.value.indexOfFirst { it.name == selectedItem.name }
+//                                if(selectedIdx!=-1) {  //current item selected, update it's info in selectedItemList
+//                                    selectedItemList.value[selectedIdx] = newItem
+//                                }
+//                            }catch (_:Exception) {
+//
+//                            }
+//                        }
+
+                        }
                     }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
                 }
 
 
@@ -862,6 +890,56 @@ fun SubmoduleListScreen(
         }
     }
 
+    if(showUpdateDialog.value) {
+        ConfirmDialog2(title = appContext.getString(R.string.update),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.select_credential) + ": ")
+
+                    SingleSelectList(
+                        optionsList = credentialList.value,
+                        selectedOptionIndex = selectedCredentialIdx,
+                        menuItemFormatter = { it.name }
+                    )
+                    Spacer(Modifier.height(15.dp))
+
+                }
+            },
+            onCancel = { showUpdateDialog.value = false }
+
+        ) {
+            showUpdateDialog.value=false
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.updating)) {
+                try {
+                    val selectedCredential = credentialList.value[selectedCredentialIdx.intValue]
+
+                    val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                    val credential = credentialDb.getByIdWithDecrypt(selectedCredential.id)
+
+                    Repository.open(curRepo.value.fullSavePath).use { repo->
+                        selectedItemList.value.toList().forEach {
+                            try {
+                                Libgit2Helper.updateSubmodule(repo, credential, it.name)
+
+                            }catch (e:Exception) {
+                                val errPrefix = "update '${it.name}' err: "
+                                val errMsg = e.localizedMessage ?: "update submodule err"
+                                Msg.requireShow(errMsg)
+                                createAndInsertError(curRepo.value.id, errPrefix+errMsg)
+                            }
+                        }
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+
+                }finally {
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+        }
+    }
 
 
     // 向下滚动监听，开始
@@ -906,19 +984,7 @@ fun SubmoduleListScreen(
             initCloneDialog()
         },
         update@{
-            //TODO 为待更新的条目设置临时状态
-            doJobThenOffLoading {
-                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                val credential = credentialDb.getByIdWithDecrypt("ffffffffffffffffffffffffffffffffff")
-                Repository.open(curRepo.value.fullSavePath).use { repo->
-                    selectedItemList.value.toList().forEach {
-                        Libgit2Helper.updateSubmodule(repo,credential, CredentialStrategy.SPECIFIED, it.name)
-                        Msg.requireShow(appContext.getString(R.string.success))
-
-                    }
-                }
-
-            }
+            initUpdateDialog()
         },
         selectAll@{
             //impl select all
@@ -1217,6 +1283,7 @@ fun SubmoduleListScreen(
                 loadingText = appContext.getString(R.string.loading),
             ) {
                 list.value.clear()  //先清一下list，然后可能添加也可能不添加
+                credentialList.value.clear()
 
                 if(!repoId.isNullOrBlank()) {
                     val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
@@ -1225,21 +1292,27 @@ fun SubmoduleListScreen(
                         curRepo.value = repoFromDb
                         Repository.open(repoFromDb.fullSavePath).use {repo ->
                             val items = Libgit2Helper.getSubmoduleDtoList(repo);
-                            list.value.clear()
                             list.value.addAll(items)
                         }
                     }
+
+                    val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                    val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = false)
+                    if(credentialListFromDb.isNotEmpty()) {
+                        credentialList.value.addAll(credentialListFromDb)
+                    }
+
                 }
 
-                if(list.value.isEmpty()) {
-                    selectedItemList.value.clear()  //清下已选中条目列表
-                }else {
+                if(list.value.isEmpty()) {  // clear selected list if list is empty
+                    selectedItemList.value.clear()
+                }else {  // hold and update selected list items which still in list
                     val listCopy = list.value.toList()
                     val selectedListCopy = selectedItemList.value.toList()
                     selectedListCopy.forEachIndexed { idx, oldSelectedItem ->
                         // if list doesn't contains selected item, remove it from selected list
                         val newItemIdx = listCopy.indexOfFirst { newItem -> oldSelectedItem.name==newItem.name }
-                        if(newItemIdx == -1) {
+                        if(newItemIdx == -1) {  // removed from src list, but still exists in selectedItemList, should remove it
                             selectedItemList.value.removeAt(idx)
                         }else {  // update info of selected and still exists items
                             selectedItemList.value[idx]=listCopy[newItemIdx]

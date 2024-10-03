@@ -4787,7 +4787,7 @@ class Libgit2Helper {
          * @param credentialStrategy if is SPECIFIED, will use `specifiedCredential`
          * @param predicate only predicate success will be cloned, you can set this for filter submodules
          */
-        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleNameList:List<String>){
+        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, submoduleNameList:List<String>){
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
             submoduleNameList.forEach { name ->
                 // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
@@ -4820,11 +4820,9 @@ class Libgit2Helper {
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
                 //set credential
-                if(credentialStrategy == CredentialStrategy.SPECIFIED && specifiedCredential!=null) {
+                if(specifiedCredential!=null) {
                     updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
-                }else if(credentialStrategy == CredentialStrategy.MATCH_BY_DOMAIN) {
-                    //TODO query credential by domain, then set it
-                }// else NONE, don't set credential
+                }
 
 
                 // clone repo
@@ -4893,7 +4891,7 @@ class Libgit2Helper {
                 // !! becareful with this, if repo contains nested-loops, will infinite clone !!
                 if(recursive) {
                     // does not support filter submodule's submodule, so predicate always return true when reach here
-                    cloneSubmodules(subRepo, recursive, specifiedCredential, credentialStrategy, submoduleNameList= getSubmoduleNameList(subRepo))
+                    cloneSubmodules(subRepo, recursive, specifiedCredential, submoduleNameList= getSubmoduleNameList(subRepo))
                 }
             }
         }
@@ -4920,7 +4918,7 @@ class Libgit2Helper {
             }
         }
 
-        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, credentialStrategy: CredentialStrategy, submoduleName: String) {
+        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, submoduleName: String) {
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(parentRepo)
 
             val sm = resolveSubmodule(parentRepo, submoduleName)
@@ -4936,11 +4934,9 @@ class Libgit2Helper {
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
                 //set credential
-                if(credentialStrategy == CredentialStrategy.SPECIFIED && specifiedCredential!=null) {
+                if(specifiedCredential!=null) {
                     updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
-                }else if(credentialStrategy == CredentialStrategy.MATCH_BY_DOMAIN) {
-                    //TODO query credential by domain, then set it
-                }// else NONE, don't set credential
+                }
 
                 MyLog.d(TAG,"#updateSubmodule: will update submodule '$submoduleName'")
 

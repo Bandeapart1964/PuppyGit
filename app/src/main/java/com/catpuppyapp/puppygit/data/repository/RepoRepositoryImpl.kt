@@ -308,7 +308,9 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                                      isReposParent: Boolean,
                                      repoNamePrefix:String,
                                      repoNameSuffix:String,
-                                     parentRepoId:String?
+                                     parentRepoId:String?,
+                                     credentialId:String?,
+
     ): ImportRepoResult {
         val repos = getAll(updateRepoInfo = false).toMutableList()
 
@@ -336,7 +338,8 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                                     repoWorkDirPath = repoWorkDirPath,
                                     initRepoName = repoNamePrefix + sub.name + repoNameSuffix,
                                     addRepoToThisListIfSuccess = repos,
-                                    parentRepoId=parentRepoId
+                                    parentRepoId=parentRepoId,
+                                    credentialId=credentialId
                                 )
 
                                 if(importSuccess) {
@@ -367,7 +370,8 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                             repo = repo,
                             repoWorkDirPath = repoWorkdirPath,
                             initRepoName = repoNamePrefix + dirFile.name + repoNameSuffix,
-                            parentRepoId=parentRepoId
+                            parentRepoId=parentRepoId,
+                            credentialId = credentialId
                         )
                         if(importSuccess) {
                             success = 1
@@ -395,7 +399,9 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                                          repoWorkDirPath:String,
                                          initRepoName:String,
                                          addRepoToThisListIfSuccess:MutableList<RepoEntity>?=null,
-                                         parentRepoId: String?
+                                         parentRepoId: String?,
+                                         credentialId:String?,
+
     ):Boolean {
         val funName = "importSingleRepo"
 
@@ -436,6 +442,12 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
                 val remoteEntity = RemoteEntity()
                 remoteEntity.remoteName = remoteName
                 remoteEntity.repoId = repoEntity.id
+
+                if(credentialId!=null) {
+                    remoteEntity.credentialId = credentialId
+                    remoteEntity.pushCredentialId = credentialId
+                }
+
                 remoteEntityList.add(remoteEntity)
             }
 

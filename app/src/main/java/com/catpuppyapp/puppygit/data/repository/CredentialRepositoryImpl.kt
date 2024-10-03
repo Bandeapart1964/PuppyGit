@@ -20,17 +20,33 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
 //    override fun getStream(id: String): Flow<CredentialEntity?> = dao.getStream(id)
 
 
-    override suspend fun getAllWithDecrypt(): List<CredentialEntity> {
-        val all = dao.getAll()
+    override suspend fun getAllWithDecrypt(includeNone:Boolean, includeMatchByDomain:Boolean): List<CredentialEntity> {
+        val all = dao.getAll().toMutableList()
         for(item in all) {
             decryptPassIfNeed(item)
         }
 
+        prependSpecialItemIfNeed(list = all, includeNone = includeNone, includeMatchByDomain = includeMatchByDomain)
+
         return all
     }
 
-    override suspend fun getAll(): List<CredentialEntity> {
-        return dao.getAll()
+    override suspend fun getAll(includeNone:Boolean, includeMatchByDomain:Boolean): List<CredentialEntity> {
+        val list =  dao.getAll().toMutableList()
+
+        prependSpecialItemIfNeed(list = list, includeNone = includeNone, includeMatchByDomain = includeMatchByDomain)
+
+        return list
+    }
+
+    private fun prependSpecialItemIfNeed(list: MutableList<CredentialEntity>, includeNone:Boolean, includeMatchByDomain:Boolean) {
+        if (includeMatchByDomain) {
+            list.add(0, Cons.getSpecialCredential_MatchByDomain())
+        }
+
+        if (includeNone) {
+            list.add(0, Cons.getSpecialCredential_NONE())
+        }
     }
 
     override suspend fun insertWithEncrypt(item: CredentialEntity) {
@@ -65,6 +81,10 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     override suspend fun delete(item: CredentialEntity) = dao.delete(item)
 
     override suspend fun updateWithEncrypt(item: CredentialEntity) {
+        if(Cons.isAllowedCredentialName(item.name).not()) {
+            throw RuntimeException("credential name disallowed")
+        }
+
         //如果密码不为空，加密密码。
         encryptPassIfNeed(item)
 
@@ -72,15 +92,29 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     }
 
     override suspend fun update(item: CredentialEntity) {
+        if(Cons.isAllowedCredentialName(item.name).not()) {
+            throw RuntimeException("credential name disallowed")
+        }
+
         dao.update(item)
     }
 
     override suspend fun isCredentialNameExist(name: String): Boolean {
+        // disallowed name treat as existed
+        if(Cons.isAllowedCredentialName(name).not()) {
+            return true
+        }
+
         val id = dao.getIdByCredentialName(name)
-        return id != null && id.isNotBlank()
+//        return id != null && id.isNotBlank()  // don't check blank may be better
+        return id != null
     }
 
     override suspend fun getByIdWithDecrypt(id: String): CredentialEntity? {
+        if(id.isBlank() || id==Cons.dbCredentialSpecialId_NONE) {
+            return null
+        }
+
         val item = dao.getById(id)
         if(item == null) {
             return null
@@ -92,19 +126,27 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     }
 
     override suspend fun getById(id: String): CredentialEntity? {
+        if(id.isBlank() || id==Cons.dbCredentialSpecialId_NONE) {
+            return null
+        }
+
         return dao.getById(id)
     }
 
-    override suspend fun getListByType(type: Int): List<CredentialEntity> {
-        return dao.getListByType(type)
-    }
+//    override suspend fun getListByType(type: Int): List<CredentialEntity> {
+//        return dao.getListByType(type)
+//    }
 
     override suspend fun getSshList(): List<CredentialEntity> {
         return dao.getListByType(Cons.dbCredentialTypeSsh)
     }
 
-    override suspend fun getHttpList(): List<CredentialEntity> {
-        return dao.getListByType(Cons.dbCredentialTypeHttp)
+    override suspend fun getHttpList(includeNone:Boolean, includeMatchByDomain:Boolean): List<CredentialEntity> {
+        val list = dao.getListByType(Cons.dbCredentialTypeHttp).toMutableList()
+
+        prependSpecialItemIfNeed(list = list, includeNone = includeNone, includeMatchByDomain = includeMatchByDomain)
+
+        return list
     }
 
     override suspend fun deleteAndUnlink(item:CredentialEntity) {

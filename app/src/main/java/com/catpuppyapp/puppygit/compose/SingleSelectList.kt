@@ -35,7 +35,7 @@ fun<T> SingleSelectList(
     outterModifier: Modifier = Modifier.fillMaxWidth(),
     dropDownMenuModifier:Modifier=Modifier.fillMaxWidth(),
 
-    optionsList:List<T>,
+    optionsList:List<T>,   // empty list will show "null" and no item for select
     selectedOptionIndex:MutableIntState?,
     selectedOptionValue:T? = if(selectedOptionIndex!=null && isGoodIndexForList(selectedOptionIndex.intValue, optionsList)) optionsList[selectedOptionIndex.intValue] else null,
 

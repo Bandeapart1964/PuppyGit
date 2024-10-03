@@ -19,6 +19,8 @@ data class CredentialEntity(
     // repo push or pull etc time
     var value: String = "",  // username or private key
     var pass: String = "",  // password or passphrase_for_ssh
+
+    // credential bind a type such a bad design, credential should define by it's proposal, not by itself, example: when used for https link, its a http type, when used for ssh, its a ssh type
     var type: Int= Cons.dbCredentialTypeHttp,  //"ssh" or "http"
 
     @Embedded

@@ -32,12 +32,12 @@ interface CredentialRepository {
 //    fun getStream(id: String): Flow<CredentialEntity?>
 
 
-    suspend fun getAllWithDecrypt(): List<CredentialEntity>
+    suspend fun getAllWithDecrypt(includeNone:Boolean = false, includeMatchByDomain:Boolean = false): List<CredentialEntity>
 
     /**
      * 不加密也不解密 密码字段，把查出的数据简单返回
      */
-    suspend fun getAll(): List<CredentialEntity>
+    suspend fun getAll(includeNone:Boolean = false, includeMatchByDomain:Boolean = false): List<CredentialEntity>
 
 
     /**
@@ -72,10 +72,11 @@ interface CredentialRepository {
      */
     suspend fun getById(id: String): CredentialEntity?
 
-    suspend fun getListByType(type:Int): List<CredentialEntity>
+    //20241003 disabled, because only support https, get by type is nonsense for now
+//    suspend fun getListByType(type:Int): List<CredentialEntity>
 
     suspend fun getSshList(): List<CredentialEntity>
-    suspend fun getHttpList(): List<CredentialEntity>
+    suspend fun getHttpList(includeNone:Boolean = false, includeMatchByDomain:Boolean = false): List<CredentialEntity>
 
     suspend fun deleteAndUnlink(item:CredentialEntity)
 

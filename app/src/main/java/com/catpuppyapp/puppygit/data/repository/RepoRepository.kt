@@ -83,7 +83,7 @@ interface RepoRepository {
      * @param repoNamePrefix specific a prefix for repo name, e.g. when import submodule of repos, default prefix is "sub_"
      * @param parentRepoId when import a submodule from a repo, should set this id to parent repo's id
      */
-    suspend fun importRepos(dir: String, isReposParent: Boolean, repoNamePrefix:String="", repoNameSuffix:String="", parentRepoId:String?=null): ImportRepoResult
+    suspend fun importRepos(dir: String, isReposParent: Boolean, repoNamePrefix:String="", repoNameSuffix:String="", parentRepoId:String?=null, credentialId:String?=null): ImportRepoResult
 
     /**
      * if reponame has illegal chars or exists in repo, return false, else return true

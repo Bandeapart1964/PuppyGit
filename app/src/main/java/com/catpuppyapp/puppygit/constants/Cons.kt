@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.constants
 
+import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.github.git24j.core.Oid
 import kotlinx.coroutines.sync.Mutex
 import java.time.ZoneOffset
@@ -116,7 +117,21 @@ class Cons {
         //credential
         const val dbCredentialTypeHttp=1
         const val dbCredentialTypeSsh=2
+        const val dbCredentialSpecialId_MatchByDomain = "match_by_domain"
+        const val dbCredentialSpecialId_NONE = ""  // no credential linked yet
+        const val dbCredentialSpecialName_MatchByDomain = "Match By Domain"
+        const val dbCredentialSpecialName_NONE = "NONE"  // no credential linked yet
 
+        fun getSpecialCredential_MatchByDomain():CredentialEntity {
+            return CredentialEntity(id= dbCredentialSpecialId_MatchByDomain, name = dbCredentialSpecialName_MatchByDomain, type = dbCredentialTypeHttp)
+        }
+        fun getSpecialCredential_NONE():CredentialEntity {
+            return CredentialEntity(id= dbCredentialSpecialId_NONE, name = dbCredentialSpecialName_NONE, type = dbCredentialTypeHttp)
+        }
+
+        fun isAllowedCredentialName(name:String):Boolean {
+            return name.isNotBlank() && name!= dbCredentialSpecialName_NONE && name != dbCredentialSpecialName_MatchByDomain
+        }
 
         //repo
         //repo createType
