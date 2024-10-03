@@ -4757,15 +4757,74 @@ class Libgit2Helper {
             return list
         }
 
-        fun removeSubmodule(){
-            TODO("not implement yet")
 
-            // remove submodule info from .gitmodules
-            // remove submodule info from .git/config
-            // delete submodule's .git folder under .git/modules
-            // delete submodule folder
-            // update parent's index
-            // done
+        /**
+         *  remove submodule info from .gitmodules
+         *  remove submodule info from .git/config
+         *  delete submodule's .git folder under .git/modules
+         *  delete submodule folder on parent repo's workdir
+         *
+         *  update parent's index ( this method don't do this, it control by user )
+         *  done
+         */
+        fun removeSubmodule(
+            deleteFiles: Boolean,
+            deleteConfigs: Boolean,
+            repo: Repository,
+            repoWorkDirPath: String,
+            submoduleName:String,
+            submoduleFullPath:String,
+        ){
+            // del files on disk
+            if (deleteFiles) {
+                val dotGitFile = File(submoduleFullPath, ".git")
+                //delete .git folder of submodule
+                val relativePathFromSmWorkdirToDotGitFolder = Libgit2Helper.readPathFromDotGitFile(dotGitFile)
+                if (relativePathFromSmWorkdirToDotGitFolder.isNotBlank()) {
+                    //absolute path + relative path = submodule's real .git folder path
+                    val dotGitRealFolder = File(submoduleFullPath, relativePathFromSmWorkdirToDotGitFolder)
+                    MyLog.d(TAG, "dotGitRealFolder.canonicalPath=${dotGitRealFolder.canonicalPath}")
+
+                    if (dotGitRealFolder.exists()) {
+                        MyLog.d(TAG, "will delete submodule .git folder at: ${dotGitRealFolder.canonicalPath}")
+
+                        dotGitRealFolder.deleteRecursively()
+                    }
+                } else {
+                    MyLog.d(TAG, "invalid path (blank) in dotGitFile, dotGitFile.exist=${dotGitFile.exists()}, dotGitFile.canonicalPath=${dotGitFile.canonicalPath}")
+                }
+
+                // delete workdir (note: must delete this after delete .git folder, because this will delete .git file, if order change, it will can't find .git folder, then .git folder will keep
+                val smWorkdir = File(submoduleFullPath)
+                if (smWorkdir.exists()) {
+                    MyLog.d(TAG, "will delete submodule workdir files at: ${smWorkdir.canonicalPath}")
+                    smWorkdir.deleteRecursively()
+                }
+            }
+
+
+            // del config entry
+            if (deleteConfigs) {
+                // delete submodule info in parent .git/config
+                val parentConfig = Libgit2Helper.getRepoConfigFilePath(repo)
+                if (parentConfig.isNotBlank()) {
+                    val parentConfigFile = File(parentConfig)
+                    if (parentConfigFile.exists()) {
+                        MyLog.d(TAG, "will delete submodule key from parent repo config at: ${parentConfigFile.canonicalPath}")
+
+                        Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(parentConfigFile, submoduleName)
+                    }
+                }
+
+                // delete submodule config in .gitmodules file
+                val gitmoduleFile = File(repoWorkDirPath, Cons.gitDotModules)
+                if (gitmoduleFile.exists()) {
+                    MyLog.d(TAG, "will delete submodule key from submodule config at: ${gitmoduleFile.canonicalPath}")
+
+                    Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(gitmoduleFile, submoduleName)
+                }
+
+            }
         }
 
         fun updateSubmoduleUrl(parentRepo:Repository, sm:Submodule, remoteUrl:String) {

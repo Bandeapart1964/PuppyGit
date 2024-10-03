@@ -67,7 +67,6 @@ import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
-import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.git.ImportRepoResult
@@ -86,7 +85,6 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
-import java.io.File
 
 private val TAG = "SubmoduleListScreen"
 private val stateKeyTag = "SubmoduleListScreen"
@@ -695,56 +693,15 @@ fun SubmoduleListScreen(
                         val repoWorkDirPath = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
                         selectedItemList.value.toList().forEach { smdto ->
                             try {
-                                // del files on disk
-                                if(deleteFilesForDeleteDialog.value) {
-                                    val dotGitFile = File(smdto.fullPath, ".git")
-                                    //delete .git folder of submodule
-                                    val relativePathFromSmWorkdirToDotGitFolder = Libgit2Helper.readPathFromDotGitFile(dotGitFile)
-                                    if(relativePathFromSmWorkdirToDotGitFolder.isNotBlank()) {
-                                        //absolute path + relative path = submodule's real .git folder path
-                                        val dotGitRealFolder = File(smdto.fullPath, relativePathFromSmWorkdirToDotGitFolder)
-                                        MyLog.d(TAG, "dotGitRealFolder.canonicalPath=${dotGitRealFolder.canonicalPath}")
 
-                                        if(dotGitRealFolder.exists()) {
-                                            MyLog.d(TAG, "will delete submodule .git folder at: ${dotGitRealFolder.canonicalPath}")
-
-                                            dotGitRealFolder.deleteRecursively()
-                                        }
-                                    }else {
-                                        MyLog.d(TAG, "invalid path (blank) in dotGitFile, dotGitFile.exist=${dotGitFile.exists()}, dotGitFile.canonicalPath=${dotGitFile.canonicalPath}")
-                                    }
-
-                                    // delete workdir
-                                    val smWorkdir = File(smdto.fullPath)
-                                    if(smWorkdir.exists()) {
-                                        MyLog.d(TAG, "will delete submodule workdir files at: ${smWorkdir.canonicalPath}")
-                                        smWorkdir.deleteRecursively()
-                                    }
-                                }
-
-
-                                // del config entry
-                                if(deleteConfigForDeleteDialog.value) {
-                                    // delete submodule info in parent .git/config
-                                    val parentConfig = Libgit2Helper.getRepoConfigFilePath(repo)
-                                    if(parentConfig.isNotBlank()) {
-                                        val parentConfigFile = File(parentConfig)
-                                        if(parentConfigFile.exists()) {
-                                            MyLog.d(TAG, "will delete submodule key from parent repo config at: ${parentConfigFile.canonicalPath}")
-
-                                            Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(parentConfigFile, smdto.name)
-                                        }
-                                    }
-
-                                    // delete submodule inff in .gitmodules file
-                                    val gitmoduleFile = File(repoWorkDirPath, Cons.gitDotModules)
-                                    if(gitmoduleFile.exists()) {
-                                        MyLog.d(TAG, "will delete submodule key from submodule config at: ${gitmoduleFile.canonicalPath}")
-
-                                        Libgit2Helper.deleteSubmoduleInfoFromGitConfigFile(gitmoduleFile, smdto.name)
-                                    }
-
-                                }
+                                Libgit2Helper.removeSubmodule(
+                                    deleteFiles = deleteFilesForDeleteDialog.value,
+                                    deleteConfigs = deleteConfigForDeleteDialog.value,
+                                    repo = repo,
+                                    repoWorkDirPath = repoWorkDirPath,
+                                    submoduleName = smdto.name,
+                                    submoduleFullPath = smdto.fullPath,
+                                )
 
                             }catch (e:Exception) {
                                 val errPrefix = "del submodule err: delConfig=${deleteConfigForDeleteDialog.value}, delFiles=${deleteFilesForDeleteDialog.value}, err="
