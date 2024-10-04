@@ -893,5 +893,9 @@
     <string name="done">Done</string>
     <string name="reload_submodule_note">Will reload selected submodules. \n\nnote: usually you need not do this, except you trust submodules infos are out-of-date on this list.</string>
     <string name="reloading">Reloading…</string>
+    <string name="diff_to_upstream">Diff To Upstream</string>
+    <string name="upstream_oid_is_invalid">Upstream Oid is invalid</string>
+    <string name="compare_to_upstream">Compare To Upstream</string>
+    <string name="both_are_the_same">Both are the same</string>
 
 </resources>

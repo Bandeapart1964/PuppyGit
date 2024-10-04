@@ -1357,6 +1357,37 @@ fun BranchListScreen(
                         }
                     }
 
+                    BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.diff_to_upstream),
+                        enabled = curObjInPage.value.type == Branch.BranchType.LOCAL
+                    ){
+                        val curObj = curObjInPage.value
+
+                        if(!curObj.isUpstreamValid()) {  // invalid upstream
+                            Msg.requireShowLongDuration(appContext.getString(R.string.upstream_not_set_or_not_published))
+                        }else {
+                            val upOid = curObj.upstream?.remoteOid ?: ""
+                            if(upOid.isBlank()) {  // invalid upstream oid
+                                Msg.requireShowLongDuration(appContext.getString(R.string.upstream_oid_is_invalid))
+                            }else {
+                                val commit1 = curObj.oidStr
+                                val commit2 = upOid
+
+                                if(commit1 == commit2) {  // local and upstream are the same, no need compare
+                                    Msg.requireShow(appContext.getString(R.string.both_are_the_same))
+                                }else {   // necessary things are ready and local vs upstream ain't same, then , should go to diff page
+                                    val descKey = Cache.setThenReturnKey(appContext.getString(R.string.compare_to_upstream))
+                                    val commitForQueryParents = Cons.allZeroOidStr
+
+                                    // url 参数： 页面导航id/repoId/treeoid1/treeoid2/desckey
+                                    navController.navigate(
+                                        //注意是 parentTreeOid to thisObj.treeOid，也就是 旧提交to新提交，相当于 git diff abc...def，比较的是旧版到新版，新增或删除或修改了什么，反过来的话，新增删除之类的也就反了
+                                        "${Cons.nav_TreeToTreeChangeListScreen}/${curRepo.value.id}/$commit1/$commit2/$descKey/$commitForQueryParents"
+                                    )
+                                }
+
+                            }
+                        }
+                    }
 
                     BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.go_upstream),
                         enabled = curObjInPage.value.type == Branch.BranchType.LOCAL
