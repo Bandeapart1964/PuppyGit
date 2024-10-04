@@ -19,6 +19,8 @@ package com.catpuppyapp.puppygit.data
 import android.content.Context
 import com.catpuppyapp.puppygit.data.repository.CredentialRepository
 import com.catpuppyapp.puppygit.data.repository.CredentialRepositoryImpl
+import com.catpuppyapp.puppygit.data.repository.DomainCredentialRepository
+import com.catpuppyapp.puppygit.data.repository.DomainCredentialRepositoryImpl
 import com.catpuppyapp.puppygit.data.repository.ErrorRepository
 import com.catpuppyapp.puppygit.data.repository.ErrorRepositoryImpl
 import com.catpuppyapp.puppygit.data.repository.PassEncryptRepository
@@ -44,6 +46,7 @@ interface AppContainer {
     val settingsRepository: SettingsRepository
     val passEncryptRepository: PassEncryptRepository
     val storageDirRepository: StorageDirRepository
+    val domainCredentialRepository: DomainCredentialRepository
     // other repository write here
 }
 
@@ -78,5 +81,8 @@ class AppDataContainer(private val context: Context) : AppContainer {
     }
     override val storageDirRepository: StorageDirRepository by lazy {
         StorageDirRepositoryImpl(db.storageDirDao())
+    }
+    override val domainCredentialRepository: DomainCredentialRepository by lazy {
+        DomainCredentialRepositoryImpl(db.domainCredentialDao())
     }
 }

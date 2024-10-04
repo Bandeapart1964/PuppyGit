@@ -49,3 +49,11 @@ val MIGRATION_21_22 = object : Migration(21, 22) {
         db.execSQL("ALTER TABLE remote ADD COLUMN pushCredentialId TEXT NOT NULL DEFAULT ''")
     }
 }
+
+val MIGRATION_22_23 = object : Migration(22, 23) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        val TABLE_NAME = "domain_credential"
+        val createTableSql = "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `domain` TEXT NOT NULL, `credentialId` TEXT NOT NULL, `baseStatus` INTEGER NOT NULL, `baseCreateTime` INTEGER NOT NULL, `baseUpdateTime` INTEGER NOT NULL, `baseIsDel` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+        db.execSQL(createTableSql)
+    }
+}
