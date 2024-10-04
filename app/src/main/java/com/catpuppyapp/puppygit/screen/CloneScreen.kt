@@ -829,17 +829,18 @@ fun CloneScreen(
             HorizontalDivider(modifier = Modifier.padding(spacerPadding))
             //choose credential
             Column(modifier = Modifier.selectableGroup(),
-
-                ) {
-                var end = credentialRadioOptions.size-1
+            ) {
                 //如果对应类型的集合为空，就不显示“选择凭据”选项了
-                if((curCredentialType.intValue == Cons.dbCredentialTypeHttp && credentialHttpList.value.isEmpty())
-                    ||(curCredentialType.intValue==Cons.dbCredentialTypeSsh && credentialSshList.value.isEmpty())) {
-                    end-=1
-                }
+                val skipSelect = (curCredentialType.intValue == Cons.dbCredentialTypeHttp && credentialHttpList.value.isEmpty()) || (curCredentialType.intValue==Cons.dbCredentialTypeSsh && credentialSshList.value.isEmpty())
+
 
                 //如果设置了有效gitUrl，显示新建和选择凭据，否则只显示无凭据
-                for(k in 0..end){
+                for(k in credentialRadioOptions.indices){
+
+                    if(skipSelect && k == optNumSelectCredential) {
+                        continue
+                    }
+
                     val optext = credentialRadioOptions[k]
 
                     Row(
