@@ -4621,7 +4621,13 @@ class Libgit2Helper {
          * @return 只有成功解析出commit才会返回成功
          */
         fun resolveCommitByHashOrRef(repo: Repository, hashOrBranchOrTag: String): Ret<Commit?> {
+            if(hashOrBranchOrTag.isBlank()) {
+                return Ret.createError(null, "invalid hash")
+            }
+
+
             val funName ="resolveCommitByHashOrRef"
+
             try {
                 //先直接解析hash
                 var c =  resolveCommitByHash(repo, hashOrBranchOrTag)

@@ -35,10 +35,11 @@ import com.github.git24j.core.Reset
 
 @Composable
 fun ResetDialog(
-    fullOidOrBranchOrTag: MutableState<String>,
+    fullOidOrBranchOrTag: MutableState<String>?,  // if null, will not show text field for input hash
     repoFullPath:String,
     repoId:String,
     closeDialog: () -> Unit,
+    onOk:((resetType:Reset.ResetT)->Unit)? =null,  // here only passing reset type, the target hash can get from `fullOidOrBranchOrTag`, it's passed by caller, so caller can get it, no need passing at here
     refreshPage: (oldHeadCommitOid:String, isDetached:Boolean)->Unit,  //入参为Hard Reset之前HEAD指向的commit id和仓库是否detached。这个detached在这只是顺手判断，commitList页面要用到这个参数，但那个页面的curRepo若是从分支页面进入，则很少更新，所以，在这顺便更新下detached状态以尽量确保那个对象能持有准确的状态
 ) {
 
@@ -63,20 +64,23 @@ fun ResetDialog(
         },
         text = {
             Column {
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
+                if(fullOidOrBranchOrTag!=null) {
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
 
-                    value = fullOidOrBranchOrTag.value,
-                    singleLine = true,
-                    onValueChange = {
-                        fullOidOrBranchOrTag.value = it
-                    },
-                    label = {
-                        Text(stringResource(R.string.hash_branch_tag))
-                    },
-                )
+                        value = fullOidOrBranchOrTag.value,
+                        singleLine = true,
+                        onValueChange = {
+                            fullOidOrBranchOrTag.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.hash_branch_tag))
+                        },
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                }
 
                 for ((k, optext) in optList.withIndex()) {
                     Row(
@@ -140,38 +144,53 @@ fun ResetDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = fullOidOrBranchOrTag.value.isNotBlank(),
+                enabled = fullOidOrBranchOrTag==null || fullOidOrBranchOrTag.value.isNotBlank(),
                 onClick = {
-                    //关闭弹窗
-                    closeDialog()
-                    //执行 hard reset
-                    doJobThenOffLoading job@{
-                        Repository.open(repoFullPath).use { repo ->
-                            val oldHead = Libgit2Helper.resolveHEAD(repo)
-                            val type = if(selectedOpt.intValue == optSoft) Reset.ResetT.SOFT else if(selectedOpt.intValue == optMixed) Reset.ResetT.MIXED else Reset.ResetT.HARD
-                            val commitRet = Libgit2Helper.resolveCommitByHashOrRef(repo, fullOidOrBranchOrTag.value)
+                    if(onOk==null) {
 
-                            if(commitRet.hasError()) {
-                                Msg.requireShowLongDuration(commitRet.msg)
-                                createAndInsertError(repoId, "Reset $type err, resolve commit failed:"+commitRet.msg)
-                                return@job
-                            }
+                        //关闭弹窗
+                        closeDialog()
+                        //执行 reset
+                        doJobThenOffLoading job@{
+                            Repository.open(repoFullPath).use { repo ->
+                                val oldHead = Libgit2Helper.resolveHEAD(repo)
+                                val type = if(selectedOpt.intValue == optSoft) Reset.ResetT.SOFT else if(selectedOpt.intValue == optMixed) Reset.ResetT.MIXED else Reset.ResetT.HARD
+                                val commitRet = Libgit2Helper.resolveCommitByHashOrRef(repo, fullOidOrBranchOrTag?.value ?: "")
 
-                            val commit = commitRet.data!!
+                                if(commitRet.hasError()) {
+                                    Msg.requireShowLongDuration(commitRet.msg)
+                                    createAndInsertError(repoId, "Reset $type err, resolve commit failed:"+commitRet.msg)
+                                    return@job
+                                }
 
-                            val ret = Libgit2Helper.resetToRevspec(repo, commit.id().toString(), type)
-                            if (ret.hasError()) {
-                                Msg.requireShowLongDuration(ret.msg)
-                                createAndInsertError(repoId, "Reset $type err:"+ret.msg)
-                            } else {
-                                val oldHeadCommitOid = oldHead?.id()?.toString() ?: ""
-                                //如果操作成功，刷新页面
-                                refreshPage(oldHeadCommitOid, repo.headDetached())
+                                val commit = commitRet.data!!
 
-                                Msg.requireShow(appContext.getString(R.string.reset_success))
+                                val ret = Libgit2Helper.resetToRevspec(repo, commit.id().toString(), type)
+                                if (ret.hasError()) {
+                                    Msg.requireShowLongDuration(ret.msg)
+                                    createAndInsertError(repoId, "Reset $type err:"+ret.msg)
+                                } else {
+                                    val oldHeadCommitOid = oldHead?.id()?.toString() ?: ""
+                                    //如果操作成功，刷新页面
+                                    refreshPage(oldHeadCommitOid, repo.headDetached())
+
+                                    Msg.requireShow(appContext.getString(R.string.reset_success))
+                                }
                             }
                         }
+                    }else {
+                        //call custom onOk
+                        onOk(
+                            if(selectedOpt.intValue == optSoft) {
+                                Reset.ResetT.SOFT
+                            }else if(selectedOpt.intValue == optMixed) {
+                                Reset.ResetT.MIXED
+                            }else {
+                                Reset.ResetT.HARD
+                            }
+                        )
                     }
+
                 },
             ) {
                 Text(

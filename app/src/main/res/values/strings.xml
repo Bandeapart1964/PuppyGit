@@ -888,5 +888,8 @@
     <string name="n_inited">ph_a3f241dc_1 inited</string>
     <string name="no_credential_will_be_used">No credential will be used</string>
     <string name="credential_match_by_domain_note">Will match credential by domain, you can manage domain and credential at \'Credential Manager\' page</string>
+    <string name="reset_to_target">Reset To Target</string>
+    <string name="resetting">Resetting</string>
+    <string name="done">Done</string>
 
 </resources>

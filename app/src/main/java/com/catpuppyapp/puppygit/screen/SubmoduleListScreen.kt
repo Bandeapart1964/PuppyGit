@@ -64,8 +64,8 @@ import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
+import com.catpuppyapp.puppygit.compose.ResetDialog
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
-import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
@@ -425,7 +425,7 @@ fun SubmoduleListScreen(
                         }
                     }
 
-                    Msg.requireShow(appContext.getString(R.string.success))
+                    Msg.requireShow(appContext.getString(R.string.done))
                 }catch (e:Exception) {
                     Msg.requireShowLongDuration(e.localizedMessage ?: "err")
                 }finally {
@@ -466,7 +466,7 @@ fun SubmoduleListScreen(
                         }
                     }
 
-                    Msg.requireShow(appContext.getString(R.string.success))
+                    Msg.requireShow(appContext.getString(R.string.done))
 
                 }catch (e:Exception) {
                     Msg.requireShowLongDuration(e.localizedMessage ?:"err")
@@ -476,6 +476,49 @@ fun SubmoduleListScreen(
             }
         }
     }
+
+    val showResetToTargetDialog = StateUtil.getRememberSaveableState(false)
+    val closeResetDialog = {showResetToTargetDialog.value=false}
+    if(showResetToTargetDialog.value) {
+        ResetDialog(
+            fullOidOrBranchOrTag = null,  // null to hidden input hash text filed
+            closeDialog=closeResetDialog,
+
+            repoFullPath = curRepo.value.fullSavePath,  // no use at here
+            repoId=repoId,  // no use at here
+            refreshPage = {_,_-> },  // no use at here
+
+            onOk = { resetType->
+                closeResetDialog()
+
+                doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.resetting)) {
+                    try {
+                        selectedItemList.value.toList().forEach {
+                            if (it.targetHash.isNotBlank()) {
+                                try {
+                                    Repository.open(it.fullPath).use { subRepo ->
+                                        // at least sub repo should has a head
+                                        if (subRepo.headUnborn().not()) {  // if head borned
+                                            Libgit2Helper.resetToRevspec(subRepo, it.targetHash, resetType)
+                                        }
+                                    }
+                                } catch (_: Exception) {
+
+                                }
+                            }
+                        }
+
+                        // its done, not means success, may failed, actually.
+                        Msg.requireShow(appContext.getString(R.string.done))
+                    }finally {
+                        changeStateTriggerRefreshPage(needRefresh)
+                    }
+
+                }
+            }
+        )
+    }
+
 
     val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
     if(showImportToReposDialog.value){
@@ -531,6 +574,7 @@ fun SubmoduleListScreen(
 
     val moreItemEnableList:List<()->Boolean> = listOf(
         {selectedItemList.value.isNotEmpty()},  // import repo
+        {selectedItemList.value.isNotEmpty()},  // reset to target
         {selectedItemList.value.isNotEmpty()},  // update config
         {selectedItemList.value.isNotEmpty()},  // init repo
         {selectedItemList.value.isNotEmpty()},  // restore .git file
@@ -541,6 +585,7 @@ fun SubmoduleListScreen(
 
     val moreItemTextList = listOf(
         stringResource(R.string.import_to_repos),
+        stringResource(R.string.reset_to_target),
         stringResource(R.string.sync_configs),
         stringResource(R.string.init_repo),
         stringResource(R.string.restore_dot_git_file),
@@ -552,6 +597,9 @@ fun SubmoduleListScreen(
     val moreItemOnClickList:List<()->Unit> = listOf(
         importToRepos@{
             showImportToReposDialog.value = true
+        },
+        resetToTarget@{
+            showResetToTargetDialog.value = true
         },
         syncConfigs@{  // git submodule init, git submodule sync. this is necessary if user's edit .gitmodules by hand
             syncParentConfig.value = true
@@ -709,7 +757,7 @@ fun SubmoduleListScreen(
 
                     }
 
-                    Msg.requireShow(appContext.getString(R.string.success))
+                    Msg.requireShow(appContext.getString(R.string.done))
                 }finally {
                     changeStateTriggerRefreshPage(needRefresh)
                 }
@@ -823,7 +871,7 @@ fun SubmoduleListScreen(
                         }
                     }
 
-                    Msg.requireShow(appContext.getString(R.string.success))
+                    Msg.requireShow(appContext.getString(R.string.done))
                 }finally {
                     changeStateTriggerRefreshPage(needRefresh)
                 }
@@ -870,7 +918,7 @@ fun SubmoduleListScreen(
                         }
                     }
 
-                    Msg.requireShow(appContext.getString(R.string.success))
+                    Msg.requireShow(appContext.getString(R.string.done))
 
                 }finally {
                     changeStateTriggerRefreshPage(needRefresh)
