@@ -21,6 +21,8 @@ data class CredentialEntity(
     var pass: String = "",  // password or passphrase_for_ssh
 
     // credential bind a type such a bad design, credential should define by it's proposal, not by itself, example: when used for https link, its a http type, when used for ssh, its a ssh type
+    //计划取消凭据类型，未来将根据使用凭据的git url来判断是创建http凭据还是ssh凭据
+    @Deprecated("planning to deprecate type of credential, in future credential will no type defined in itself, it will defined by it's proposal, e.g. if you use same credential to http and ssh respectively, it's value and pass will treat as username+password and privateKey+passphrase respectively, and which type of credential will be create by libgit2, it's will depending by type of git url")
     var type: Int= Cons.dbCredentialTypeHttp,  //"ssh" or "http"
 
     @Embedded

@@ -886,5 +886,7 @@
     <string name="edit_ignore_file">Edit Ignore File</string>
     <string name="will_init_selected_folders_to_git_repos_are_you_sure">Will init selected folders to git repos, are you sure?</string>
     <string name="n_inited">ph_a3f241dc_1 inited</string>
+    <string name="no_credential_will_be_used">No credential will be used</string>
+    <string name="credential_match_by_domain_note">Will match credential by domain, you can manage domain and credential at \'Credential Manager\' page</string>
 
 </resources>

@@ -2,6 +2,7 @@ package com.catpuppyapp.puppygit.data.repository
 
 import androidx.room.withTransaction
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.dao.CredentialDao
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -41,11 +42,11 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
 
     private fun prependSpecialItemIfNeed(list: MutableList<CredentialEntity>, includeNone:Boolean, includeMatchByDomain:Boolean) {
         if (includeMatchByDomain) {
-            list.add(0, Cons.getSpecialCredential_MatchByDomain())
+            list.add(0, SpecialCredential.MatchByDomain.getEntityCopy())
         }
 
         if (includeNone) {
-            list.add(0, Cons.getSpecialCredential_NONE())
+            list.add(0, SpecialCredential.NONE.getEntityCopy())
         }
     }
 
@@ -81,7 +82,7 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     override suspend fun delete(item: CredentialEntity) = dao.delete(item)
 
     override suspend fun updateWithEncrypt(item: CredentialEntity) {
-        if(Cons.isAllowedCredentialName(item.name).not()) {
+        if(SpecialCredential.isAllowedCredentialName(item.name).not()) {
             throw RuntimeException("credential name disallowed")
         }
 
@@ -92,7 +93,7 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     }
 
     override suspend fun update(item: CredentialEntity) {
-        if(Cons.isAllowedCredentialName(item.name).not()) {
+        if(SpecialCredential.isAllowedCredentialName(item.name).not()) {
             throw RuntimeException("credential name disallowed")
         }
 
@@ -101,7 +102,7 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
 
     override suspend fun isCredentialNameExist(name: String): Boolean {
         // disallowed name treat as existed
-        if(Cons.isAllowedCredentialName(name).not()) {
+        if(SpecialCredential.isAllowedCredentialName(name).not()) {
             return true
         }
 
@@ -111,7 +112,7 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     }
 
     override suspend fun getByIdWithDecrypt(id: String): CredentialEntity? {
-        if(id.isBlank() || id==Cons.dbCredentialSpecialId_NONE) {
+        if(id.isBlank() || id==SpecialCredential.NONE.credentialId) {
             return null
         }
 
@@ -126,7 +127,7 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
     }
 
     override suspend fun getById(id: String): CredentialEntity? {
-        if(id.isBlank() || id==Cons.dbCredentialSpecialId_NONE) {
+        if(id.isBlank() || id==SpecialCredential.NONE.credentialId) {
             return null
         }
 

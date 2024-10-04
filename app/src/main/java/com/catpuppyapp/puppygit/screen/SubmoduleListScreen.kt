@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.BottomBar
 import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
+import com.catpuppyapp.puppygit.compose.CredentialSelector
 import com.catpuppyapp.puppygit.compose.FilterTextField
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
@@ -484,16 +485,7 @@ fun SubmoduleListScreen(
             textCompose = {
                 ScrollableColumn {
 //                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
-
-                    Text(stringResource(R.string.select_credential)+": ")
-
-                    SingleSelectList(
-                        optionsList = credentialList.value,
-                        selectedOptionIndex = selectedCredentialIdx,
-                        menuItemFormatter = {it.name}
-                    )
-
-                    Spacer(Modifier.height(15.dp))
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
 
                 }
             },
@@ -743,16 +735,9 @@ fun SubmoduleListScreen(
                 ScrollableColumn {
 //                    Text(stringResource(R.string.will_clone_selected_submodules_are_you_sure))
 
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
 
-                    Text(stringResource(R.string.select_credential)+": ")
-
-                    SingleSelectList(
-                        optionsList = credentialList.value,
-                        selectedOptionIndex = selectedCredentialIdx,
-                        menuItemFormatter = {it.name}
-                    )
-
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(5.dp))
 
                     MyCheckBox(text = stringResource(R.string.recursive_clone), value = recursiveClone)
                     if(recursiveClone.value) {
@@ -854,14 +839,8 @@ fun SubmoduleListScreen(
             requireShowTextCompose = true,
             textCompose = {
                 ScrollableColumn {
-                    Text(stringResource(R.string.select_credential) + ": ")
 
-                    SingleSelectList(
-                        optionsList = credentialList.value,
-                        selectedOptionIndex = selectedCredentialIdx,
-                        menuItemFormatter = { it.name }
-                    )
-                    Spacer(Modifier.height(15.dp))
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
 
                 }
             },
@@ -1256,7 +1235,7 @@ fun SubmoduleListScreen(
                     }
 
                     val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                    val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = false)
+                    val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = true)
                     if(credentialListFromDb.isNotEmpty()) {
                         credentialList.value.addAll(credentialListFromDb)
                     }
