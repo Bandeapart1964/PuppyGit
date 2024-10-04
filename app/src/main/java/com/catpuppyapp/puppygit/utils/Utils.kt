@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
@@ -649,4 +650,13 @@ fun <T> isGoodIndexForList(index:Int, list:List<T>):Boolean {
 }
 fun isGoodIndexForStr(index:Int, str:String):Boolean {
     return index >= 0 && index < str.length
+}
+
+fun getDomainByUrl(url:String):String {
+    try {
+        return URI.create(url).host ?: ""
+    }catch (e:Exception) {
+        MyLog.e(TAG, "#getDomainByUrl err: url=$url, err=${e.localizedMessage}")
+        return ""
+    }
 }

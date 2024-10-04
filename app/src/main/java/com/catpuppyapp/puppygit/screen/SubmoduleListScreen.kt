@@ -68,6 +68,7 @@ import com.catpuppyapp.puppygit.compose.ResetDialog
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.SubmoduleItem
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.git.ImportRepoResult
@@ -825,7 +826,9 @@ fun SubmoduleListScreen(
     }
 
     val showUpdateDialog = StateUtil.getRememberSaveableState(false)
+    val recursiveUpdate = StateUtil.getRememberSaveableState(false)
     val initUpdateDialog = {
+        recursiveUpdate.value = false
         showUpdateDialog.value=true
     }
 
@@ -840,7 +843,7 @@ fun SubmoduleListScreen(
 
                     Spacer(Modifier.height(5.dp))
 
-                    MyCheckBox(text = stringResource(R.string.recursive_clone), value = recursiveClone)
+                    MyCheckBox(text = stringResource(R.string.recursive), value = recursiveClone)
                     if(recursiveClone.value) {
                         Text(stringResource(R.string.recursive_clone_submodule_nested_loop_warn), color = MyStyleKt.TextColor.danger)
                     }
@@ -863,7 +866,8 @@ fun SubmoduleListScreen(
 
                     val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
                     val selectedCredential = credentialList.value[selectedCredentialIdx.intValue]
-                    val credential = credentialDb.getByIdWithDecrypt(selectedCredential.id)
+                    // NONE will query from db then got null, so only need handle match by domain
+                    val credential = if(SpecialCredential.MatchByDomain.credentialId == selectedCredential.id) selectedCredential.copy() else credentialDb.getByIdWithDecrypt(selectedCredential.id)
 
 //                val defaultInvalidIdx = -1
 
@@ -895,7 +899,7 @@ fun SubmoduleListScreen(
                             try {
 
                                 // clone submodule
-                                Libgit2Helper.cloneSubmodules(repo, recursive, specifiedCredential=credential, submoduleNameList= listOf(selectedItem.name))
+                                Libgit2Helper.cloneSubmodules(repo, recursive, specifiedCredential=credential, submoduleNameList= listOf(selectedItem.name), credentialDb=credentialDb)
 
                             }catch (e:Exception) {
                                 val errPrefix = "clone '${selectedItem.name}' err: "
@@ -943,6 +947,15 @@ fun SubmoduleListScreen(
 
                     CredentialSelector(credentialList.value, selectedCredentialIdx)
 
+
+                    Spacer(Modifier.height(5.dp))
+
+                    MyCheckBox(text = stringResource(R.string.recursive), value = recursiveUpdate)
+                    if(recursiveUpdate.value) {
+                        Text(stringResource(R.string.recursive_update_submodule_nested_loop_warn), color = MyStyleKt.TextColor.danger)
+                    }
+                    Spacer(Modifier.height(10.dp))
+
                 }
             },
             onCancel = { showUpdateDialog.value = false }
@@ -955,15 +968,15 @@ fun SubmoduleListScreen(
                     val selectedCredential = credentialList.value[selectedCredentialIdx.intValue]
 
                     val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                    val credential = credentialDb.getByIdWithDecrypt(selectedCredential.id)
+                    val credential = if(SpecialCredential.MatchByDomain.credentialId == selectedCredential.id) selectedCredential.copy() else credentialDb.getByIdWithDecrypt(selectedCredential.id)
 
                     Repository.open(curRepo.value.fullSavePath).use { repo->
                         selectedItemList.value.toList().forEach {
                             try {
-                                Libgit2Helper.updateSubmodule(repo, credential, it.name)
+                                Libgit2Helper.updateSubmodule(repo, credential, listOf(it.name), recursiveUpdate.value, credentialDb)
 
                             }catch (e:Exception) {
-                                val errPrefix = "update '${it.name}' err: "
+                                val errPrefix = "update submodule '${it.name}' err: "
                                 val errMsg = e.localizedMessage ?: "update submodule err"
                                 Msg.requireShow(errMsg)
                                 createAndInsertError(curRepo.value.id, errPrefix+errMsg)

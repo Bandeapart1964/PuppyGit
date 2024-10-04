@@ -84,8 +84,14 @@ fun TagFetchPushDialog(
                         val remote = remoteDb.getByRepoIdAndRemoteName(repoId, it)  //无条目不跳过，只是不查凭据了
 
                         //其实这里fetch时不用查push，push时不用查fetch，但我为了简化逻辑，直接两个都查了
-                        val fetchCredential = if(remote==null || remote.credentialId.isBlank()) null else credentialDb.getByIdWithDecrypt(remote.credentialId)
-                        val pushCredential = if(remote==null || remote.pushCredentialId.isBlank()) null else credentialDb.getByIdWithDecrypt(remote.pushCredentialId)
+                        val fetchCredential = if(remote==null || remote.credentialId.isBlank()) null else credentialDb.getByIdWithDecryptAndMatchByDomain(
+                            id = remote.credentialId,
+                            url = remote.remoteUrl
+                        )
+                        val pushCredential = if(remote==null || remote.pushCredentialId.isBlank()) null else credentialDb.getByIdWithDecryptAndMatchByDomain(
+                            id = remote.pushCredentialId,
+                            url = remote.pushUrl
+                        )
 
                         remoteAndCredentials.add(
                             RemoteAndCredentials(

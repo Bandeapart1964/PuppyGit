@@ -1459,7 +1459,8 @@ private fun getInit(
                             if (credentialId.isNotBlank()) {
                                 //先查询下credential信息，如果不为null，检查credential类型，如果是http，用httpauth方式克隆，如果是ssh，用ssh方式克隆
                                 val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                                val credentialFromDb = credentialDb.getByIdWithDecrypt(credentialId)
+//                                val credentialFromDb = credentialDb.getByIdWithDecrypt(credentialId)
+                                val credentialFromDb = credentialDb.getByIdWithDecryptAndMatchByDomain(id = credentialId, url = repo2ndQuery.cloneUrl)
                                 if (credentialFromDb != null) {
                                     val credentialType = credentialFromDb.type
                                     val usernameOrPrivateKey = credentialFromDb.value;

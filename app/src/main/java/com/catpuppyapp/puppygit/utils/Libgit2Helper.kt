@@ -6,6 +6,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.data.repository.CredentialRepository
@@ -2558,12 +2559,13 @@ class Libgit2Helper {
             val remote = remoteDb.getByRepoIdAndRemoteName(repoId, remoteName)
 
             val credentialId = if(trueFetchFalsePush) {remote?.credentialId ?:""} else {remote?.pushCredentialId ?:""}
+            val remoteUrl = if(trueFetchFalsePush) {remote?.remoteUrl ?: ""} else {remote?.pushUrl ?: ""}
 
             if(remote == null || credentialId.isBlank()) {
                 return null
             }
 
-            val credential = credentialDb.getByIdWithDecrypt(credentialId)
+            val credential = credentialDb.getByIdWithDecryptAndMatchByDomain(id = credentialId, url = remoteUrl)
 
             return credential
         }
@@ -4954,10 +4956,10 @@ class Libgit2Helper {
 
 
         /**
-         * @param credentialStrategy if is SPECIFIED, will use `specifiedCredential`
-         * @param predicate only predicate success will be cloned, you can set this for filter submodules
+         * should make sure when expect NONE credential, set `specifiedCredential` to null; if want to match by domain, set it to match by domain credential entity;
+         *   if want to use specified credential but NONE and match by domain both, set it to expect credential
          */
-        fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, submoduleNameList:List<String>){
+        suspend fun cloneSubmodules(repo:Repository, recursive:Boolean, specifiedCredential: CredentialEntity?, submoduleNameList:List<String>, credentialDb:CredentialRepository){
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(repo)
             submoduleNameList.forEach { name ->
                 // sync .gitmodules info(e.g. remoteUrl) to parent repos .git/config and submodules .git/config
@@ -4996,8 +4998,17 @@ class Libgit2Helper {
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
                 //set credential
+                // at here, null means NONE
                 if(specifiedCredential!=null) {
-                    updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                    // only 2 cases possible in this block, credential is match by domain or a specified credential
+                    if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
+                        val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
+                        if(credentialByDomain!=null) {
+                            updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                        }
+                    }else {  // specified domain, no query need
+                        updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                    }
                 }
 
 
@@ -5070,7 +5081,7 @@ class Libgit2Helper {
                 // !! becareful with this, if repo contains nested-loops, will infinite clone !!
                 if(recursive) {
                     // does not support filter submodule's submodule, so predicate always return true when reach here
-                    cloneSubmodules(subRepo, recursive, specifiedCredential, submoduleNameList= getSubmoduleNameList(subRepo))
+                    cloneSubmodules(subRepo, recursive, specifiedCredential, getSubmoduleNameList(subRepo), credentialDb)
                 }
             }
         }
@@ -5097,44 +5108,64 @@ class Libgit2Helper {
             }
         }
 
-        fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, submoduleName: String) {
+        suspend fun updateSubmodule(parentRepo:Repository, specifiedCredential: CredentialEntity?, submoduleNameList: List<String>, recursive: Boolean, credentialDb: CredentialRepository) {
             val repoFullPathNoSlashSuffix = getRepoWorkdirNoEndsWithSlash(parentRepo)
 
-            val sm = resolveSubmodule(parentRepo, submoduleName)
-            if(sm==null){
-                return
-            }
+            submoduleNameList.forEach { submoduleName ->
 
-            val submodulePath = sm.path()
-
-            try {
-                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
-
-                val updateOpts = Submodule.UpdateOptions.createDefault()
-
-                //set credential
-                if(specifiedCredential!=null) {
-                    updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                val sm = resolveSubmodule(parentRepo, submoduleName)
+                if(sm==null){
+                    return
                 }
 
-                MyLog.d(TAG,"#updateSubmodule: will update submodule '$submoduleName'")
+                val submodulePath = sm.path()
 
-                val overwriteForInit = true
-                val initForUpdate = true
+                try {
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
-                sm.init(overwriteForInit)
-                sm.sync()
+                    val updateOpts = Submodule.UpdateOptions.createDefault()
 
-                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+                    //set credential
+                    // at here, null means NONE
+                    if(specifiedCredential!=null) {
+                        // only 2 cases possible in this block, credential is match by domain or a specified credential
+                        if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
+                            val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
+                            if(credentialByDomain!=null) {
+                                updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                            }
+                        }else {  // specified domain, no query need
+                            updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
+                        }
+                    }
 
-                sm.update(initForUpdate, updateOpts)
-                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
 
-            }catch (e:Exception) {
-                SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+                    MyLog.d(TAG,"#updateSubmodule: will update submodule '$submoduleName'")
 
-                MyLog.e(TAG,"#updateSubmodule: update submodule '$submoduleName' err: ${e.localizedMessage}")
-                throw e
+                    val overwriteForInit = true
+                    val initForUpdate = true
+
+                    sm.init(overwriteForInit)
+                    sm.sync()
+
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
+                    sm.update(initForUpdate, updateOpts)
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
+                    if(recursive) {
+                        val smFullPath = File(repoFullPathNoSlashSuffix, submodulePath).canonicalPath
+                        Repository.open(smFullPath).use { smRepo->
+                            updateSubmodule(smRepo, specifiedCredential, getSubmoduleNameList(smRepo), recursive, credentialDb)
+                        }
+                    }
+
+                }catch (e:Exception) {
+                    SubmoduleDotGitFileMan.restoreDotGitFileForSubmodule(repoFullPathNoSlashSuffix, submodulePath)
+
+                    // avoid recursive many logs, better don't log at here
+//                    MyLog.e(TAG,"#updateSubmodule: update submodule '$submoduleName' err: ${e.localizedMessage}")
+                }
             }
         }
 

@@ -654,7 +654,8 @@ fun BranchListScreen(
                                     var credential: CredentialEntity? = null
                                     if (!remoteFromDb.pushCredentialId.isNullOrBlank()) {
                                         val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                                        credential = credentialDb.getByIdWithDecrypt(remoteFromDb.pushCredentialId)
+//                                        credential = credentialDb.getByIdWithDecrypt(remoteFromDb.pushCredentialId)
+                                        credential = credentialDb.getByIdWithDecryptAndMatchByDomain(id = remoteFromDb.pushCredentialId, url = remoteFromDb.pushUrl)
                                     }
 
                                     //执行删除(push)
@@ -817,7 +818,8 @@ fun BranchListScreen(
                             var credential: CredentialEntity? = null
                             if (!remoteFromDb.pushCredentialId.isNullOrBlank()) {
                                 val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                                credential = credentialDb.getByIdWithDecrypt(remoteFromDb.pushCredentialId)
+//                                credential = credentialDb.getByIdWithDecrypt(remoteFromDb.pushCredentialId)
+                                credential = credentialDb.getByIdWithDecryptAndMatchByDomain(id = remoteFromDb.pushCredentialId, url = remoteFromDb.pushUrl)
                             }
 
                             //例如：移除 origin/main 中的 origin/，然后拼接成 refs/heads/main

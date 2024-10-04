@@ -854,6 +854,7 @@
     <string name="recursive">Recursive</string>
     <string name="update">Update</string>
     <string name="recursive_clone_submodule_nested_loop_warn">WARN: becareful! if your repo contains nested-loops, it will be infinite clone until your device no more storage space!!</string>
+    <string name="recursive_update_submodule_nested_loop_warn">WARN: becareful! please make sure your repo doesn\'t contains nested-loops!!</string>
     <string name="no_submodules_found">No Submodules Found</string>
     <string name="full_path">Full Path</string>
     <string name="checkout_to_recorded_commit">Checkout To Recorded Commit</string>

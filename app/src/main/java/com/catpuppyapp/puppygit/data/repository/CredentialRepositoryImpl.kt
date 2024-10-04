@@ -8,6 +8,7 @@ import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.encrypt.PassEncryptHelper
+import com.catpuppyapp.puppygit.utils.getDomainByUrl
 import kotlinx.coroutines.sync.withLock
 
 private val TAG = "CredentialRepositoryImpl"
@@ -124,6 +125,22 @@ class CredentialRepositoryImpl(private val dao: CredentialDao) : CredentialRepos
         decryptPassIfNeed(item)
 
         return item
+    }
+
+    override suspend fun getByIdWithDecryptAndMatchByDomain(id: String, url: String): CredentialEntity? {
+        if(id==SpecialCredential.MatchByDomain.credentialId) {
+            val dcDb = AppModel.singleInstanceHolder.dbContainer.domainCredentialRepository
+            val domain = getDomainByUrl(url)
+            if(domain.isNotBlank()) {
+                val domainCred = dcDb.getByDomain(domain) ?: return null
+                val credId = domainCred.credentialId
+                return getByIdWithDecrypt(credId)
+            }else {
+                return null
+            }
+        }else {
+            return getByIdWithDecrypt(id)
+        }
     }
 
     override suspend fun getById(id: String): CredentialEntity? {
