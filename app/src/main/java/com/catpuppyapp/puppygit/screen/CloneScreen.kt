@@ -69,6 +69,7 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
@@ -164,11 +165,13 @@ fun CloneScreen(
     val noCredential = stringResource(R.string.no_credential)
     val newCredential = stringResource(R.string.new_credential)
     val selectCredential = stringResource(R.string.select_credential)
+    val matchCredentialByDomain = stringResource(R.string.match_credential_by_domain)
 
     val optNumNoCredential = 0  //这个值就是对应的选项在选项列表的索引
     val optNumNewCredential = 1
     val optNumSelectCredential = 2
-    val credentialRadioOptions = listOf(noCredential, newCredential, selectCredential)  // 编号: 文本
+    val optNumMatchCredentialByDomain = 3
+    val credentialRadioOptions = listOf(noCredential, newCredential, selectCredential, matchCredentialByDomain)  // 编号: 文本
     val (credentialSelectedOption, onCredentialOptionSelected) = StateUtil.getRememberSaveableIntState(initValue = optNumNoCredential)
 
     val (isRecursiveClone, onIsRecursiveCloneStateChange) = StateUtil.getRememberSaveableState(false)
@@ -422,6 +425,8 @@ fun CloneScreen(
                 credentialIdForClone = credentialForSave.id
             } else if(credentialSelectedOption == optNumSelectCredential) {
                 credentialIdForClone = selectedCredentialId.value
+            } else if(credentialSelectedOption == optNumMatchCredentialByDomain) {
+                credentialIdForClone = SpecialCredential.MatchByDomain.credentialId
             }
 
 
@@ -1019,6 +1024,10 @@ fun CloneScreen(
                         )
                     }
                 }
+            }else if(credentialSelectedOption == optNumMatchCredentialByDomain) {
+                Row (modifier = Modifier.padding(10.dp)){
+                    Text(stringResource(R.string.credential_match_by_domain_note), color = MyStyleKt.TextColor.highlighting_green, fontWeight = FontWeight.Light)
+                }
             }
         }
     }
@@ -1073,18 +1082,22 @@ fun CloneScreen(
                 val credentialIdForClone = repo.credentialIdForClone
                 //注意，如果仓库存在关联的credential，在克隆页面编辑仓库时，不能编辑credential，只能新建或选择之前的credential，若想编辑credential，需要去credential页面，这样是为了简化实现逻辑
                 if (!credentialIdForClone.isNullOrBlank()) {  //更新credential相关字段
-                    val credential = credentialDb.getById(credentialIdForClone)
-                    MyLog.d(TAG, "#LaunchedEffect:credential==null:" +(credential==null))
+                    if(credentialIdForClone == SpecialCredential.MatchByDomain.credentialId) {
+                        onCredentialOptionSelected(optNumMatchCredentialByDomain)
+                    }else {
+                        val credential = credentialDb.getById(credentialIdForClone)
+//                        MyLog.d(TAG, "#LaunchedEffect:credential==null:" +(credential==null))
 
-                    if (credential == null) {  //要么没设置，要么设置了但被删除了，所以是无效id，这两种情况都会查不出对应的credential
-                        onCredentialOptionSelected(optNumNoCredential)
-                    } else {  //存在之前设置的credential
-                        //设置选中的credential
-                        onCredentialOptionSelected(optNumSelectCredential)  //选中“select credential”单选项
-                        selectedCredentialName.value = credential.name  //选中项的名字，显示给用户看的
-                        selectedCredentialId.value = credential.id  //选中项的id，保存时用的，不给用户看
+                        if (credential == null) {  //要么没设置，要么设置了但被删除了，所以是无效id，这两种情况都会查不出对应的credential
+                            onCredentialOptionSelected(optNumNoCredential)
+                        } else {  //存在之前设置的credential
+                            //设置选中的credential
+                            onCredentialOptionSelected(optNumSelectCredential)  //选中“select credential”单选项
+                            selectedCredentialName.value = credential.name  //选中项的名字，显示给用户看的
+                            selectedCredentialId.value = credential.id  //选中项的id，保存时用的，不给用户看
 
-                        curCredentialType.intValue = credential.type  //设置当前credential类型
+                            curCredentialType.intValue = credential.type  //设置当前credential类型
+                        }
                     }
                 }
             } else {  //如果是新增模式，简单聚焦下第一个输入框，弹出键盘即可
@@ -1113,7 +1126,7 @@ fun CloneScreen(
     //判定是否启用执行克隆的按钮，每次状态改变重新渲染页面都会执行这段代码更新此值
     isReadyForClone.value = ((gitUrl.value.isNotBlank() && repoName.value.text.isNotBlank())
         &&
-        ((credentialSelectedOption==optNumNoCredential)  //新凭据的情况
+        ((credentialSelectedOption==optNumNoCredential || credentialSelectedOption==optNumMatchCredentialByDomain)  //新凭据的情况
                 || ((credentialSelectedOption==optNumNewCredential && credentialName.value.text.isNotBlank())  //必填字段
                     //要么是http且填了密码字段，要么是ssh且填了privatekey字段
                     && (curCredentialType.intValue==Cons.dbCredentialTypeHttp && credentialPass.value.isNotBlank()) || (curCredentialType.intValue==Cons.dbCredentialTypeSsh && credentialVal.value.isNotBlank())
