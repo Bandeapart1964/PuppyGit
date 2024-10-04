@@ -888,6 +888,7 @@
     <string name="n_inited">ph_a3f241dc_1 inited</string>
     <string name="no_credential_will_be_used">No credential will be used</string>
     <string name="credential_match_by_domain_note">Will match credential by domain, you can link domain and credential at \'Credential Manager\' page</string>
+    <string name="credential_match_by_domain_note_short">Match credential by domain</string>
     <string name="reset_to_target">Reset To Target</string>
     <string name="resetting">Resetting…</string>
     <string name="done">Done</string>
@@ -901,5 +902,6 @@
     <string name="domains">Domains</string>
     <string name="domain">Domain</string>
     <string name="import_repos_link_credential_note">Selected credential will be linked to repo\'s Remotes, usually is \'origin\'</string>
+    <string name="desc">Desc</string>
 
 </resources>

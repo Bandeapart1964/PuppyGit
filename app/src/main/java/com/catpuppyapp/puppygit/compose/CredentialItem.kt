@@ -16,9 +16,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
+import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 
@@ -33,6 +33,9 @@ fun CredentialItem(
     onClick:(CredentialEntity)->Unit
 ) {
     val haptic = AppModel.singleInstanceHolder.haptic
+
+    val isMatchByDoMain = SpecialCredential.MatchByDomain.equals_to(thisItem)
+
 //    println("IDX::::::::::"+idx)
     Column(
         //0.9f 占父元素宽度的百分之90
@@ -80,7 +83,7 @@ fun CredentialItem(
         Row (
             verticalAlignment = Alignment.CenterVertically,
 
-            ){
+        ){
 
             Text(text = stringResource(R.string.type) +":")
             Text(text = thisItem.getTypeStr(),
@@ -89,6 +92,20 @@ fun CredentialItem(
                 fontWeight = FontWeight.Light
 
             )
+        }
+
+        if(isMatchByDoMain) {
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+
+            ){
+                Text(text = stringResource(R.string.desc) +":")
+                Text(text = stringResource(R.string.credential_match_by_domain_note_short),
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Light
+
+                )
+            }
         }
 
     }

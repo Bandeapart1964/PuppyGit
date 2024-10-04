@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.dto.RemoteDto
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 
@@ -111,7 +112,7 @@ fun RemoteItem(
 
         ){
             Text(text = stringResource(R.string.fetch_credential) +": ")
-            Text(text = curObj.credentialName?:noneCredentialStr,
+            Text(text = if(curObj.credentialId==SpecialCredential.MatchByDomain.credentialId) SpecialCredential.MatchByDomain.name else (curObj.credentialName?:noneCredentialStr),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Light
@@ -123,7 +124,7 @@ fun RemoteItem(
 
         ){
             Text(text = stringResource(R.string.push_credential) +": ")
-            Text(text = curObj.pushCredentialName?:noneCredentialStr,
+            Text(text = if(curObj.pushCredentialId==SpecialCredential.MatchByDomain.credentialId) SpecialCredential.MatchByDomain.name else (curObj.pushCredentialName?:noneCredentialStr),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Light

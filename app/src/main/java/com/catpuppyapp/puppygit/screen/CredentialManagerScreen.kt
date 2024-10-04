@@ -88,6 +88,9 @@ fun CredentialManagerScreen(
     val appContext = AppModel.singleInstanceHolder.appContext
     val scope = rememberCoroutineScope()
 
+    // for link credential to remote
+    val isLinkMode = remoteId.isNotBlank()
+
 
     val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<CredentialEntity>() )
     val listState = rememberLazyListState()
@@ -431,11 +434,11 @@ fun CredentialManagerScreen(
         // DisposableEffect is better for this
         try {
             doJobThenOffLoading(loadingOn = loadingOn, loadingOff = loadingOff, loadingText = appContext.getString(R.string.loading)) job@{
-                val credential = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
                 list.value.clear()
-                list.value.addAll(credential.getAll())
+                list.value.addAll(credentialDb.getAll(includeMatchByDomain = isLinkMode))
 
-                if(remoteId.isNotEmpty()) {
+                if(isLinkMode) {
                     val remoteFromDb = AppModel.singleInstanceHolder.dbContainer.remoteRepository.getById(remoteId)
                     if(remoteFromDb!=null){
                         remote.value=remoteFromDb

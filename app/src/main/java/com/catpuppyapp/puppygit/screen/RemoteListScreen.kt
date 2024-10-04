@@ -59,6 +59,7 @@ import com.catpuppyapp.puppygit.compose.SetBranchForRemoteDialog
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.UnLinkCredentialAndRemoteDialogForRemoteListPage
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.SpecialCredential
 import com.catpuppyapp.puppygit.data.entity.RemoteEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.createRemoteTestPassed
@@ -111,9 +112,11 @@ fun RemoteListScreen(
         keyName = "list",
         initValue = listOf<RemoteDto>()
     )
-    SideEffect {
-        Msg.msgNotifyHost()
-    }
+
+//
+//    SideEffect {
+//        Msg.msgNotifyHost()
+//    }
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
     val lazyListState = StateUtil.getRememberLazyListState()
@@ -879,10 +882,10 @@ fun RemoteListScreen(
                     sb.append(appContext.getString(R.string.push_url)+": "+(it.pushUrl.ifEmpty { it.remoteUrl }))
                     sb.appendLine()
                     sb.appendLine()
-                    sb.append(appContext.getString(R.string.fetch_credential)+": "+(it.credentialName?:""))
+                    sb.append(appContext.getString(R.string.fetch_credential)+": "+(if(it.credentialId== SpecialCredential.MatchByDomain.credentialId) SpecialCredential.MatchByDomain.name else (it.credentialName?:"")))
                     sb.appendLine()
                     sb.appendLine()
-                    sb.append(appContext.getString(R.string.push_credential)+": "+(it.pushCredentialName?:""))
+                    sb.append(appContext.getString(R.string.push_credential)+": "+(if(it.pushCredentialId== SpecialCredential.MatchByDomain.credentialId) SpecialCredential.MatchByDomain.name else (it.pushCredentialName?:"")))
                     sb.appendLine()
                     sb.appendLine()
                     sb.append(appContext.getString(R.string.branch_mode)+": "+(if(it.branchMode == Cons.dbRemote_Fetch_BranchMode_All) appContext.getString(R.string.all) else appContext.getString(R.string.custom)))
