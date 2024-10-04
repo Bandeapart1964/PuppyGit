@@ -75,6 +75,14 @@ fun AppScreenNavigator() {
                 naviUp = { navController.navigateUp() }
             )
         }
+        composable(Cons.nav_DomainCredentialListScreen) {
+//            val remoteId = it.arguments?.getString("remoteId") ?: ""
+
+            DomainCredentialListScreen(
+//                remoteId= if(remoteId==Cons.dbInvalidNonEmptyId) "" else remoteId,
+                naviUp = { navController.navigateUp() }
+            )
+        }
         /*
          * composable("profile/{userId}") { backStackEntry ->
             Profile(navController, backStackEntry.arguments?.getString("userId"))

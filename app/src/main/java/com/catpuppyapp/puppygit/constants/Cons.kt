@@ -80,6 +80,7 @@ class Cons {
         const val nav_ReflogListScreen = "refloglist"
         const val nav_StashListScreen = "stashlist"
         const val nav_SubmoduleListScreen = "submodulelist"
+        const val nav_DomainCredentialListScreen = "domain_credential_list"
 
 
 

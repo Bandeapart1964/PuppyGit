@@ -16,23 +16,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.dto.DomainCredentialDto
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.constants.Cons
-import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CredentialItem(
+fun DomainCredItem(
     showBottomSheet: MutableState<Boolean>,
-    curCredentialState: CustomStateSaveable<CredentialEntity>,
+    curCredentialState: CustomStateSaveable<DomainCredentialDto>,
     idx:Int,
-    thisItem:CredentialEntity,
-    onClick:(CredentialEntity)->Unit
+    thisItem:DomainCredentialDto,
+    onClick:(DomainCredentialDto)->Unit
 ) {
     val haptic = AppModel.singleInstanceHolder.haptic
+
+    val none = "[${stringResource(R.string.none)}]"
+
 //    println("IDX::::::::::"+idx)
     Column(
         //0.9f 占父元素宽度的百分之90
@@ -48,7 +50,7 @@ fun CredentialItem(
                     //震动反馈
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
-                    curCredentialState.value = CredentialEntity()
+                    curCredentialState.value = DomainCredentialDto()
 
                     //设置当前条目，供bottomsheet使用
                     curCredentialState.value = thisItem
@@ -64,13 +66,13 @@ fun CredentialItem(
 
 
     ) {
+
         Row (
             verticalAlignment = Alignment.CenterVertically,
 
-        ){
-
-            Text(text = stringResource(R.string.name) +":")
-            Text(text = thisItem.name,
+            ){
+            Text(text = stringResource(R.string.domain) +":")
+            Text(text = thisItem.domain,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Light
@@ -80,10 +82,9 @@ fun CredentialItem(
         Row (
             verticalAlignment = Alignment.CenterVertically,
 
-            ){
-
-            Text(text = stringResource(R.string.type) +":")
-            Text(text = thisItem.getTypeStr(),
+        ){
+            Text(text = stringResource(R.string.credential) +":")
+            Text(text = thisItem.credName ?: none,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Light

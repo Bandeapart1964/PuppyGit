@@ -22,6 +22,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.catpuppyapp.puppygit.data.entity.DomainCredentialEntity
+import com.catpuppyapp.puppygit.dto.DomainCredentialDto
 
 /**
  * Database access object to access the Inventory database
@@ -30,6 +31,12 @@ import com.catpuppyapp.puppygit.data.entity.DomainCredentialEntity
 interface DomainCredentialDao {
     @Query("SELECT * from domain_credential order by baseCreateTime DESC")
     suspend fun getAll(): List<DomainCredentialEntity>
+
+    @Query("SELECT d.id as domainCredId, d.domain as domain, c.name as credName, c.id as credId from domain_credential d left join credential c on c.id= d.credentialId order by d.baseCreateTime DESC")
+    suspend fun getAllDto(): List<DomainCredentialDto>
+
+    @Query("select * from domain_credential where domain=:domain LIMIT 1")
+    suspend fun getByDomain(domain:String):DomainCredentialEntity?
 
     @Insert
     suspend fun insert(item: DomainCredentialEntity)

@@ -17,6 +17,7 @@
 package com.catpuppyapp.puppygit.data.repository
 
 import com.catpuppyapp.puppygit.data.entity.DomainCredentialEntity
+import com.catpuppyapp.puppygit.dto.DomainCredentialDto
 
 /**
  * Repository that provides insert, update, delete, and retrieve of [Item] from a given data source.
@@ -26,6 +27,11 @@ interface DomainCredentialRepository {
      * Retrieve all the items from the the given data source.
      */
     suspend fun getAll(): List<DomainCredentialEntity>
+
+    suspend fun getAllDto(): List<DomainCredentialDto>
+
+    suspend fun isDomainExist(domain:String):Boolean
+    suspend fun getByDomain(domain:String):DomainCredentialEntity?
 
     /**
      * Insert item in the data source

@@ -10,6 +10,7 @@ import com.catpuppyapp.puppygit.utils.getShortUUID
 data class DomainCredentialEntity (
         @PrimaryKey
         var id: String= getShortUUID(),
+
         var domain:String="",
         var credentialId:String="",
 

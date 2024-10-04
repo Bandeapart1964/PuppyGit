@@ -7,21 +7,26 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Domain
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -37,20 +42,28 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.BottomSheet
 import com.catpuppyapp.puppygit.compose.BottomSheetItem
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CredentialItem
+import com.catpuppyapp.puppygit.compose.CredentialSelector
+import com.catpuppyapp.puppygit.compose.DomainCredItem
 import com.catpuppyapp.puppygit.compose.FilterTextField
 import com.catpuppyapp.puppygit.compose.LinkOrUnLinkCredentialAndRemoteDialog
+import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
+import com.catpuppyapp.puppygit.data.entity.DomainCredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RemoteEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.dto.DomainCredentialDto
 import com.catpuppyapp.puppygit.dto.RemoteDtoForCredential
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
@@ -64,24 +77,21 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 
-private val TAG = "CredentialManagerScreen"
-private val stateKeyTag = "CredentialManagerScreen"
+private val TAG = "DomainCredentialListScreen"
+private val stateKeyTag = "DomainCredentialListScreen"
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun CredentialManagerScreen(
+fun DomainCredentialListScreen(
 //    context: Context,
 //    navController: NavHostController,
 //    scope: CoroutineScope,
 //    haptic: HapticFeedback,
 //    homeTopBarScrollBehavior: TopAppBarScrollBehavior,
-    remoteId:String,
+//    remoteId:String,
 
     naviUp: () -> Boolean
 ) {
-//    SideEffect {
-//        Msg.msgNotifyHost()
-//    }
 
     val homeTopBarScrollBehavior = AppModel.singleInstanceHolder.homeTopBarScrollBehavior
     val navController = AppModel.singleInstanceHolder.navController
@@ -89,9 +99,9 @@ fun CredentialManagerScreen(
     val scope = rememberCoroutineScope()
 
 
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<CredentialEntity>() )
+    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<DomainCredentialDto>() )
     val listState = rememberLazyListState()
-    val curCredential =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curCredential", initValue = CredentialEntity(id=""))
+    val curCredential =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curCredential", initValue = DomainCredentialDto())
     val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
     val showLoadingDialog = StateUtil.getRememberSaveableState(initValue = true)
 
@@ -106,43 +116,8 @@ fun CredentialManagerScreen(
         loadingText.value=""
     }
 
-
     val remote =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "remote", initValue = RemoteEntity(id=""))
     val curRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
-    val showLinkOrUnLinkDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val onClickCurItem =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "onClickCurItem", initValue = CredentialEntity(id=""))  //非点击跳转页面的情况下，点击条目后更新此变量
-    val requireDoLink = StateUtil.getRememberSaveableState(initValue = false)
-    val targetAll = StateUtil.getRememberSaveableState(initValue = false)
-    val remoteDtoForCredential = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "remoteDtoForCredential", initValue = RemoteDtoForCredential(remoteId = remoteId))
-
-    val linkOrUnLinkDialogTitle = StateUtil.getRememberSaveableState(initValue = "")
-
-    if(showLinkOrUnLinkDialog.value) {
-        LinkOrUnLinkCredentialAndRemoteDialog(
-            curItemInPage = onClickCurItem,
-            requireDoLink = requireDoLink.value,
-            targetAll = targetAll.value,
-            title = linkOrUnLinkDialogTitle.value,  //若空字符串，会根据上面的flag自动判断显示link还是unlink
-            thisItem = remoteDtoForCredential.value,
-            onCancel = { showLinkOrUnLinkDialog.value=false},
-            onFinallyCallback = {
-                showLinkOrUnLinkDialog.value=false
-                //关联模式下，似乎，没必要刷新页面啊？但刷新下其实也没什么
-                changeStateTriggerRefreshPage(needRefresh)
-            },
-            onErrCallback = { e->
-                val errMsgPrefix = "${linkOrUnLinkDialogTitle.value} err: remote='${remote.value.remoteName}', credential=${onClickCurItem.value.name}, err="
-                Msg.requireShowLongDuration(e.localizedMessage ?: errMsgPrefix)
-                createAndInsertError(remote.value.repoId, errMsgPrefix + e.localizedMessage)
-                MyLog.e(TAG, "#LinkOrUnLinkCredentialAndRemoteDialog err: $errMsgPrefix${e.stackTraceToString()}")
-            },
-            onOkCallback = {
-                Msg.requireShow(appContext.getString(R.string.success))
-            }
-
-        )
-
-    }
 
 
     val sheetState = StateUtil.getRememberModalBottomSheetState()
@@ -150,15 +125,121 @@ fun CredentialManagerScreen(
     val doDelete = {
         doJobThenOffLoading {
             try{
-                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
-                credentialDb.deleteAndUnlink(curCredential.value)
+                val dcDb = AppModel.singleInstanceHolder.dbContainer.domainCredentialRepository
+                dcDb.delete(DomainCredentialEntity(id=curCredential.value.domainCredId))
             }finally{
                 changeStateTriggerRefreshPage(needRefresh)
             }
         }
     }
+
+
+    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
+    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+
+
+    val showCreateOrEditDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val isCreate = StateUtil.getRememberSaveableState(initValue = false)
+    val curDomainNameErr = StateUtil.getRememberSaveableState(initValue = "")
+    val curDomainName = StateUtil.getRememberSaveableState(initValue = "")
+    val curId = StateUtil.getRememberSaveableState(initValue = "")  // current edit item id
+
+    fun initCreateOrEditDialog(isCreateParam:Boolean, curDomainParam:String, curIdParam:String, curCredentialId:String){
+        isCreate.value = isCreateParam
+        curDomainName.value = curDomainParam
+        curDomainNameErr.value=""
+        curId.value = curIdParam
+
+        val indexOf = credentialList.value.indexOfFirst { it.id == curCredentialId }
+        selectedCredentialIdx.intValue = indexOf.coerceAtLeast(0)  // if not found, set to 0, else use found index
+
+        showCreateOrEditDialog.value = true
+    }
+
+    if(showCreateOrEditDialog.value) {
+        ConfirmDialog2(
+            title = stringResource(if(isCreate.value) R.string.create else R.string.edit),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        value = curDomainName.value,
+                        onValueChange = {
+                            curDomainName.value = it
+                            curDomainNameErr.value=""
+                        },
+                        label = {
+                            Text(stringResource(R.string.domain))
+                        },
+
+                        isError = curDomainNameErr.value.isNotEmpty(),
+                        supportingText = {
+                            if(curDomainNameErr.value.isNotEmpty()) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    text = curDomainNameErr.value,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+
+                            }
+                        },
+                        trailingIcon = {
+                            if(curDomainNameErr.value.isNotEmpty()) {
+                                Icon(imageVector= Icons.Filled.Error,
+                                    contentDescription="err icon",
+                                    tint = MaterialTheme.colorScheme.error)
+                            }
+                        },
+                    )
+
+                    Spacer(Modifier.height(15.dp))
+
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
+
+                }
+            },
+            okBtnText = stringResource(R.string.save),
+            okBtnEnabled = curDomainName.value.isNotBlank() && curDomainNameErr.value.isEmpty(),
+            onCancel = { showCreateOrEditDialog.value = false }
+        ) {
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.saving)) {
+                val newDomain = curDomainName.value
+                val newCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
+                try {
+                    val dcDb = AppModel.singleInstanceHolder.dbContainer.domainCredentialRepository
+                    if(isCreate.value) {
+                        dcDb.insert(
+                            DomainCredentialEntity(
+                                domain = newDomain,
+                                credentialId = newCredentialId
+                            )
+                        )
+                    }else {
+                        val old = dcDb.getById(curId.value) ?: throw RuntimeException("invalid id for update")
+                        old.domain = newDomain
+                        old.credentialId =newCredentialId
+
+                        dcDb.update(old)
+                    }
+
+                    showCreateOrEditDialog.value=false
+
+                    Msg.requireShow(appContext.getString(R.string.success))
+
+                    changeStateTriggerRefreshPage(needRefresh)
+                }catch (e:Exception) {
+                    curDomainNameErr.value = e.localizedMessage ?:"err"
+                }
+            }
+        }
+    }
+
+
     val showDeleteDialog = StateUtil.getRememberSaveableState(initValue = false)
-    
+
     if(showDeleteDialog.value) {
         ConfirmDialog(
             title = stringResource(R.string.delete_credential),
@@ -170,7 +251,6 @@ fun CredentialManagerScreen(
             doDelete()
         }
     }
-
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
@@ -231,7 +311,7 @@ fun CredentialManagerScreen(
                             Row(modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, listState, 0) }) {}
                             ) {
                                 Text(
-                                    text = stringResource(id = R.string.credential_manager),
+                                    text = stringResource(id = R.string.domains),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -294,21 +374,13 @@ fun CredentialManagerScreen(
                             ) {
                                 changeStateTriggerRefreshPage(needRefresh)
                             }
-                            LongPressAbleIconBtn(
-                                tooltipText = stringResource(R.string.domains),
-                                icon =  Icons.Filled.Domain,
-                                iconContentDesc = stringResource(id = R.string.domains),
-                            ) {
-                                navController.navigate(Cons.nav_DomainCredentialListScreen)
-                            }
 
                             LongPressAbleIconBtn(
                                 tooltipText = stringResource(R.string.create),
                                 icon =  Icons.Filled.Add,
                                 iconContentDesc = stringResource(id = R.string.create_new_credential),
                             ) {
-                                //从这跳是新建，直接传null
-                                navController.navigate(Cons.nav_CredentialNewOrEditScreen+"/"+null)
+                                initCreateOrEditDialog(isCreateParam = true, curDomainParam = "", curIdParam = "", curCredentialId="")
                             }
                         }
 
@@ -335,14 +407,7 @@ fun CredentialManagerScreen(
     ) { contentPadding ->
 
         if(showBottomSheet.value) {
-            BottomSheet(showBottomSheet, sheetState, curCredential.value.name) {
-                BottomSheetItem(sheetState=sheetState, showBottomSheet=showBottomSheet, text=stringResource(R.string.edit)){
-                    //跳转到编辑页面
-                    //在这里可以直接用state curObj取到当前选中条目，curObjInState在长按条目后会被更新为当前被长按的条目
-                    navController.navigate(Cons.nav_CredentialNewOrEditScreen+"/"+curCredential.value.id)
-
-                }
-
+            BottomSheet(showBottomSheet, sheetState, curCredential.value.domain) {
                 //改成在关联页面有这个功能了，在这就不显示了
     //            BottomSheetItem(sheetState=sheetState, showBottomSheet=showBottomSheet, text=stringResource(R.string.unlink_all)){
     //                //显示弹窗，询问将会与所有remotes解除关联，是否确定？
@@ -356,9 +421,9 @@ fun CredentialManagerScreen(
         }
 
         if (showLoadingDialog.value) {
-//            LoadingDialog()  //这个东西太阴间了，还是用LoadingText吧
-
-            LoadingText(text = loadingText.value,contentPadding = contentPadding)
+            LoadingDialog(text = loadingText.value)  //这个东西太阴间了，还是用LoadingText吧
+//
+//            LoadingText(text = loadingText.value,contentPadding = contentPadding)
 
         }else {
 
@@ -367,8 +432,7 @@ fun CredentialManagerScreen(
             val enableFilter = filterModeOn.value && k.isNotEmpty()
             val list = if(enableFilter){
                 list.value.filter {
-                    it.name.lowercase().contains(k) || it.value.lowercase().contains(k)
-                            || it.getTypeStr().lowercase().contains(k)
+                    it.domain.lowercase().contains(k) || (it.credName?.lowercase()?.contains(k) == true)
                 }
             }else {
                 list.value
@@ -387,26 +451,8 @@ fun CredentialManagerScreen(
                 requireForEachWithIndex = true,
                 requirePaddingAtBottom = true
             ) {idx, value->
-                CredentialItem(showBottomSheet = showBottomSheet, curCredentialState = curCredential, idx = idx, thisItem = value) {
-
-                    //这里value和it和传给CredentialItem的thisItem值都一样，只是参数传来传去而已
-
-                    if(remoteId.isEmpty()) {  //若remoteId为空，跳转到remote和凭据绑定页面
-                        // 点击跳转到关联列表，传1表示显示的是关联列表
-                        navController.navigate(Cons.nav_CredentialRemoteListScreen+"/"+it.id+"/1")
-                    }else {  //若remoteId不为空，则代表为此remoteId绑定凭据，点击条目弹窗
-                        //为弹窗准备参数
-                        onClickCurItem.value = it  //虽然这里是被点击的条目，但其实用保存长按条目的状态变量curCredential也可以，不过为了避免混淆，没用那个
-                        requireDoLink.value = true
-                        targetAll.value=false
-
-                        //remoteDtoForCredential.remoteId 改成在初始化时赋值了，remoteId是常量，初始化一次即可，不需每次都赋值
-//                        remoteDtoForCredential.value = RemoteDtoForCredential(remoteId=remoteId)
-//                        remoteDtoForCredential.value.remoteId = remoteId  //由于remoteDtoForCredential修改后并不需要刷新页面，所以不用重新赋值，一个对象反复用，把需要使用的字段更新下就行
-                        linkOrUnLinkDialogTitle.value = appContext.getString(R.string.link)+" '${it.name}'"
-                        //显示弹窗
-                        showLinkOrUnLinkDialog.value=true
-                    }
+                DomainCredItem (showBottomSheet = showBottomSheet, curCredentialState = curCredential, idx = idx, thisItem = value) {
+                    initCreateOrEditDialog(isCreateParam = false, curDomainParam = value.domain, curIdParam = value.domainCredId, curCredentialId=value.credId?:"")
                 }
 
                 HorizontalDivider()
@@ -430,33 +476,33 @@ fun CredentialManagerScreen(
         // don't use this way to track screen disappearance
         // DisposableEffect is better for this
         try {
-            doJobThenOffLoading(loadingOn = loadingOn, loadingOff = loadingOff, loadingText = appContext.getString(R.string.loading)) job@{
-                val credential = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+            doJobThenOffLoading(loadingOn = loadingOn, loadingOff = loadingOff, loadingText=appContext.getString(R.string.loading)) job@{
                 list.value.clear()
-                list.value.addAll(credential.getAll())
+                credentialList.value.clear()
 
-                if(remoteId.isNotEmpty()) {
-                    val remoteFromDb = AppModel.singleInstanceHolder.dbContainer.remoteRepository.getById(remoteId)
-                    if(remoteFromDb!=null){
-                        remote.value=remoteFromDb
-                        val repoFromDb = AppModel.singleInstanceHolder.dbContainer.repoRepository.getById(remoteFromDb.repoId)
-                        if(repoFromDb!=null) {
-                            curRepo.value = repoFromDb
-                        }
-                    }
+                val dcDb = AppModel.singleInstanceHolder.dbContainer.domainCredentialRepository
+                list.value.addAll(dcDb.getAllDto())
+
+                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                // link to none = no link
+                val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = false)
+                if(credentialListFromDb.isNotEmpty()) {
+                    credentialList.value.addAll(credentialListFromDb)
                 }
 //                list.requireRefreshView()
             }
 //            读取配置文件，初始化状态之类的
         } catch (cancel: Exception) {
+            MyLog.e(TAG, "#LaunchedEffect: ${cancel.localizedMessage}")
 //            println("LaunchedEffect: job cancelled")
         }
     }
-    //compose被销毁时执行的副作用
-    DisposableEffect(Unit) {
-//        println("DisposableEffect: entered main")
-        onDispose {
-//            println("DisposableEffect: exited main")
-        }
-    }
+//
+//    //compose被销毁时执行的副作用
+//    DisposableEffect(Unit) {
+////        println("DisposableEffect: entered main")
+//        onDispose {
+////            println("DisposableEffect: exited main")
+//        }
+//    }
 }
