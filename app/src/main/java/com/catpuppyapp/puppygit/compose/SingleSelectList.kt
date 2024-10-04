@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -19,9 +20,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
@@ -32,8 +37,10 @@ import com.catpuppyapp.puppygit.utils.state.StateUtil
 //@Deprecated("may crashed if use this in dialog")  // 20241003 update: new version of jetpack compose are fixed this bug
 @Composable
 fun<T> SingleSelectList(
-    outterModifier: Modifier = Modifier.fillMaxWidth(),
-    dropDownMenuModifier:Modifier=Modifier.fillMaxWidth(),
+//    outterModifier: Modifier = Modifier.fillMaxWidth(),
+//    dropDownMenuModifier:Modifier=Modifier.fillMaxWidth(),
+    outterModifier: Modifier = Modifier,
+    dropDownMenuModifier:Modifier=Modifier,
 
     optionsList:List<T>,   // empty list will show "null" and no item for select
     selectedOptionIndex:MutableIntState?,
@@ -50,11 +57,16 @@ fun<T> SingleSelectList(
 ) {
     val expandDropdownMenu = StateUtil.getRememberSaveableState(initValue = false)
 
+    val containerSize = remember { mutableStateOf(IntSize.Zero) }
+
     Card(
         //0.9f 占父元素宽度的百分之90
         modifier = outterModifier
             .clickable {
                 expandDropdownMenu.value = !expandDropdownMenu.value
+            }
+            .onSizeChanged {
+                containerSize.value = it
             }
         ,
         colors = CardDefaults.cardColors(
@@ -68,12 +80,12 @@ fun<T> SingleSelectList(
         Box(modifier = Modifier
             .padding(start = 5.dp, end = 5.dp)
             .defaultMinSize(minHeight = 50.dp)
-            .fillMaxWidth(),
+//            .fillMaxWidth(),
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(.9f)
                     .align(Alignment.CenterStart)
+                    .fillMaxWidth(.92f)
 
             ) {
                 Text(text = if(selectedOptionValue==null) "null" else menuItemFormatter(selectedOptionValue))
@@ -81,8 +93,8 @@ fun<T> SingleSelectList(
 
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(.1f)
                     .align(Alignment.CenterEnd)
+                    .fillMaxWidth(.08f)
             ) {
                 Icon(imageVector = if(expandDropdownMenu.value) Icons.Filled.ArrowDropDown else Icons.AutoMirrored.Filled.ArrowLeft
                     , contentDescription = null
@@ -90,8 +102,9 @@ fun<T> SingleSelectList(
             }
         }
 
+
         DropdownMenu(
-            modifier = dropDownMenuModifier,
+            modifier = dropDownMenuModifier.width((containerSize.value.width/2).dp),
 
             expanded = expandDropdownMenu.value,
             onDismissRequest = { expandDropdownMenu.value=false }
@@ -138,6 +151,7 @@ fun<T> SingleSelectList(
 
             }
         }
+
     }
 
 }
