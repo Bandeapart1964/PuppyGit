@@ -575,6 +575,8 @@ fun SubmoduleListScreen(
 //                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
                     CredentialSelector(credentialList.value, selectedCredentialIdx)
 
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(R.string.import_repos_link_credential_note), fontWeight = FontWeight.Light)
                 }
             },
             onCancel = { showImportToReposDialog.value = false },
