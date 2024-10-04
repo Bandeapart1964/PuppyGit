@@ -263,6 +263,7 @@ fun SubmoduleListScreen(
         val sb = StringBuilder()
         sb.appendLine(appContext.getString(R.string.name)+": "+item.name).appendLine()
             .appendLine(appContext.getString(R.string.url)+": "+item.remoteUrl).appendLine()
+            .appendLine(appContext.getString(R.string.target)+": "+item.targetHash).appendLine()
             .appendLine(appContext.getString(R.string.path)+": "+item.relativePathUnderParent).appendLine()
             .appendLine(appContext.getString(R.string.full_path)+": "+item.fullPath).appendLine()
             .appendLine(appContext.getString(R.string.status)+": "+item.getStatus())
@@ -477,6 +478,50 @@ fun SubmoduleListScreen(
         }
     }
 
+    val showReloadDialog = StateUtil.getRememberSaveableState(false)
+    val forceReload = StateUtil.getRememberSaveableState(false)
+    if(showReloadDialog.value) {
+        ConfirmDialog2(
+            title = stringResource(R.string.reload),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.reload_submodule_note))
+                    Spacer(Modifier.height(15.dp))
+                    MyCheckBox(text = stringResource(R.string.force), forceReload)
+                }
+            },
+            onCancel = {showReloadDialog.value=false},
+        ) {
+            showReloadDialog.value=false
+
+            val force = forceReload.value
+
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.reloading)) {
+                try {
+                    Repository.open(curRepo.value.fullSavePath).use { parentRepo ->
+                        selectedItemList.value.toList().forEach {
+                            try {
+                                val sm = Libgit2Helper.resolveSubmodule(parentRepo, it.name)
+                                if(sm!=null) {
+                                    Libgit2Helper.reloadSubmodule(sm, force)
+                                }
+
+                            }catch (e:Exception) {
+                                MyLog.e(TAG, "reload submodule '${it.name}' err: ${e.localizedMessage}")
+                            }
+                        }
+                    }
+
+                    Msg.requireShow(appContext.getString(R.string.done))
+                }finally {
+                    // refresh list for get newest data after reload
+                    changeStateTriggerRefreshPage(needRefresh)
+                }
+            }
+        }
+    }
+
     val showResetToTargetDialog = StateUtil.getRememberSaveableState(false)
     val closeResetDialog = {showResetToTargetDialog.value=false}
     if(showResetToTargetDialog.value) {
@@ -575,6 +620,7 @@ fun SubmoduleListScreen(
     val moreItemEnableList:List<()->Boolean> = listOf(
         {selectedItemList.value.isNotEmpty()},  // import repo
         {selectedItemList.value.isNotEmpty()},  // reset to target
+        {selectedItemList.value.isNotEmpty()},  // reload
         {selectedItemList.value.isNotEmpty()},  // update config
         {selectedItemList.value.isNotEmpty()},  // init repo
         {selectedItemList.value.isNotEmpty()},  // restore .git file
@@ -586,6 +632,7 @@ fun SubmoduleListScreen(
     val moreItemTextList = listOf(
         stringResource(R.string.import_to_repos),
         stringResource(R.string.reset_to_target),
+        stringResource(R.string.reload),
         stringResource(R.string.sync_configs),
         stringResource(R.string.init_repo),
         stringResource(R.string.restore_dot_git_file),
@@ -600,6 +647,10 @@ fun SubmoduleListScreen(
         },
         resetToTarget@{
             showResetToTargetDialog.value = true
+        },
+        reload@{
+            forceReload.value=false
+            showReloadDialog.value = true
         },
         syncConfigs@{  // git submodule init, git submodule sync. this is necessary if user's edit .gitmodules by hand
             syncParentConfig.value = true

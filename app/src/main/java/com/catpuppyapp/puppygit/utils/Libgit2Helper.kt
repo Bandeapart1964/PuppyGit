@@ -5350,6 +5350,10 @@ class Libgit2Helper {
         fun getParentRecordedTargetHashForSubmodule(submodule:Submodule):String {
             return submodule.headId()?.toString() ?: ""
         }
+
+        fun reloadSubmodule(sm:Submodule, force: Boolean) {
+            sm.reload(force)
+        }
     }
 
 }
