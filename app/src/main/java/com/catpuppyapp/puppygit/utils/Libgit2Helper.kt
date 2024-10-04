@@ -13,6 +13,7 @@ import com.catpuppyapp.puppygit.data.repository.RemoteRepository
 import com.catpuppyapp.puppygit.data.repository.RepoRepository
 import com.catpuppyapp.puppygit.dto.RemoteDto
 import com.catpuppyapp.puppygit.dto.createCommitDto
+import com.catpuppyapp.puppygit.dto.createSubmoduleDto
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.BranchNameAndTypeDto
 import com.catpuppyapp.puppygit.git.CommitDto
@@ -3847,7 +3848,7 @@ class Libgit2Helper {
                     //查询仓库最新信息
                     val head = resolveHEAD(repo)
                     repoFromDb.branch = head?.shorthand()?:""
-                    repoFromDb.lastCommitHash = getShortOidStrByFull(head?.id().toString())
+                    repoFromDb.lastCommitHash = getShortOidStrByFull(head?.id()?.toString() ?: "")  // no commit hash will show empty str
                     repoFromDb.isDetached = boolToDbInt(repo.headDetached())
                     if(!dbIntToBool(repoFromDb.isDetached)) {  //只有非detached才有upstream
                         val upstream = getUpstreamOfBranch(repo, repoFromDb.branch)
@@ -4823,24 +4824,14 @@ class Libgit2Helper {
                     return@foreach 0
                 }
 
-                val smRelativePath = sm.path()
-                val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
-
-                // [fixed, the reason was pass NULL to jni StringUTF method in c codes] if call submodule.url() it will crashed when url invalid
-                val smUrl = sm.url()?.toString() ?: ""
-                //another way to get url from .gitsubmodules, is read info by kotlin, 100% safe
-//                val smUrl = getValueFromGitConfig(parentDotGitModuleFile, "submodule.$name.url")
-
-                list.add(
-                    SubmoduleDto(
-                        name=name,
-                        relativePathUnderParent = smRelativePath,
-                        fullPath = smFullPath,
-                        cloned = isValidGitRepo(smFullPath),
-                        remoteUrl = smUrl,
-                        tempStatus = if(smUrl.isBlank()) invalidUrlAlertText else ""
-                    )
+                val smDto = createSubmoduleDto(
+                    sm = sm,
+                    smName = name,
+                    parentWorkdirPathNoSlashSuffix = parentWorkdirPathNoSlashSuffix,
+                    invalidUrlAlertText = invalidUrlAlertText
                 )
+
+                list.add(smDto)
 
                 0
 
@@ -4848,6 +4839,7 @@ class Libgit2Helper {
 
             return list
         }
+
 
         fun getSubmoduleNameList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<String> {
             val list = mutableListOf<String>()
@@ -5344,6 +5336,13 @@ class Libgit2Helper {
         fun initGitRepo(path: String) {
             val isBare = false
             Repository.init(path, isBare)
+        }
+
+        /**
+         * get parent repo recorded target hash for submodule, if no recorded id, will return empty string ""
+         */
+        fun getParentRecordedTargetHashForSubmodule(submodule:Submodule):String {
+            return submodule.headId()?.toString() ?: ""
         }
     }
 

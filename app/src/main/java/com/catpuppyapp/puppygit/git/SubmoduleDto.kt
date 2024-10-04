@@ -10,6 +10,7 @@ data class SubmoduleDto (
     val relativePathUnderParent:String,
     val fullPath:String,
     val cloned:Boolean,
+    val targetHash:String,  //target commit hash recorded by parent repo
 
     var tempStatus:String = "",  // cloning... etc
 

@@ -103,6 +103,19 @@ fun SubmoduleItem(
                 fontWeight = FontWeight.Light
             )
         }
+
+        Row (
+            verticalAlignment = Alignment.CenterVertically,
+
+        ){
+            Text(text = stringResource(R.string.target) +":")
+            Text(text = thisObj.targetHash,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.Light
+            )
+        }
+
         Row (
             verticalAlignment = Alignment.CenterVertically,
 

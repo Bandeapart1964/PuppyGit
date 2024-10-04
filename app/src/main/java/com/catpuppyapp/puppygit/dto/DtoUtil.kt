@@ -3,11 +3,15 @@ package com.catpuppyapp.puppygit.dto
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.git.BranchNameAndTypeDto
 import com.catpuppyapp.puppygit.git.CommitDto
+import com.catpuppyapp.puppygit.git.SubmoduleDto
 import com.catpuppyapp.puppygit.git.TagDto
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
+import com.catpuppyapp.puppygit.utils.Libgit2Helper.Companion.isValidGitRepo
+import com.catpuppyapp.puppygit.utils.Libgit2Helper.Companion.getParentRecordedTargetHashForSubmodule
 import com.github.git24j.core.Commit
 import com.github.git24j.core.Oid
 import com.github.git24j.core.Repository
+import com.github.git24j.core.Submodule
 
 fun createCommitDto(
     commitOid: Oid,
@@ -108,4 +112,30 @@ fun updateRemoteDto(repo: Repository, remoteDto: RemoteDto) {
         remoteDto.branchMode = Cons.dbRemote_Fetch_BranchMode_CustomBranches
         remoteDto.branchListForFetch = branchNameList  //自定义分支列表，列表值是指定的分支的名字
     }
+}
+
+
+fun createSubmoduleDto(
+    sm: Submodule,
+    smName: String,
+    parentWorkdirPathNoSlashSuffix: String,
+    invalidUrlAlertText: String
+): SubmoduleDto {
+    val smRelativePath = sm.path()
+    val smFullPath = parentWorkdirPathNoSlashSuffix + Cons.slash + smRelativePath.removePrefix(Cons.slash)
+
+    // [fixed, the reason was pass NULL to jni StringUTF method in c codes] if call submodule.url() it will crashed when url invalid
+    val smUrl = sm.url()?.toString() ?: ""
+    //another way to get url from .gitsubmodules, is read info by kotlin, 100% safe
+    //                val smUrl = getValueFromGitConfig(parentDotGitModuleFile, "submodule.$name.url")
+    val smDto = SubmoduleDto(
+        name = smName,
+        relativePathUnderParent = smRelativePath,
+        fullPath = smFullPath,
+        cloned = isValidGitRepo(smFullPath),
+        remoteUrl = smUrl,
+        targetHash = getParentRecordedTargetHashForSubmodule(sm),
+        tempStatus = if (smUrl.isBlank()) invalidUrlAlertText else ""
+    )
+    return smDto
 }
