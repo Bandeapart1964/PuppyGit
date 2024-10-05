@@ -1,3 +1,7 @@
+1.0.5v26 - 20241005:
+- support submodules
+- minor bugs fixed
+
 1.0.4v25:
 - important update, unlock all features
 

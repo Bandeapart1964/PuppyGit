@@ -59,7 +59,7 @@ Idk how support ssh on Android, so PuppyGit Pro only support https for now, if y
 
 
 ## Build
-import project to Android Studio, then build, thats all.
+import project to Android Studio, then build, that's all.
 
 
 ## Security
@@ -79,4 +79,4 @@ this project has many chinese comments, and some comments are out-of-date or non
 
 
 ## Donate
-If this app has many users in future, maybe I'll make some ways to accept donations
+I expect some donations, because I am poor, I'll find some ways to accept donations, it may help I keep continuously maintenance this project.
