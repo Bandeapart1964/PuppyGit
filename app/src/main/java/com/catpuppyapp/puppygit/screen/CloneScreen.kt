@@ -662,8 +662,8 @@ fun CloneScreen(
                     optionsList=storagePathList.value,
                     selectedOptionIndex=storagePathSelectedIndex,
                     selectedOptionValue = storagePathSelectedPath.value,
-                    menuItemFormatter = {value ->
-                        FsUtils.getPathWithInternalOrExternalPrefix(value)
+                    menuItemFormatter = {_, value ->
+                        FsUtils.getPathWithInternalOrExternalPrefix(value?:"")
                     },
                     menuItemOnClick = { index, value ->
                         storagePathSelectedIndex.intValue = index

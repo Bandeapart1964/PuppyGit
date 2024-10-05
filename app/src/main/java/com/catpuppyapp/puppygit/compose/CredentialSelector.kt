@@ -31,7 +31,7 @@ fun CredentialSelector(
     SingleSelectList(
         optionsList = credentialList,
         selectedOptionIndex = selectedCredentialIdx,
-        menuItemFormatter = { it.name }
+        menuItemFormatter = {_,value-> value?.name?:"" }
     )
 
     doActIfIndexGood(selectedCredentialIdx.intValue, credentialList) {

@@ -70,6 +70,7 @@ import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
+import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.applyPatchTestPassed
 import com.catpuppyapp.puppygit.dev.importReposFromFilesTestPassed
 import com.catpuppyapp.puppygit.dev.initRepoFromFilesPageTestPassed
@@ -320,10 +321,12 @@ fun FilesInnerPage(
 
     val showApplyAsPatchDialog = StateUtil.getRememberSaveableState(initValue = false)
     val fileFullPathForApplyAsPatch =  StateUtil.getRememberSaveableState(initValue = "")
+    val selectedRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "selectedRepo") { RepoEntity(id="") }
 
     if(showApplyAsPatchDialog.value) {
         ApplyPatchDialog(
             showDialog = showApplyAsPatchDialog,
+            selectedRepo=selectedRepo,
             patchFileFullPath = fileFullPathForApplyAsPatch.value,
             onCancel={showApplyAsPatchDialog.value=false},
             onErrCallback={ e, selectedRepoId->

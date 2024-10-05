@@ -46,7 +46,10 @@ fun<T> SingleSelectList(
     selectedOptionIndex:MutableIntState?,
     selectedOptionValue:T? = if(selectedOptionIndex!=null && isGoodIndexForList(selectedOptionIndex.intValue, optionsList)) optionsList[selectedOptionIndex.intValue] else null,
 
-    menuItemFormatter:(value:T)->String = {value-> ""+value},
+    // 显示已选中条目时，会传selectedOptionIndex作为index值，其值可能为null
+    // when show selected item, will passing selectedOptionIndex as index, the value maybe null
+    // for the formatter, index will be null if value not in the list, and index maybe invalid, like -1,-2 something... usually happened when you was selected a item, but remove it from list later, the the selected item will haven't index of the list, should handle this case, if you overwrite this formatter
+    menuItemFormatter:(index:Int?, value:T?)->String = {index, value-> value?.toString() ?: ""},
     menuItemOnClick:(index:Int, value:T)->Unit = {index, value-> selectedOptionIndex?.intValue = index},
     menuItemSelected:(index:Int, value:T) -> Boolean = {index, value -> selectedOptionIndex?.intValue == index},
 
@@ -88,7 +91,7 @@ fun<T> SingleSelectList(
                     .fillMaxWidth(.92f)
 
             ) {
-                Text(text = if(selectedOptionValue==null) "null" else menuItemFormatter(selectedOptionValue))
+                Text(text = menuItemFormatter(selectedOptionIndex?.intValue, selectedOptionValue))
             }
 
             Row(
@@ -121,7 +124,7 @@ fun<T> SingleSelectList(
                 ){
                     //列出其余条目
                     DropdownMenuItem(
-                        text = { Text(if(menuItemSelected(index, value)) "*${menuItemFormatter(value)}" else menuItemFormatter(value)) },
+                        text = { Text(if(menuItemSelected(index, value)) "*${menuItemFormatter(index, value)}" else menuItemFormatter(index, value)) },
                         onClick ={
                             expandDropdownMenu.value=false
 
