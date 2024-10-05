@@ -913,5 +913,7 @@
     <string name="jump">Jump</string>
     <string name="dir_not_imported">Dir not imported</string>
     <string name="go_sub">Go Sub</string>
+    <string name="no_submodule_selected">No submodule selected</string>
+    <string name="will_try_import_selected_dirs_as_repos">Will try import selected dir(s) as repo(s)</string>
 
 </resources>

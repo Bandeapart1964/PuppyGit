@@ -114,7 +114,6 @@ import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Repository
 import com.github.git24j.core.Tree
-import java.io.File
 
 private val TAG = "ChangeListInnerPage"
 private val stateKeyTag = "ChangeListInnerPage"
@@ -163,7 +162,7 @@ fun ChangeListInnerPage(
     openDrawer:()->Unit,
     goToRepoPage:(targetRepoId:String)->Unit = {},  // only show workdir changes at ChangeList need this
     changeListRepoList:CustomStateListSaveable<RepoEntity>?=null,
-    goToChangeListPage:(goToThisRepo:RepoEntity)->Unit?={},
+    goToChangeListPage:(goToThisRepo:RepoEntity)->Unit={},
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
 ) {
@@ -372,9 +371,11 @@ fun ChangeListInnerPage(
             selectedListIsNotEmpty,  //revert
             selectedListIsNotEmpty, // create patch
             selectedListIsNotEmpty, // ignore
-        ) else listOf(
+            selectedListIsNotEmpty, // import as repo
+        ) else listOf( // index page actually
             selectedListIsNotEmpty,  // unstage
             selectedListIsNotEmpty, // create patch
+            selectedListIsNotEmpty, // import as repo
         )
 
 //    val isAllConflictItemsSelected:()->Boolean = isAllConflictItemsSelectedLabel@{
@@ -2323,9 +2324,10 @@ fun ChangeListInnerPage(
         stringResource(R.string.revert),
         stringResource(R.string.create_patch),
         if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) stringResource(R.string.ignore) else "",
+        stringResource(R.string.import_as_repo),
 
     )  //按元素添加顺序在列表中会呈现为从上到下
-    else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage), stringResource(R.string.create_patch),)
+    else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage), stringResource(R.string.create_patch), stringResource(R.string.import_as_repo),)
     else listOf()  // tree to tree，无选项
 
     val moreItemVisibleList = if(fromTo == Cons.gitDiffFromIndexToWorktree) listOf(
@@ -2335,6 +2337,7 @@ fun ChangeListInnerPage(
         {true},  // revert
         {true},  // create patch
         {true},  // ignore
+        {true}, // import as repo
     ) else listOf()  // empty list, always visible
 
     val showRevertAlert = StateUtil.getRememberSaveableState(initValue = false)
@@ -2411,11 +2414,89 @@ fun ChangeListInnerPage(
             }
         }
     }
+
+
+
+    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
+    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+
+//    val fullPathForImport = StateUtil.getRememberSaveableState("")
+    val importList = StateUtil.getCustomSaveableStateList(stateKeyTag, "importList") { listOf<StatusTypeEntrySaver>() }
+    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
+    if(showImportToReposDialog.value){
+        ConfirmDialog2(
+            title = appContext.getString(R.string.import_as_repo),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    Text(stringResource(R.string.will_try_import_selected_dirs_as_repos))
+                    Spacer(Modifier.height(15.dp))
+
+//                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
+
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(R.string.import_repos_link_credential_note), fontWeight = FontWeight.Light)
+                }
+            },
+            onCancel = { showImportToReposDialog.value = false },
+
+            ) {
+            showImportToReposDialog.value = false
+
+            val curRepo = curRepoFromParentPage
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                val repoNameSuffix = "_of_${curRepo.value.repoName}"
+                val parentRepoId = curRepo.value.id
+//                val importList = selectedItemList.value.toList().filter { it.cloned }
+
+                val selectedCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
+
+                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                val importRepoResult = ImportRepoResult()
+
+                try {
+                    importList.value.forEach {
+                        val result = repoDb.importRepos(dir=it.canonicalPath, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId, credentialId = selectedCredentialId)
+                        importRepoResult.all += result.all
+                        importRepoResult.success += result.success
+                        importRepoResult.failed += result.failed
+                        importRepoResult.existed += result.existed
+                    }
+
+                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+                }catch (e:Exception) {
+                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
+                    val errMsg = e.localizedMessage
+                    Msg.requireShowLongDuration(errMsg ?: "import err")
+                    createAndInsertError(curRepo.value.id, "import repo(s) err: $errMsg")
+                    MyLog.e(TAG, "import repo(s) from ChangeList err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
+                }finally {
+                    // refresh for get new repos list
+                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
+                }
+            }
+
+        }
+    }
+
+
     /*
     if(fromTo == Cons.gitDiffFromIndexToWorktree) listOf(stringResource(R.string.revert), stringResource(R.string.stage),)
                             else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(stringResource(R.string.unstage))
                             else listOf()  //这个应该不会执行到
      */
+
+    val initImportAsRepo = {
+        val tmplist = selectedItemList.value.filter { it.toFile().isDirectory }
+        if(tmplist.isEmpty()) {
+            Msg.requireShow(appContext.getString(R.string.no_submodule_selected))
+        }else {
+            importList.value.clear()
+            importList.value.addAll(tmplist)
+            showImportToReposDialog.value=true
+        }
+    }
 
     val moreItemOnClickList:List<()->Unit> = if(fromTo == Cons.gitDiffFromIndexToWorktree) listOf(
         acceptTheirs@{
@@ -2456,6 +2537,9 @@ fun ChangeListInnerPage(
         },
         ignore@{
             showIgnoreDialog.value = true
+        },
+        importAsRepo@{
+            initImportAsRepo()
         }
     ) else if(fromTo == Cons.gitDiffFromHeadToIndex) listOf(
         unstage@{
@@ -2463,6 +2547,9 @@ fun ChangeListInnerPage(
         },
         createPatch@{
             showCreatePatchDialog.value = true
+        },
+        importAsRepo@{
+            initImportAsRepo()
         }
     ) else listOf()  // fromTo == Cons.gitDiffFromTreeToTree
 
@@ -2500,68 +2587,8 @@ fun ChangeListInnerPage(
 
 
 
-    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
-    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
 
-    val fullPathForImport = StateUtil.getRememberSaveableState("")
-    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
-    if(showImportToReposDialog.value){
-        ConfirmDialog2(
-            title = appContext.getString(R.string.import_to_repos),
-            requireShowTextCompose = true,
-            textCompose = {
-                ScrollableColumn {
-//                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
-                    CredentialSelector(credentialList.value, selectedCredentialIdx)
-
-                    Spacer(Modifier.height(10.dp))
-                    Text(stringResource(R.string.import_repos_link_credential_note), fontWeight = FontWeight.Light)
-                }
-            },
-            onCancel = { showImportToReposDialog.value = false },
-
-        ) {
-            showImportToReposDialog.value = false
-
-            val curRepo = curRepoFromParentPage
-            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
-                val repoNameSuffix = "_of_${curRepo.value.repoName}"
-                val parentRepoId = curRepo.value.id
-//                val importList = selectedItemList.value.toList().filter { it.cloned }
-                val importList = selectedItemList.value.toList()  // just import all selected, will fail if must fail
-
-                val selectedCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
-
-                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-                val importRepoResult = ImportRepoResult()
-
-                try {
-//                    importList.forEach {
-                    val result = repoDb.importRepos(dir=fullPathForImport.value, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId, credentialId = selectedCredentialId)
-                    importRepoResult.all += result.all
-                    importRepoResult.success += result.success
-                    importRepoResult.failed += result.failed
-                    importRepoResult.existed += result.existed
-//                    }
-
-                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
-                }catch (e:Exception) {
-                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
-                    val errMsg = e.localizedMessage
-                    Msg.requireShowLongDuration(errMsg ?: "import err")
-                    createAndInsertError(curRepo.value.id, "import repo err: $errMsg")
-                    MyLog.e(TAG, "import repo from ChangeList err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
-                }finally {
-                    // refresh for get new repos list
-                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
-                }
-            }
-
-        }
-    }
-
-
-    val doJump = {item:StatusTypeEntrySaver ->
+    val goToSub = { item:StatusTypeEntrySaver ->
         val target = changeListRepoList?.value?.find { item.canonicalPath == it.fullSavePath }
         if(target==null) {
             Msg.requireShow(appContext.getString(R.string.dir_not_imported))
@@ -2615,11 +2642,12 @@ fun ChangeListInnerPage(
             Msg.requireShow(appContext.getString(R.string.copied))
         },
         importAsRepo@{
-            fullPathForImport.value = it.canonicalPath
+            importList.value.clear()
+            importList.value.add(it)
             showImportToReposDialog.value = true
         },
-        jump@{
-            doJump(it)
+        goToSub@{
+            goToSub(it)
         }
     )
     val menuKeyEnableList:List<(StatusTypeEntrySaver)->Boolean> = listOf(
@@ -2629,8 +2657,8 @@ fun ChangeListInnerPage(
         //只有worktree的cl页面支持在Files页面显示文件，index页面由于是二级页面，跳转不了，干脆禁用了
         showInFilesEnabled@{fromTo == Cons.gitDiffFromIndexToWorktree},  //对所有条目都启用showInFiles，不过会在点击后检查文件是否存在，若不存在不会跳转
         copyRealPath@{true},
-        importAsRepo@{ (fromTo == Cons.gitDiffFromIndexToWorktree || fromTo == Cons.gitDiffFromHeadToIndex) && File(it.canonicalPath).isDirectory }, //only dir can be import as repo
-        jump@{fromTo == Cons.gitDiffFromIndexToWorktree && File(it.canonicalPath).isDirectory},  // only dir maybe import, then maybe can jump
+        importAsRepo@{ (fromTo == Cons.gitDiffFromIndexToWorktree || fromTo == Cons.gitDiffFromHeadToIndex) && it.toFile().isDirectory }, //only dir can be import as repo
+        goToSub@{fromTo == Cons.gitDiffFromIndexToWorktree && it.toFile().isDirectory},  // only dir maybe import as cur repo's sub repo, then maybe can go to sub
     )
 
     //这个页面，显示就是启用，禁用就不需要显示，所以直接把enableList作为visibleList即可
