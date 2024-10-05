@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.compose
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
@@ -9,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
@@ -30,6 +30,7 @@ private val stateKeyTag = "ApplyPatchDialog"
 fun ApplyPatchDialog(
     showDialog: MutableState<Boolean>,
     selectedRepo:CustomStateSaveable<RepoEntity>,
+    checkOnly:MutableState<Boolean>,
     patchFileFullPath:String,
     onCancel: () -> Unit,
     onErrCallback:suspend (err:Exception, selectedRepoId:String)->Unit,
@@ -52,7 +53,7 @@ fun ApplyPatchDialog(
             title = stringResource(R.string.apply_patch),
             requireShowTextCompose = true,
             textCompose = {
-                Column {
+                ScrollableColumn {
                     Text(text = stringResource(R.string.select_target_repo)+":")
                     Spacer(modifier = Modifier.height(10.dp))
 
@@ -63,6 +64,15 @@ fun ApplyPatchDialog(
                         selectedOptionIndex = null,
                         selectedOptionValue = selectedRepo.value
                     )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    MyCheckBox(stringResource(R.string.check_only), checkOnly)
+                    if(checkOnly.value) {
+                        Text(stringResource(R.string.apply_patch_check_note), fontWeight = FontWeight.Light)
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+
 //
 //                MyLazyColumn(
 //                    modifier = Modifier.heightIn(max=150.dp),
@@ -123,6 +133,7 @@ fun ApplyPatchDialog(
                         val ret = Libgit2Helper.applyPatchFromFile(
                             inputFile,
                             repo,
+                            checkOnlyDontRealApply = checkOnly.value
                         )
 
                         if(ret.hasError()) {

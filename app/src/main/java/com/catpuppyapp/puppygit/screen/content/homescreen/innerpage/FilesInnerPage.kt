@@ -321,11 +321,13 @@ fun FilesInnerPage(
 
     val showApplyAsPatchDialog = StateUtil.getRememberSaveableState(initValue = false)
     val fileFullPathForApplyAsPatch =  StateUtil.getRememberSaveableState(initValue = "")
+    val checkOnly = StateUtil.getRememberSaveableState(initValue = false)
     val selectedRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "selectedRepo") { RepoEntity(id="") }
 
     if(showApplyAsPatchDialog.value) {
         ApplyPatchDialog(
             showDialog = showApplyAsPatchDialog,
+            checkOnly = checkOnly,
             selectedRepo=selectedRepo,
             patchFileFullPath = fileFullPathForApplyAsPatch.value,
             onCancel={showApplyAsPatchDialog.value=false},

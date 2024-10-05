@@ -4506,7 +4506,7 @@ class Libgit2Helper {
         fun applyPatchFromFile(
             inputFile:File,
             repo:Repository,
-            applyOptions: Apply.Options?=null,
+            checkOnlyDontRealApply:Boolean,
             location:Apply.LocationT = Apply.LocationT.WORKDIR,  // default same as `git apply`
             checkWorkdirCleanBeforeApply: Boolean = true,
             checkIndexCleanBeforeApply: Boolean = false
@@ -4537,6 +4537,15 @@ class Libgit2Helper {
 
                 //根据patch内容创建diff对象
                 val diff = Diff.fromBuffer(content)
+
+                val applyOptions:Apply.Options? = if(checkOnlyDontRealApply) {
+                    val tmpOpt=Apply.Options.createDefault(null, null)
+                    tmpOpt.flags = EnumSet.of(Apply.FlagsT.CHECK)
+                    tmpOpt
+                }else {
+                    null
+                }
+
                 //应用patch
                 Apply.apply(repo, diff, location, applyOptions)
 
@@ -4686,7 +4695,7 @@ class Libgit2Helper {
         }
 
         /**
-         * @return "(2/6)", if err, return empty string
+         * @return e.g. "(2/6)", if err, return empty string
          */
         fun rebaseCurOfAllFormatted(repo:Repository, prefix: String="(", split:String="/", suffix:String=")"):String {
             try {

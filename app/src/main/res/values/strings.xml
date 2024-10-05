@@ -905,5 +905,7 @@
     <string name="import_repos_link_credential_note">Selected credential will be linked to repo\'s Remotes, usually is \'origin\'</string>
     <string name="desc">Desc</string>
     <string name="location">Location</string>
+    <string name="check_only">Check Only</string>
+    <string name="apply_patch_check_note">won\'t actually make changes, just test that the patch applies</string>
 
 </resources>
