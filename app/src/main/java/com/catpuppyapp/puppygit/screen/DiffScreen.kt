@@ -56,6 +56,8 @@ fun DiffScreen(
     underRepoPathKey:String,
     treeOid1Str:String,
     treeOid2Str:String,
+    isSubmodule:Boolean,
+    isDiffToLocal:Boolean,
     naviUp: () -> Boolean,
 ) {
 
@@ -261,7 +263,8 @@ fun DiffScreen(
                 fromTo=fromTo,changeType=changeType,fileSize=fileSize, naviUp=naviUp,
                 loading=loading,dbContainer=dbContainer,contentPadding, treeOid1Str, treeOid2Str,
                 needRefresh = needRefresh, listState = listState, curRepo=curRepo,
-                requireBetterMatchingForCompare = requireBetterMatchingForCompare, fileFullPath = fileFullPath.value
+                requireBetterMatchingForCompare = requireBetterMatchingForCompare, fileFullPath = fileFullPath.value,
+                isSubmodule=isSubmodule, isDiffToLocal = isDiffToLocal
             )
         }
 

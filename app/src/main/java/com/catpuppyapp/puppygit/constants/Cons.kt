@@ -241,7 +241,8 @@ class Cons {
         val gitItemTypeSubmodule = 3;
         val gitItemTypeFileStr = "File";
         val gitItemTypeDirStr = "Dir";
-        val gitItemTypeSubmoduleStr = "Submodule";
+        val gitItemTypeSubmoduleStr = "Sub";
+        val gitSubmoduleDirtyStr="Dirty"  // for item type submodule, when dirty, show this at ChangeList item
         val gitDiffFromIndexToWorktree = "1";
         val gitDiffFromHeadToIndex = "2";
         val gitDiffFromHeadToWorktree = "3";

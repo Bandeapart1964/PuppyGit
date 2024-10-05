@@ -51,6 +51,8 @@ fun ChangeListItem(
     menuKeyEnableList: List<(StatusTypeEntrySaver)->Boolean>,
     menuKeyVisibleList: List<(StatusTypeEntrySaver)->Boolean> = listOf(),
     fromTo:String,
+    //此参数用来确认是否diff to local，因为from为tree to tree时有可能和local diff也可能不是，所以无法单凭from to 判断
+    isDiffToLocal:Boolean,  // fromTo are treeToTree or indexToWorkdir all maybe diff to local, but tree to tree maybe is not diff to local, so make sure is diff to local or not, by this param
     switchItemSelected:(StatusTypeEntrySaver)->Unit,
     isItemInSelected:(StatusTypeEntrySaver)->Boolean,
 //    treeOid1Str:String,
@@ -135,7 +137,7 @@ fun ChangeListItem(
                 val changeTypeColor = Libgit2Helper.getChangeTypeColor(item.changeType ?: "")
                 val fontSize = 12.sp
                 Row{
-                    Text((item.changeType?:"")+(if(item.itemType==Cons.gitItemTypeSubmodule) ", ${Cons.gitItemTypeSubmoduleStr}" else ""), fontSize = fontSize, color = changeTypeColor)
+                    Text((item.changeType?:"") + (if(item.itemType==Cons.gitItemTypeSubmodule) ", ${Cons.gitItemTypeSubmoduleStr+(if(isDiffToLocal && item.dirty) ", ${Cons.gitSubmoduleDirtyStr}" else "")}" else ""), fontSize = fontSize, color = changeTypeColor)
                 }
                 Row {
                     Text(text = item.getSizeStr(),fontSize = fontSize, )

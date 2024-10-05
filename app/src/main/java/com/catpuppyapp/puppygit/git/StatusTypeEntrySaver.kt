@@ -21,6 +21,7 @@ class StatusTypeEntrySaver {
     var fileSizeInBytes:Long=0;
     //file or dir or submodule
     var itemType:Int = Cons.gitItemTypeFile;
+    var dirty:Boolean = false  // for submodule, if has uncommited changes, this should set to true
 
     private var mime:MimeType? = null
 

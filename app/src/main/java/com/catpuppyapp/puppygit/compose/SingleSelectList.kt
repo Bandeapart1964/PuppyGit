@@ -87,8 +87,8 @@ fun<T> SingleSelectList(
         ) {
             Row(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
                     .fillMaxWidth(.92f)
+                    .align(Alignment.CenterStart)
 
             ) {
                 Text(text = menuItemFormatter(selectedOptionIndex?.intValue, selectedOptionValue))
@@ -96,8 +96,8 @@ fun<T> SingleSelectList(
 
             Row(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
                     .fillMaxWidth(.08f)
+                    .align(Alignment.CenterEnd)
             ) {
                 Icon(imageVector = if(expandDropdownMenu.value) Icons.Filled.ArrowDropDown else Icons.AutoMirrored.Filled.ArrowLeft
                     , contentDescription = null

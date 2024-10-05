@@ -111,7 +111,7 @@ fun AppScreenNavigator() {
             )
         }
 //        composable(Cons.nav_DiffScreen + "/{repoId}/{relativePathUnderRepoEncoded}/{fromTo}/{changeType}") {
-        composable(Cons.nav_DiffScreen + "/{repoId}/{fromTo}/{changeType}/{fileSize}/{underRepoPathKey}/{treeOid1Str}/{treeOid2Str}") {
+        composable(Cons.nav_DiffScreen + "/{repoId}/{fromTo}/{changeType}/{fileSize}/{underRepoPathKey}/{treeOid1Str}/{treeOid2Str}/{isSubmodule}/{isDiffToLocal}") {
             DiffScreen(
                 repoId = it.arguments?.getString("repoId") ?: "",
                 fromTo = it.arguments?.getString("fromTo") ?: "",
@@ -121,6 +121,8 @@ fun AppScreenNavigator() {
                 treeOid1Str = it.arguments?.getString("treeOid1Str") ?: "",
                 treeOid2Str = it.arguments?.getString("treeOid2Str") ?: "",
                 naviUp = { navController.navigateUp() },
+                isSubmodule = (it.arguments?.getString("isSubmodule")?.toInt() ?: 0) != 0,
+                isDiffToLocal = (it.arguments?.getString("isDiffToLocal")?.toInt() ?: 0) != 0,
             )
         }
 

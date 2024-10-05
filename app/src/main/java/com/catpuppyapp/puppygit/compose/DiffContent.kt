@@ -4,7 +4,9 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -15,6 +17,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.LineNum
@@ -63,6 +67,8 @@ fun DiffContent(
     curRepo:CustomStateSaveable<RepoEntity>,
     requireBetterMatchingForCompare:MutableState<Boolean>,
     fileFullPath:String,
+    isSubmodule:Boolean,
+    isDiffToLocal:Boolean
 ) {
     //废弃，改用获取diffItem时动态计算实际需要显示的contentLen总和了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
@@ -74,12 +80,19 @@ fun DiffContent(
 
     val diffItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "diffItem", initValue = DiffItemSaver())
 
+    val submoduleIsDirty = StateUtil.getRememberSaveableState(false)
+
     val oldLineAt = stringResource(R.string.old_line_at)
     val newLineAt = stringResource(R.string.new_line_at)
     val errOpenFileFailed = stringResource(R.string.open_file_failed)
 
     //判断是否是支持预览的修改类型
-    val isSupportedChangeType = changeType == Cons.gitStatusModified || changeType == Cons.gitStatusNew || changeType == Cons.gitStatusDeleted   // 冲突条目不能diff，会提示unmodified！所以支持预览冲突条目没意义，若支持的话，在当前判断条件后追加后面的代码即可: `|| changeType == Cons.gitStatusConflict`
+    // 注意：冲突条目不能diff，会提示unmodified！所以支持预览冲突条目没意义，若支持的话，在当前判断条件后追加后面的代码即可: `|| changeType == Cons.gitStatusConflict`
+    val isSupportedChangeType = (changeType == Cons.gitStatusModified
+            || changeType == Cons.gitStatusNew
+            || changeType == Cons.gitStatusDeleted
+            || changeType == Cons.gitStatusTypechanged  // e.g. submodule folder path change to a file, will show type changed, view this is ok
+    )
 
     val fileChangeTypeIsModified = changeType == Cons.gitStatusModified
 
@@ -110,16 +123,22 @@ fun DiffContent(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if(!isSupportedChangeType){
-                Text(text = stringResource(R.string.error_unknown_change_type))
-            } else if(loading.value) {
-                Text(stringResource(R.string.loading))
-            } else if(diffItem.value.flags.contains(Diff.FlagT.BINARY)) {
-                Text(stringResource(R.string.doesnt_support_view_binary_file))
-            }else if(diffItem.value.isContentSizeOverLimit) {
-                Text(text = stringResource(R.string.content_size_over_limit)+"("+Cons.diffContentSizeMaxLimitForHumanReadable+")")
-            }else if(!diffItem.value.isFileModified) {
-                Text(stringResource(R.string.file_unmodified_no_diff_for_shown))
+            Row(modifier = Modifier.padding(10.dp)) {
+                if(!isSupportedChangeType){
+                    Text(text = stringResource(R.string.error_unknown_change_type))
+                }else if(loading.value) {
+                    Text(stringResource(R.string.loading))
+                }else if(diffItem.value.flags.contains(Diff.FlagT.BINARY)) {
+                    Text(stringResource(R.string.doesnt_support_view_binary_file))
+                }else if(diffItem.value.isContentSizeOverLimit) {
+                    Text(text = stringResource(R.string.content_size_over_limit)+"("+Cons.diffContentSizeMaxLimitForHumanReadable+")")
+                }else if(!diffItem.value.isFileModified) {
+                    if(isSubmodule && submoduleIsDirty.value) {  // submodule no diff for shown, give user a hint
+                        Text(stringResource(R.string.submodule_is_dirty_note))
+                    }else {
+                        Text(stringResource(R.string.file_unmodified_no_diff_for_shown))
+                    }
+                }
             }
         }
     }else {  //文本类型且没超过大小且文件修改过，正常显示diff信息
@@ -134,6 +153,17 @@ fun DiffContent(
                 .padding(bottom = 150.dp),
 
             ) {
+                // show a notice make user know submodule has uncommitted changes
+                if(submoduleIsDirty.value) {
+                    Row(modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+
+                    ) {
+                        Text(stringResource(R.string.submodule_is_dirty_note_short), fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
+                    }
+                }
+
                 val lastIndex = diffItem.value.hunks.size - 1
 
                 //数据结构是一个hunk header N 个行
@@ -383,6 +413,14 @@ fun DiffContent(
                             }else {  //indexToWorktree or headToIndex
                                 val diffItemSaver = Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo)
                                 diffItem.value = diffItemSaver
+                            }
+
+
+                            // only when compare to work tree need check submodule is or is not dirty. because only non-dirty(clean) submodule can be stage to index, and can be commit to log.
+                            if(isDiffToLocal) {
+                                if(isSubmodule) {
+                                    submoduleIsDirty.value = Libgit2Helper.submoduleIsDirty(parentRepo = repo, submoduleName = relativePathUnderRepoDecoded)
+                                }
                             }
 
                         }

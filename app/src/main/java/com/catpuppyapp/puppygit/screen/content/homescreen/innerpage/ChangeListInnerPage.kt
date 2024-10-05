@@ -165,6 +165,7 @@ fun ChangeListInnerPage(
     val commit2OidStr = commit2OidStr.ifBlank { Cons.allZeroOid.toString() }
     val repoId = remember(repoId) { derivedStateOf { if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId } }.value
 
+    val isDiffToLocal = fromTo == Cons.gitDiffFromIndexToWorktree || commit1OidStr==Cons.gitLocalWorktreeCommitHash || commit2OidStr==Cons.gitLocalWorktreeCommitHash
 
     val haptic = LocalHapticFeedback.current
 
@@ -3012,6 +3013,7 @@ fun ChangeListInnerPage(
                         menuKeyEnableList=menuKeyEnableList,
                         menuKeyVisibleList=menuKeyVisibleList,
                         fromTo=fromTo,
+                        isDiffToLocal = isDiffToLocal,
                         switchItemSelected=switchItemSelected,
                         isItemInSelected=isItemInSelected,
                         onLongClick= lc@{
@@ -3062,7 +3064,9 @@ fun ChangeListInnerPage(
                                             "/" + it.fileSizeInBytes +
                                             "/" + underRepoPathKey +
                                             "/" + (if(swap) commit2OidStr else commit1OidStr) +
-                                            "/" + (if(swap) commit1OidStr else commit2OidStr)
+                                            "/" + (if(swap) commit1OidStr else commit2OidStr) +
+                                            "/" + (if(it.itemType==Cons.gitItemTypeSubmodule) 1 else 0) +
+                                            "/" + (if(isDiffToLocal) 1 else 0)
                                 )
 
                             }

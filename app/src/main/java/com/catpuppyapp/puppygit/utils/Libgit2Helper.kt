@@ -714,6 +714,9 @@ class Libgit2Helper {
 //                statusTypeSaver.itemType= if(submodulePathList.contains(path) && File(canonicalPath).isDirectory) Cons.gitItemTypeSubmodule else fileType
                 statusTypeSaver.itemType= if(submodulePathList.contains(path)) Cons.gitItemTypeSubmodule else fileType
 
+                if(statusTypeSaver.itemType == Cons.gitItemTypeSubmodule) {
+                    statusTypeSaver.dirty = submoduleIsDirty(repo, path)
+                }
 
                 statusTypeSaver.canonicalPath = canonicalPath
                 statusTypeSaver.fileName = getFileNameFromCanonicalPath(canonicalPath)  // or File(canonicalPath).name
@@ -850,6 +853,10 @@ class Libgit2Helper {
                     //   so, here check the path is dir or not, if not, dont set type to submodule, but this check may will create many File objects, wasted memory......
 //                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo) && File(stes.canonicalPath).isDirectory) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
                     stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo)) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
+
+                    if(stes.itemType == Cons.gitItemTypeSubmodule) {
+                        stes.dirty = submoduleIsDirty(repo, stes.relativePathUnderRepo)
+                    }
 
                     if(oldFileOid.isNullOrEmptyOrZero && !newFileOid.isNullOrEmptyOrZero) {  //新增
                         stes.changeType = Cons.gitStatusNew
@@ -5458,6 +5465,35 @@ class Libgit2Helper {
                 setOf()
             }
         }
+
+        fun getStatusOfSubmodule(parent: Repository, smName:String):Set<Submodule.StatusT>{
+            return try {
+                Submodule.status(parent, smName, null)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#getStatusOfSubmodule: get status of submodule '$smName' err: ${e.localizedMessage}")
+                setOf()
+            }
+        }
+
+        /**
+         * @return if submodule has uncommitted changes in it's index or workdir, will return true, else return false
+         */
+        fun submoduleIsDirty(parentRepo:Repository, submoduleName:String):Boolean {
+            val statusSet = getStatusOfSubmodule(parentRepo, submoduleName)
+
+            return statusSet.indexOfFirst {
+//                    it == Submodule.StatusT.WD_MODIFIED ||
+                it == Submodule.StatusT.WD_INDEX_MODIFIED ||  // submodule index not clean
+                        it == Submodule.StatusT.WD_WD_MODIFIED ||  // submodule workdir not clean
+//                            it == Submodule.StatusT.WD_ADDED ||
+//                            it == Submodule.StatusT.WD_DELETED ||
+//                            it == Submodule.StatusT.WD_UNINITIALIZED ||
+                        it == Submodule.StatusT.WD_UNTRACKED  // submodule has untracked files
+
+            } != -1
+        }
+
+
     }
 
 }
