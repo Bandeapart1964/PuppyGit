@@ -272,12 +272,12 @@ fun ChangeListPageActions(
             }
 
 
-            if(fromTo == Cons.gitDiffFromIndexToWorktree) {
-
+            if(isWorktreePage) {
                 if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) {
                     DropdownMenuItem(
 //                    enabled = enableRepoAction,
-                        enabled = enableMenuItem,
+//                        enabled = enableMenuItem,
+                        enabled = true,
 
                         text = { Text(stringResource(R.string.edit_ignore_file)) },
                         onClick = {
