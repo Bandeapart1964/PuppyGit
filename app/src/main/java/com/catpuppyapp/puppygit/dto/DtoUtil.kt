@@ -135,7 +135,9 @@ fun createSubmoduleDto(
         cloned = isValidGitRepo(smFullPath),
         remoteUrl = smUrl,
         targetHash = getParentRecordedTargetHashForSubmodule(sm),
-        tempStatus = if (smUrl.isBlank()) invalidUrlAlertText else ""
+        tempStatus = if (smUrl.isBlank()) invalidUrlAlertText else "",
+        location = Libgit2Helper.getSubmoduleLocation(sm)
     )
+
     return smDto
 }

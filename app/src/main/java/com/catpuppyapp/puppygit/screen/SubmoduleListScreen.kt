@@ -265,6 +265,7 @@ fun SubmoduleListScreen(
         sb.appendLine(appContext.getString(R.string.name)+": "+item.name).appendLine()
             .appendLine(appContext.getString(R.string.url)+": "+item.remoteUrl).appendLine()
             .appendLine(appContext.getString(R.string.target)+": "+item.targetHash).appendLine()
+            .appendLine(appContext.getString(R.string.location)+": "+item.location.toString()).appendLine()
             .appendLine(appContext.getString(R.string.path)+": "+item.relativePathUnderParent).appendLine()
             .appendLine(appContext.getString(R.string.full_path)+": "+item.fullPath).appendLine()
             .appendLine(appContext.getString(R.string.status)+": "+item.getStatus())
@@ -1242,6 +1243,8 @@ fun SubmoduleListScreen(
                             || it.remoteUrl.contains(k)
                             || it.getStatus().lowercase().contains(k)
                             || it.fullPath.lowercase().contains(k)
+                            || it.targetHash.lowercase().contains(k)
+                            || it.location.toString().lowercase().contains(k)
                 }
                 filterList.value.clear()
                 filterList.value.addAll(fl)

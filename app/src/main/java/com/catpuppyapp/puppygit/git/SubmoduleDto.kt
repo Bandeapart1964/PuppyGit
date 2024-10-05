@@ -3,6 +3,7 @@ package com.catpuppyapp.puppygit.git
 import androidx.compose.ui.graphics.Color
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.github.git24j.core.Submodule
 
 data class SubmoduleDto (
     val name:String,
@@ -11,6 +12,8 @@ data class SubmoduleDto (
     val fullPath:String,
     val cloned:Boolean,
     val targetHash:String,  //target commit hash recorded by parent repo
+
+    val location:Set<Submodule.StatusT>,
 
     var tempStatus:String = "",  // cloning... etc
 

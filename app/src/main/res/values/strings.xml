@@ -904,5 +904,6 @@
     <string name="domain">Domain</string>
     <string name="import_repos_link_credential_note">Selected credential will be linked to repo\'s Remotes, usually is \'origin\'</string>
     <string name="desc">Desc</string>
+    <string name="location">Location</string>
 
 </resources>

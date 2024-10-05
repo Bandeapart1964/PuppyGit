@@ -4828,18 +4828,23 @@ class Libgit2Helper {
             val invalidUrlAlertText = appContext.getString(R.string.submodule_invalid_url_err)
 
             Submodule.foreach(repo) { sm, name ->
-                if(!predicate(name)) {
-                    return@foreach 0
+                try {
+                    if(!predicate(name)) {
+                        return@foreach 0
+                    }
+
+                    val smDto = createSubmoduleDto(
+                        sm = sm,
+                        smName = name,
+                        parentWorkdirPathNoSlashSuffix = parentWorkdirPathNoSlashSuffix,
+                        invalidUrlAlertText = invalidUrlAlertText
+                    )
+
+                    list.add(smDto)
+
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#getSubmoduleDtoList: get submodule '$name' err: ${e.localizedMessage}")
                 }
-
-                val smDto = createSubmoduleDto(
-                    sm = sm,
-                    smName = name,
-                    parentWorkdirPathNoSlashSuffix = parentWorkdirPathNoSlashSuffix,
-                    invalidUrlAlertText = invalidUrlAlertText
-                )
-
-                list.add(smDto)
 
                 0
 
@@ -4998,17 +5003,22 @@ class Libgit2Helper {
                 val updateOpts = Submodule.UpdateOptions.createDefault()
 
                 //set credential
-                // at here, null means NONE
-                if(specifiedCredential!=null) {
-                    // only 2 cases possible in this block, credential is match by domain or a specified credential
-                    if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
-                        val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
-                        if(credentialByDomain!=null) {
-                            updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                try {
+                    // at here, null means NONE credential will be used
+                    if(specifiedCredential!=null) {
+                        // only 2 cases possible in this block, credential is match by domain or a specified credential
+                        if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
+                            val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
+                            if(credentialByDomain!=null) {
+                                updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                            }
+                        }else {  // specified domain, no query need
+                            updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
                         }
-                    }else {  // specified domain, no query need
-                        updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
                     }
+
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#cloneSubmodules: set credential for submodule '$name' err: ${e.localizedMessage}")
                 }
 
 
@@ -5126,17 +5136,21 @@ class Libgit2Helper {
                     val updateOpts = Submodule.UpdateOptions.createDefault()
 
                     //set credential
-                    // at here, null means NONE
-                    if(specifiedCredential!=null) {
-                        // only 2 cases possible in this block, credential is match by domain or a specified credential
-                        if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
-                            val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
-                            if(credentialByDomain!=null) {
-                                updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                    try {
+                        // at here, null means NONE credential will be used
+                        if(specifiedCredential!=null) {
+                            // only 2 cases possible in this block, credential is match by domain or a specified credential
+                            if(SpecialCredential.MatchByDomain.credentialId == specifiedCredential.id) {  // match by domain, need query
+                                val credentialByDomain = credentialDb.getByIdWithDecryptAndMatchByDomain(specifiedCredential.id, sm.url()?.toString() ?: "")
+                                if(credentialByDomain!=null) {
+                                    updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(credentialByDomain.type, credentialByDomain.name, credentialByDomain.pass))
+                                }
+                            }else {  // specified domain, no query need
+                                updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
                             }
-                        }else {  // specified domain, no query need
-                            updateOpts.fetchOpts.callbacks.setCredAcquireCb(getCredentialCb(specifiedCredential.type, specifiedCredential.name, specifiedCredential.pass))
                         }
+                    }catch (e:Exception) {
+                        MyLog.e(TAG, "#updateSubmodule: set credential for submodule '$submoduleName' err: ${e.localizedMessage}")
                     }
 
 
@@ -5384,6 +5398,14 @@ class Libgit2Helper {
 
         fun reloadSubmodule(sm:Submodule, force: Boolean) {
             sm.reload(force)
+        }
+
+        fun getSubmoduleLocation(sm:Submodule):Set<Submodule.StatusT> {
+            return try {
+                sm.location()
+            }catch (_:Exception) {
+                setOf()
+            }
         }
     }
 
