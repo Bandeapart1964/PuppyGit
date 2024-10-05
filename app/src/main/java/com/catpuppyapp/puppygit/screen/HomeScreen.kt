@@ -319,6 +319,8 @@ fun HomeScreen(
     val filesPageRequireImportUriList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageRequireImportUriList", initValue = listOf<Uri>())
     val filesPageCurrentPathFileList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageCurrentPathFileList", initValue = listOf<FileItemDto>()) //路径字符串，用路径分隔符分隔后的list
     val filesPageRequestFromParent = StateUtil.getRememberSaveableState(initValue = "")
+    val filesPageCheckOnly = StateUtil.getRememberSaveableState(initValue = false)
+    val filesPageSelectedRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "selectedRepo") { RepoEntity(id="") }
 
     val initDone = StateUtil.getRememberSaveableState(initValue = false)
     val editorPageShowCloseDialog = StateUtil.getRememberSaveableState(initValue = false)
@@ -861,6 +863,8 @@ fun HomeScreen(
                     isFileSelectionMode= filesPageIsFileSelectionMode,
                     isPasteMode = filesPageIsPasteMode,
                     selectedItems = filesPageSelectedItems,
+                    checkOnly = filesPageCheckOnly,
+                    selectedRepo = filesPageSelectedRepo,
                 )
             }
             else if(currentHomeScreen.intValue == Cons.selectedItem_Editor) {

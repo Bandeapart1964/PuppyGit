@@ -143,6 +143,8 @@ fun FilesInnerPage(
     isFileSelectionMode:MutableState<Boolean>,
     isPasteMode:MutableState<Boolean>,
     selectedItems:CustomStateListSaveable<FileItemDto>,
+    checkOnly:MutableState<Boolean>,
+    selectedRepo:CustomStateSaveable<RepoEntity>,
 ) {
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir;
 //    val appContext = AppModel.singleInstanceHolder.appContext;
@@ -321,8 +323,6 @@ fun FilesInnerPage(
 
     val showApplyAsPatchDialog = StateUtil.getRememberSaveableState(initValue = false)
     val fileFullPathForApplyAsPatch =  StateUtil.getRememberSaveableState(initValue = "")
-    val checkOnly = StateUtil.getRememberSaveableState(initValue = false)
-    val selectedRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "selectedRepo") { RepoEntity(id="") }
 
     if(showApplyAsPatchDialog.value) {
         ApplyPatchDialog(

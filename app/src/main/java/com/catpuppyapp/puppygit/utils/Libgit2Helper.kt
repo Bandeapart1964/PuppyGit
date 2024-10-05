@@ -351,6 +351,37 @@ class Libgit2Helper {
             }
         }
 
+        /**
+         * a callback for Apply patch, for ignore submodule, because it can't be applied and make apply abort
+         */
+        private fun getIgnoreSubmoduleApplyDeltaCallback(submodulePathList:List<String>):(delta:Diff.Delta)->Int {
+            val skip = 1;  // >0, skip
+            val ok=0  // ==0 will applied
+            val abort = -1  // <0 will abort
+
+            val cb:(delta:Diff.Delta)->Int  = cb@{ delta ->
+                // get path of delta, btw Delta is a pair of old and new file, but most time can get path of oldFile
+                var path = delta.oldFile.path
+                if(path==null || path.isBlank()) {
+                    path = delta.newFile.path
+                    if(path==null || path.isBlank()) {
+                        return@cb ok
+                    }
+                }
+
+                // path is a submodule, skip it
+                if(submodulePathList.contains(path)) {
+                    MyLog.d(TAG, "#getIgnoreSubmoduleApplyDeltaCallback: SKIP: target is a submodule '$path', apply it will abort the procedure")
+                    return@cb skip
+                }
+
+                return@cb ok
+            }
+
+
+            return cb
+        }
+
         private fun getDefaultStatusOptTypeSet():EnumSet<Status.OptT> {
             return EnumSet.of(
                 Status.OptT.OPT_INCLUDE_UNTRACKED,
@@ -566,7 +597,7 @@ class Libgit2Helper {
             val repoIndex = repo.index()
             var isIndexChanged = false
 
-            val submodulePathList = getSubmoduleNameList(repo)  // submodule name == it's path, so this list is path list too
+            val submodulePathList = getSubmodulePathList(repo)  // submodule name == it's path, so this list is path list too
 
 
             //until， 左闭右开，左包含，右不包含
@@ -789,7 +820,7 @@ class Libgit2Helper {
             //注意比较的顺序是旧版本号 to 新版本号（父提交 to 新提交）
             val diff = if(treeToWorkTree) Diff.treeToWorkdir(repo, tree1, options) else Diff.treeToTree(repo, tree1, tree2, options)
 
-            val submodulePathList = getSubmoduleNameList(repo)  // submodule name == it's path
+            val submodulePathList = getSubmodulePathList(repo)  // submodule name == it's path
 
             diff.foreach(
                 { delta: Diff.Delta, progress: Float ->
@@ -871,6 +902,10 @@ class Libgit2Helper {
         }
 
         fun resetToRevspec(repo: Repository, revspec: String, resetType:Reset.ResetT,checkoutOptions: Checkout.Options?=null):Ret<String?> {
+            if(revspec.isBlank()) {
+                return Ret.createError(null, "invalid revspec (empty)")
+            }
+
             try {
                 val resetTarget = revparseSingle(repo, revspec)
                 if(resetTarget==null){
@@ -4538,12 +4573,11 @@ class Libgit2Helper {
                 //根据patch内容创建diff对象
                 val diff = Diff.fromBuffer(content)
 
-                val applyOptions:Apply.Options? = if(checkOnlyDontRealApply) {
-                    val tmpOpt=Apply.Options.createDefault(null, null)
-                    tmpOpt.flags = EnumSet.of(Apply.FlagsT.CHECK)
-                    tmpOpt
-                }else {
-                    null
+                val deltaCallback = getIgnoreSubmoduleApplyDeltaCallback(getSubmodulePathList(repo))
+                val applyOptions:Apply.Options = Apply.Options.createDefault(deltaCallback, null)
+
+                if(checkOnlyDontRealApply) {
+                    applyOptions.flags = EnumSet.of(Apply.FlagsT.CHECK)
                 }
 
                 //应用patch
@@ -4862,6 +4896,14 @@ class Libgit2Helper {
             return list
         }
 
+        /**
+         * if you want to get a repo's all submodule's path list, should call this.
+         *
+         * btw. usually submodule's path = name
+         */
+        fun getSubmodulePathList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<String> {
+            return getSubmoduleNameList(repo, predicate)
+        }
 
         fun getSubmoduleNameList(repo:Repository, predicate: (submoduleName: String) -> Boolean={true}):List<String> {
             val list = mutableListOf<String>()
