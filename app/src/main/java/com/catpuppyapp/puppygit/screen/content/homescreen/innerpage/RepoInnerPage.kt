@@ -131,7 +131,8 @@ fun RepoInnerPage(
     repoPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
     filterListState:CustomStateSaveable<LazyListState>,
     openDrawer:()->Unit,
-    showImportRepoDialog:MutableState<Boolean>
+    showImportRepoDialog:MutableState<Boolean>,
+    goToThisRepoId:MutableState<String>
 ) {
     val appContext = AppModel.singleInstanceHolder.appContext;
     val exitApp = AppModel.singleInstanceHolder.exitApp;
@@ -378,7 +379,6 @@ fun RepoInnerPage(
 
 //    val needRefreshRepoPage = rememberSaveable { mutableStateOf(false) }
 //    val needRefreshRepoPage = rememberSaveable { mutableStateOf("") }
-    val initRepoPage = getInit(dbContainer, repoList, cloningText, unknownErrWhenCloning, loadingOn, loadingOff, appContext)
 
     //执行完doFetch/doMerge/doPush/doSync记得刷新页面，刷新页面不会改变列表滚动位置，所以放心刷，不用怕一刷新列表元素又滚动回第一个，让正在浏览仓库列表的用户困扰
     val doFetch:suspend (String?,RepoEntity)->Boolean = doFetch@{remoteNameParam:String?,curRepo:RepoEntity ->  //参数的remoteNameParam如果有效就用参数的，否则自己查当前head分支对应的remote
@@ -1007,6 +1007,56 @@ fun RepoInnerPage(
     }
 
 
+
+    val goToThisRepoAndHighlightingIt = goTo@{ targetId:String ->
+        if(targetId.isBlank()) {
+            return@goTo
+        }
+
+        try {
+            val list = getCurActiveList()
+            val listState = getCurActiveListState()
+            val targetIndex = list.toList().indexOfFirst { it.id == targetId }
+            if(targetIndex != -1) {  // found in current active list
+                requireBlinkIdx.intValue = targetIndex
+                UIHelper.scrollToItem(scope, listState, targetIndex)
+            }else{
+                if(repoPageFilterModeOn.value) {
+                    //从源列表找
+                    val indexInOriginList = repoList.value.toList().indexOfFirst { it.id == targetId }
+
+                    if(indexInOriginList != -1){  // found in origin list
+                        repoPageFilterModeOn.value = false  //关闭过滤模式
+                        showBottomSheet.value = false  //关闭菜单
+
+                        //定位条目
+                        UIHelper.scrollToItem(scope, repoPageListState, indexInOriginList)
+                        requireBlinkIdx.intValue = indexInOriginList  //设置条目闪烁以便用户发现
+                    }else {
+                        Msg.requireShow(appContext.getString(R.string.not_found))
+                    }
+                }else {
+                    Msg.requireShow(appContext.getString(R.string.not_found))
+                }
+            }
+        }catch (_:Exception) {
+
+        }
+    }
+
+    val initRepoPage = getInit(
+        dbContainer = dbContainer,
+        repoDtoList = repoList,
+        cloningText = cloningText,
+        unknownErrWhenCloning = unknownErrWhenCloning,
+        loadingOn = loadingOn,
+        loadingOff = loadingOff,
+        appContext = appContext,
+        goToThisRepoId = goToThisRepoId,
+        goToThisRepoAndHighlightingIt = goToThisRepoAndHighlightingIt
+    )
+
+
     if(showBottomSheet.value) {
         val repoDto = curRepo.value
         val repoStatusGood = repoDto.gitRepoState!=null && !Libgit2Helper.isRepoStatusNotReadyOrErr(repoDto)
@@ -1133,36 +1183,8 @@ fun RepoInnerPage(
 
             //show jump to parent repo if has parentRepoId
             if(curRepo.value.parentRepoId.isNotBlank()) {
-                val parentRepoId = curRepo.value.parentRepoId
                 BottomSheetItem(sheetState, showBottomSheet, stringResource(R.string.go_parent)) {
-                    doJobThenOffLoading {
-                        val list = getCurActiveList()
-                        val listState = getCurActiveListState()
-                        val parentIndex = list.toList().indexOfFirst { it.id == parentRepoId }
-                        if(parentIndex != -1) {  // found in current active list
-                            requireBlinkIdx.intValue = parentIndex
-                            UIHelper.scrollToItem(scope, listState, parentIndex)
-                        }else{
-                            if(repoPageFilterModeOn.value) {
-                                //从源列表找
-                                val indexInOriginList = repoList.value.toList().indexOfFirst { it.id == parentRepoId }
-
-                                if(indexInOriginList != -1){  // found in origin list
-                                    repoPageFilterModeOn.value = false  //关闭过滤模式
-                                    showBottomSheet.value = false  //关闭菜单
-
-                                    //定位条目
-                                    UIHelper.scrollToItem(scope, repoPageListState, indexInOriginList)
-                                    requireBlinkIdx.intValue = indexInOriginList  //设置条目闪烁以便用户发现
-                                }else {
-                                    Msg.requireShow(appContext.getString(R.string.not_found))
-                                }
-                            }else {
-                                Msg.requireShow(appContext.getString(R.string.not_found))
-                            }
-                        }
-
-                    }
+                    goToThisRepoAndHighlightingIt(curRepo.value.parentRepoId)
                 }
             }
 
@@ -1275,6 +1297,7 @@ fun RepoInnerPage(
                         || it.tmpStatus.lowercase().contains(k)
                         || it.upstreamBranch.lowercase().contains(k)
                         || it.createErrMsg.lowercase().contains(k)
+                        || it.fullSavePath.lowercase().contains(k)
             }
             filterList.value.clear()
             filterList.value.addAll(tmpList)
@@ -1375,7 +1398,9 @@ private fun getInit(
     unknownErrWhenCloning: String,
     loadingOn:(String)->Unit,
     loadingOff:()->Unit,
-    appContext:Context
+    appContext:Context,
+    goToThisRepoId: MutableState<String>,
+    goToThisRepoAndHighlightingIt:(id:String) ->Unit
 ): () -> Unit = {
     doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
         //执行仓库页面的初始化操作
@@ -1384,6 +1409,14 @@ private fun getInit(
         val repoListFromDb = repoRepository.getAll();
         repoDtoList.value.clear()
         repoDtoList.value.addAll(repoListFromDb)
+
+        if(goToThisRepoId.value.isNotBlank()) {
+            val target = goToThisRepoId.value
+            goToThisRepoId.value = ""
+
+            goToThisRepoAndHighlightingIt(target)
+        }
+
 //        repoDtoList.requireRefreshView()
 //        repoDtoList.requireRefreshView()
         for ((idx,item) in repoListFromDb.toList().withIndex()) {

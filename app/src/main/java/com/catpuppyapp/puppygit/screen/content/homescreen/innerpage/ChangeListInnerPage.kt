@@ -154,7 +154,8 @@ fun ChangeListInnerPage(
     commitForQueryParents:String,
     rebaseCurOfAll:MutableState<String>? = null,  //ChangeList页面和Index页面需要此参数，treeToTree不需要
 
-    openDrawer:()->Unit
+    openDrawer:()->Unit,
+    goToRepoPage:(targetRepoId:String)->Unit = {},  // only show workdir changes at ChangeList need this
 
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
@@ -1240,6 +1241,8 @@ fun ChangeListInnerPage(
                 }
 
 
+            }else if(requireAct==PageRequest.showInRepos) {
+                goToRepoPage(repoId)
             }else if(requireAct==PageRequest.pull) { // pull(fetch+merge)
                 doPull()
 

@@ -288,6 +288,25 @@ fun ChangeListPageActions(
                 )
             }
 
+            if(fromTo == Cons.gitDiffFromIndexToWorktree) {
+                DropdownMenuItem(
+//                    enabled = enableRepoAction,
+//                    enabled = enableMenuItem,
+                    enabled = true,  // go to repo page anytime, even loading something
+
+                    text = { Text(stringResource(R.string.show_in_repos)) },
+                    onClick = {
+                        Cache.set(Cache.Key.changeListInnerPage_requireDoActFromParent, PageRequest.showInRepos)
+                        requireDoActFromParentShowTextWhenDoingAct.value= appContext.getString(R.string.loading)
+                        requireDoActFromParent.value = true
+                        enableAction.value=false
+
+                        dropDownMenuExpendState.value=false
+                    }
+                )
+            }
+
+
 
             //merge相关
             if(repoUnderMerge) {

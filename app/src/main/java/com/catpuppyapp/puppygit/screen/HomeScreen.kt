@@ -173,6 +173,8 @@ fun HomeScreen(
     )
     val repoPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
     val repoPageShowImportRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val repoPageGoToId = StateUtil.getRememberSaveableState(initValue = "")
+
 
     val subscriptionPageNeedRefresh = StateUtil.getRememberSaveableState(initValue = "")
 
@@ -407,6 +409,14 @@ fun HomeScreen(
         snapshotedFileInfo = editorPageSnapshotedFileInfo
     )
 
+
+    val goToRepoPage = { targetIdIfHave:String ->
+        repoPageGoToId.value = targetIdIfHave
+        currentHomeScreen.intValue = Cons.selectedItem_Repos
+
+        changeStateTriggerRefreshPage(needRefreshRepoPage)
+    }
+
     val goToFilesPage = {path:String ->
         filesPageCurrentPath.value = path
         currentHomeScreen.intValue = Cons.selectedItem_Files
@@ -420,6 +430,8 @@ fun HomeScreen(
 
         changeStateTriggerRefreshPage(changeListRefreshRequiredByParentPage)
     }
+
+
 
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
     val repoPageScrollingDown = remember { mutableStateOf(false) }
@@ -831,7 +843,8 @@ fun HomeScreen(
                     repoPageFilterKeyWord= repoPageFilterKeyWord,
                     filterListState = repoFilterListState,
                     openDrawer = openDrawer,
-                    showImportRepoDialog = repoPageShowImportRepoDialog
+                    showImportRepoDialog = repoPageShowImportRepoDialog,
+                    goToThisRepoId = repoPageGoToId
                 )
 
             }
@@ -954,6 +967,7 @@ fun HomeScreen(
                     commitForQueryParents = "",
                     rebaseCurOfAll=changeListPageRebaseCurOfAll,
                     openDrawer = openDrawer,
+                    goToRepoPage = goToRepoPage,
 
                     // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
 //                    commit1OidStr = Cons.gitIndexCommitHash,

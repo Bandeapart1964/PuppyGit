@@ -909,5 +909,6 @@
     <string name="apply_patch_check_note">won\'t actually make changes, just test that the patch applies</string>
     <string name="submodule_is_dirty_note">Submodule has uncommited changes, you must make it clean before you stage/commit it at parent Repository.\n\nYou can manage submodule by import it to Repos.</string>
     <string name="submodule_is_dirty_note_short">Submodule has uncommitted changes</string>
+    <string name="show_in_repos">Show In Repos</string>
 
 </resources>
