@@ -271,24 +271,27 @@ fun ChangeListPageActions(
 
             }
 
-            if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) {
-                DropdownMenuItem(
-//                    enabled = enableRepoAction,
-                    enabled = enableMenuItem,
-
-                    text = { Text(stringResource(R.string.edit_ignore_file)) },
-                    onClick = {
-                        Cache.set(Cache.Key.changeListInnerPage_requireDoActFromParent, PageRequest.editIgnoreFile)
-                        requireDoActFromParentShowTextWhenDoingAct.value= appContext.getString(R.string.loading)
-                        requireDoActFromParent.value = true
-                        enableAction.value=false
-
-                        dropDownMenuExpendState.value=false
-                    }
-                )
-            }
 
             if(fromTo == Cons.gitDiffFromIndexToWorktree) {
+
+                if(proFeatureEnabled(ignoreWorktreeFilesTestPassed)) {
+                    DropdownMenuItem(
+//                    enabled = enableRepoAction,
+                        enabled = enableMenuItem,
+
+                        text = { Text(stringResource(R.string.edit_ignore_file)) },
+                        onClick = {
+                            Cache.set(Cache.Key.changeListInnerPage_requireDoActFromParent, PageRequest.editIgnoreFile)
+                            requireDoActFromParentShowTextWhenDoingAct.value= appContext.getString(R.string.loading)
+                            requireDoActFromParent.value = true
+                            enableAction.value=false
+
+                            dropDownMenuExpendState.value=false
+                        }
+                    )
+                }
+
+
                 DropdownMenuItem(
 //                    enabled = enableRepoAction,
 //                    enabled = enableMenuItem,
