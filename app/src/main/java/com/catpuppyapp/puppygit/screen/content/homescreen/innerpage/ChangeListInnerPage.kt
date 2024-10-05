@@ -58,18 +58,22 @@ import com.catpuppyapp.puppygit.compose.AskGitUsernameAndEmailDialogWithSelectio
 import com.catpuppyapp.puppygit.compose.BottomBar
 import com.catpuppyapp.puppygit.compose.ChangeListItem
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
+import com.catpuppyapp.puppygit.compose.CredentialSelector
 import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
 import com.catpuppyapp.puppygit.compose.RequireCommitMsgDialog
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SetUpstreamDialog
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.AppContainer
+import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.checkoutFilesTestPassed
 import com.catpuppyapp.puppygit.dev.cherrypickTestPassed
@@ -80,6 +84,7 @@ import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.dev.treeToTreeBottomBarActAtLeastOneTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
+import com.catpuppyapp.puppygit.git.ImportRepoResult
 import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.git.Upstream
 import com.catpuppyapp.puppygit.play.pro.R
@@ -109,6 +114,7 @@ import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Repository
 import com.github.git24j.core.Tree
+import java.io.File
 
 private val TAG = "ChangeListInnerPage"
 private val stateKeyTag = "ChangeListInnerPage"
@@ -156,7 +162,8 @@ fun ChangeListInnerPage(
 
     openDrawer:()->Unit,
     goToRepoPage:(targetRepoId:String)->Unit = {},  // only show workdir changes at ChangeList need this
-
+    changeListRepoList:CustomStateListSaveable<RepoEntity>?=null,
+    goToChangeListPage:(goToThisRepo:RepoEntity)->Unit?={},
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
 ) {
@@ -1207,6 +1214,22 @@ fun ChangeListInnerPage(
         navController.navigate(Cons.nav_SubPageEditor + "/$filePathKey" + "/$goToLine" + "/$initMergeMode" +"/$initReadOnly")
     }
 
+    val goParentChangeList = {
+        val parentId = curRepoFromParentPage.value.parentRepoId
+        if(parentId.isBlank()) {
+            Msg.requireShow(appContext.getString(R.string.not_found))
+        }else {
+            val target = changeListRepoList?.value?.find { it.id == parentId }
+            if(target == null) {
+                Msg.requireShow(appContext.getString(R.string.not_found))
+            }else {
+                goToChangeListPage(target)
+            }
+        }
+
+        Unit
+    }
+
 
 
     //有两层防止重复执行的保险：一层是立刻改状态；二层是用加锁的缓存取出请求执行操作的key后就清掉，这样即使第一层破防，第二层也能阻止重复执行。
@@ -1243,6 +1266,8 @@ fun ChangeListInnerPage(
 
             }else if(requireAct==PageRequest.showInRepos) {
                 goToRepoPage(repoId)
+            }else if(requireAct==PageRequest.goParent) {
+                goParentChangeList()
             }else if(requireAct==PageRequest.pull) { // pull(fetch+merge)
                 doPull()
 
@@ -2473,11 +2498,87 @@ fun ChangeListInnerPage(
         }
     }
 
+
+
+    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
+    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+
+    val fullPathForImport = StateUtil.getRememberSaveableState("")
+    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
+    if(showImportToReposDialog.value){
+        ConfirmDialog2(
+            title = appContext.getString(R.string.import_to_repos),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+//                    Text(stringResource(R.string.will_import_selected_submodules_to_repos))
+                    CredentialSelector(credentialList.value, selectedCredentialIdx)
+
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(R.string.import_repos_link_credential_note), fontWeight = FontWeight.Light)
+                }
+            },
+            onCancel = { showImportToReposDialog.value = false },
+
+        ) {
+            showImportToReposDialog.value = false
+
+            val curRepo = curRepoFromParentPage
+            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
+                val repoNameSuffix = "_of_${curRepo.value.repoName}"
+                val parentRepoId = curRepo.value.id
+//                val importList = selectedItemList.value.toList().filter { it.cloned }
+                val importList = selectedItemList.value.toList()  // just import all selected, will fail if must fail
+
+                val selectedCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
+
+                val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                val importRepoResult = ImportRepoResult()
+
+                try {
+//                    importList.forEach {
+                    val result = repoDb.importRepos(dir=fullPathForImport.value, isReposParent=false, repoNameSuffix = repoNameSuffix, parentRepoId = parentRepoId, credentialId = selectedCredentialId)
+                    importRepoResult.all += result.all
+                    importRepoResult.success += result.success
+                    importRepoResult.failed += result.failed
+                    importRepoResult.existed += result.existed
+//                    }
+
+                    Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.n_imported), listOf(""+importRepoResult.success)))
+                }catch (e:Exception) {
+                    //出错的时候，importRepoResult的计数不一定准，有可能比实际成功和失败的少，不过不可能多
+                    val errMsg = e.localizedMessage
+                    Msg.requireShowLongDuration(errMsg ?: "import err")
+                    createAndInsertError(curRepo.value.id, "import repo err: $errMsg")
+                    MyLog.e(TAG, "import repo from ChangeList err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
+                }finally {
+                    // refresh for get new repos list
+                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
+                }
+            }
+
+        }
+    }
+
+
+    val doJump = {item:StatusTypeEntrySaver ->
+        val target = changeListRepoList?.value?.find { item.canonicalPath == it.fullSavePath }
+        if(target==null) {
+            Msg.requireShow(appContext.getString(R.string.dir_not_imported))
+        }else {
+            goToChangeListPage(target)
+        }
+
+        Unit
+    }
+
     val menuKeyTextList = listOf(
         stringResource(R.string.open),
         stringResource(R.string.open_as),
         stringResource(R.string.show_in_files),
         stringResource(R.string.copy_real_path),
+        stringResource(R.string.import_as_repo),
+        stringResource(R.string.go_sub),
     )
 
     val menuKeyActList = listOf(
@@ -2512,6 +2613,13 @@ fun ChangeListInnerPage(
         copyRealPath@{item:StatusTypeEntrySaver ->
             clipboardManager.setText(AnnotatedString(item.canonicalPath))
             Msg.requireShow(appContext.getString(R.string.copied))
+        },
+        importAsRepo@{
+            fullPathForImport.value = it.canonicalPath
+            showImportToReposDialog.value = true
+        },
+        jump@{
+            doJump(it)
         }
     )
     val menuKeyEnableList:List<(StatusTypeEntrySaver)->Boolean> = listOf(
@@ -2520,7 +2628,9 @@ fun ChangeListInnerPage(
 
         //只有worktree的cl页面支持在Files页面显示文件，index页面由于是二级页面，跳转不了，干脆禁用了
         showInFilesEnabled@{fromTo == Cons.gitDiffFromIndexToWorktree},  //对所有条目都启用showInFiles，不过会在点击后检查文件是否存在，若不存在不会跳转
-        copyRealPath@{true}
+        copyRealPath@{true},
+        importAsRepo@{ (fromTo == Cons.gitDiffFromIndexToWorktree || fromTo == Cons.gitDiffFromHeadToIndex) && File(it.canonicalPath).isDirectory }, //only dir can be import as repo
+        jump@{fromTo == Cons.gitDiffFromIndexToWorktree && File(it.canonicalPath).isDirectory},  // only dir maybe import, then maybe can jump
     )
 
     //这个页面，显示就是启用，禁用就不需要显示，所以直接把enableList作为visibleList即可
@@ -2566,7 +2676,9 @@ fun ChangeListInnerPage(
         hasNoConflictItems=hasNoConflictItems,
         swap=swap,
         commitForQueryParents=commitForQueryParents,
-        rebaseCurOfAll=rebaseCurOfAll
+        rebaseCurOfAll=rebaseCurOfAll,
+        credentialList=credentialList,
+
 //        isDiffToHead=isDiffToHead,
 //        headCommitHash=headCommitHash
 //        scope
@@ -3154,7 +3266,8 @@ private fun getInit(
     hasNoConflictItems: MutableState<Boolean>,
     swap:Boolean,
     commitForQueryParents:String,
-    rebaseCurOfAll:MutableState<String>?
+    rebaseCurOfAll:MutableState<String>?,
+    credentialList:CustomStateListSaveable<CredentialEntity>,
 //    isDiffToHead:MutableState<Boolean>?,
 //    headCommitHash:MutableState<String>
 //    scope:CoroutineScope
@@ -3172,6 +3285,7 @@ private fun getInit(
             //先清空列表
             //TODO 这里实现恢复的逻辑，如果列表不为空，就直接恢复数据，不清空列表，也不重新查询，如果刷新，加个flag，强制重新查询
             itemList.value.clear()
+            credentialList.value.clear()
 //            selectedItemList.value.clear()
 //            itemList.requireRefreshView()
 //            selectedItemList.requireRefreshView()
@@ -3439,6 +3553,14 @@ private fun getInit(
 
                     hasNoConflictItems.value = !gitRepository.index().hasConflicts()
                     MyLog.d(TAG, "hasNoConflictItems="+hasNoConflictItems.value)
+                }
+
+
+
+                val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
+                val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = true)
+                if(credentialListFromDb.isNotEmpty()) {
+                    credentialList.value.addAll(credentialListFromDb)
                 }
 
 

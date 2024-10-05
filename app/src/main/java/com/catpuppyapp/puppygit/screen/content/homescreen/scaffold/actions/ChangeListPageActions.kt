@@ -307,6 +307,24 @@ fun ChangeListPageActions(
                         dropDownMenuExpendState.value=false
                     }
                 )
+
+                if(changeListCurRepo.value.parentRepoId.isNotBlank()) {
+                    DropdownMenuItem(
+//                    enabled = enableRepoAction,
+//                    enabled = enableMenuItem,
+                        enabled = true,
+
+                        text = { Text(stringResource(R.string.go_parent)) },
+                        onClick = {
+                            Cache.set(Cache.Key.changeListInnerPage_requireDoActFromParent, PageRequest.goParent)
+                            requireDoActFromParentShowTextWhenDoingAct.value= appContext.getString(R.string.loading)
+                            requireDoActFromParent.value = true
+                            enableAction.value=false
+
+                            dropDownMenuExpendState.value=false
+                        }
+                    )
+                }
             }
 
 

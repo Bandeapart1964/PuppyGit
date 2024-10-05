@@ -436,6 +436,8 @@ fun HomeScreen(
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
     val repoPageScrollingDown = remember { mutableStateOf(false) }
 
+    val changeListRepoList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListRepoList", initValue = listOf<RepoEntity>())
+
 
     //用不到这段代码了，当初用这个是因为有些地方不能用Toast，后来发现直接withMainContext就可在任何地方用Toast了
     //这一堆判断只是为了确保这代码能被运行
@@ -611,7 +613,16 @@ fun HomeScreen(
                                     changeListPageFilterKeyWord,
                                 )
                             }else{
-                                ChangeListTitle(changeListCurRepo,changeListPageDropDownMenuItemOnClick, changeListCurRepoState, changeListIsFileSelectionMode,changeListPageItemListState, scope, changeListEnableAction.value)
+                                ChangeListTitle(
+                                    changeListCurRepo = changeListCurRepo,
+                                    dropDownMenuItemOnClick = changeListPageDropDownMenuItemOnClick,
+                                    repoState = changeListCurRepoState,
+                                    isSelectionMode = changeListIsFileSelectionMode,
+                                    listState = changeListPageItemListState,
+                                    scope = scope,
+                                    enableAction = changeListEnableAction.value,
+                                    repoList = changeListRepoList
+                                )
                             }
                         } else if (currentHomeScreen.intValue == Cons.selectedItem_Settings) {
                             SettingsTitle()
@@ -968,7 +979,8 @@ fun HomeScreen(
                     rebaseCurOfAll=changeListPageRebaseCurOfAll,
                     openDrawer = openDrawer,
                     goToRepoPage = goToRepoPage,
-
+                    changeListRepoList= changeListRepoList,
+                    goToChangeListPage=goToChangeListPage,
                     // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
 //                    commit1OidStr = Cons.gitIndexCommitHash,
 //                    commit2OidStr = Cons.gitLocalWorktreeCommitHash

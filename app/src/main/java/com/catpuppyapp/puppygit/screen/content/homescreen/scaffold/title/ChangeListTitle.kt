@@ -41,12 +41,13 @@ import com.catpuppyapp.puppygit.utils.addPrefix
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
+import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
 import kotlinx.coroutines.CoroutineScope
 
-private val stateKeyPrefix = "ChangeListTitle"
+//private val stateKeyTag = "ChangeListTitle"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -58,7 +59,7 @@ fun ChangeListTitle(
     listState: LazyListState,
     scope: CoroutineScope,
     enableAction:Boolean,
-
+    repoList:CustomStateListSaveable<RepoEntity>
 )
 {
     val haptic = LocalHapticFeedback.current
@@ -66,7 +67,6 @@ fun ChangeListTitle(
 
     val inDarkTheme = Theme.inDarkTheme
 
-    val repoList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyPrefix, keyName = "repoList", initValue = listOf<RepoEntity>())
     val dropDownMenuExpendState = StateUtil.getRememberSaveableState(initValue = false)
     val needReQueryRepoList = StateUtil.getRememberSaveableState(initValue = "")
 
