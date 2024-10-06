@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
@@ -36,7 +38,10 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -111,6 +116,8 @@ import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Repository
 import com.github.git24j.core.Tree
@@ -139,7 +146,7 @@ fun ChangeListInnerPage(
     //只有fromTo是tree to tree时才有这些条目，开始
     commit1OidStr:String="",
     commit2OidStr:String="",
-    commitParentList:CustomStateListSaveable<String> = StateUtil.getCustomSaveableStateList(
+    commitParentList:CustomStateListSaveable<String> = mutableCustomStateListOf(
         keyTag = stateKeyTag,
         keyName = "commitParentList",
         initValue = listOf<String>()
@@ -182,30 +189,29 @@ fun ChangeListInnerPage(
     val dbContainer = AppModel.singleInstanceHolder.dbContainer
     val navController = AppModel.singleInstanceHolder.navController
 
-//    val headCommitHash = StateUtil.getRememberSaveableState(initValue = "")   //只有tree to tree页面需要查这个
+//    val headCommitHash = rememberSaveable { mutableStateOf("")   //只有tree to tree页面需要查这个
 
-    val filterList = StateUtil.getCustomSaveableStateList(
+    val filterList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
-        keyName = "filterList"
-    ) {
-        listOf<StatusTypeEntrySaver>()
-    }
+        keyName = "filterList",
+        initValue = listOf<StatusTypeEntrySaver>()
+    )
 
 //    val scope = rememberCoroutineScope()
 //    val changeListPageCurRepo = rememberSaveable { mutableStateOf(RepoEntity()) }
-    val changeListPageHasConflictItem = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListPageHasConflictItem = rememberSaveable { mutableStateOf(false)}
 //    val changeListPageHasIndexItem = rememberSaveable { mutableStateOf(false) }
-    val changeListPageHasWorktreeItem = StateUtil.getRememberSaveableState(initValue = false)
-    val showAbortMergeDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showMergeAcceptTheirsOrOursDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val mergeAcceptTheirs = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListPageHasWorktreeItem = rememberSaveable { mutableStateOf(false)}
+    val showAbortMergeDialog = rememberSaveable { mutableStateOf(false)}
+    val showMergeAcceptTheirsOrOursDialog = rememberSaveable { mutableStateOf(false)}
+    val mergeAcceptTheirs = rememberSaveable { mutableStateOf(false)}
 //    val needRefreshChangeListPage = rememberSaveable { mutableStateOf(false) }
-    val needRefreshChangeListPage = StateUtil.getRememberSaveableState(initValue = "")
+    val needRefreshChangeListPage = rememberSaveable { mutableStateOf("")}
 //    val changeListPageWorktreeItemList = remember { mutableStateListOf<StatusTypeEntrySaver>() }
 //    val itemList = mutableCustomStateOf(value = mutableListOf<StatusTypeEntrySaver>())  //这个反正旋转屏幕都会清空，没必要用我写的自定义状态存储器
 //    val changeListPageConflictItemList = mutableCustomStateOf(value = mutableListOf<StatusTypeEntrySaver>())
 //    val openRepoFailedErrStrRes = stringResource(R.string.open_repo_failed)
-    val curRepoUpstream = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepoUpstream", initValue = Upstream())
+    val curRepoUpstream = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepoUpstream", initValue = Upstream())
     //for error shown when coroutine has error
 //    val hasErr = rememberSaveable { mutableStateOf(false) }
 //    val errMsg = rememberSaveable { mutableStateOf("") }
@@ -407,8 +413,8 @@ fun ChangeListInnerPage(
 
     val errWhenQuerySettingsFromDbStrRes = stringResource(R.string.err_when_querying_settings_from_db)
 
-    val isLoading = StateUtil.getRememberSaveableState(initValue = true)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
+    val isLoading = rememberSaveable { mutableStateOf(true)}
+    val loadingText = rememberSaveable { mutableStateOf(appContext.getString(R.string.loading))}
     val loadingOn = {text:String->
         //Loading的时候禁用顶栏按钮
         enableActionFromParent.value=false
@@ -437,12 +443,12 @@ fun ChangeListInnerPage(
         setUserAndEmailForCurRepo
     )
 
-    val usernameAndEmailDialogSelectedOption = StateUtil.getRememberSaveableIntState(initValue = optNumSetUserAndEmailForGlobal)
+    val usernameAndEmailDialogSelectedOption = rememberSaveable{mutableIntStateOf(optNumSetUserAndEmailForGlobal)}
 
-    val username = StateUtil.getRememberSaveableState(initValue = "")
-    val email = StateUtil.getRememberSaveableState(initValue = "")
+    val username = rememberSaveable { mutableStateOf("")}
+    val email = rememberSaveable { mutableStateOf("")}
 
-    val showUserAndEmailDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showUserAndEmailDialog = rememberSaveable { mutableStateOf(false)}
 
     val pleaseSetUsernameAndEmailBeforeCommit = stringResource(R.string.please_set_username_email_before_commit)
     val canceledStrRes = stringResource(R.string.canceled)
@@ -514,28 +520,28 @@ fun ChangeListInnerPage(
 //    val commitMsgNeedAsk = "1"
 //    val commitMsgShowAskDialog = "2"
 //    val commitMsgAlreadyGet = "3"
-    val showCommitMsgDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val amendCommit = StateUtil.getRememberSaveableState(initValue = false)
-    val overwriteAuthor = StateUtil.getRememberSaveableState(initValue = false)
-    val commitMsg = StateUtil.getRememberSaveableState(initValue = "")
+    val showCommitMsgDialog = rememberSaveable { mutableStateOf(false)}
+    val amendCommit = rememberSaveable { mutableStateOf(false)}
+    val overwriteAuthor = rememberSaveable { mutableStateOf(false)}
+    val commitMsg = rememberSaveable { mutableStateOf("")}
 
     //upstream
 //    val upstreamRemoteOptionsList = mutableCustomStateOf(value = mutableListOf<String>())
-    val upstreamRemoteOptionsList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "upstreamRemoteOptionsList", initValue = listOf<String>() )
-    val upstreamSelectedRemote = StateUtil.getRememberSaveableIntState(initValue = 0)  //默认选中第一个remote，每个仓库至少有一个origin remote，应该不会出错
+    val upstreamRemoteOptionsList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "upstreamRemoteOptionsList", initValue = listOf<String>() )
+    val upstreamSelectedRemote = rememberSaveable{mutableIntStateOf(0)} //默认选中第一个remote，每个仓库至少有一个origin remote，应该不会出错
     //默认选中为上游设置和本地分支相同名
-    val upstreamBranchSameWithLocal =StateUtil.getRememberSaveableState(initValue = true)
+    val upstreamBranchSameWithLocal =rememberSaveable { mutableStateOf(true)}
     //把远程分支名设成当前分支的完整名
-    val upstreamBranchShortRefSpec = StateUtil.getRememberSaveableState(initValue = "")
+    val upstreamBranchShortRefSpec = rememberSaveable { mutableStateOf("")}
     //设置当前分支，用来让用户知道自己在为哪个分支设置上游
-    val upstreamCurBranchShortName = StateUtil.getRememberSaveableState(initValue = "")
+    val upstreamCurBranchShortName = rememberSaveable { mutableStateOf("")}
 
     //给commit msg弹窗的回调用的，如果是true，代表需要执行sync，否则只是commit就行了
 //    val requireDoSync = rememberSaveable { mutableStateOf(false) }
 
     //修改状态，显示弹窗
-    val showSetUpstreamDialog  =StateUtil.getRememberSaveableState(initValue = false)
-    val upstreamDialogOnOkText  =StateUtil.getRememberSaveableState(initValue = "")
+    val showSetUpstreamDialog  =rememberSaveable { mutableStateOf(false)}
+    val upstreamDialogOnOkText  =rememberSaveable { mutableStateOf("")}
     val stageFailedStrRes = stringResource(R.string.stage_failed)
     val successCommitStrRes = stringResource(R.string.commit_success)
 
@@ -1138,7 +1144,7 @@ fun ChangeListInnerPage(
 
     }
 
-    val showPushForceDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showPushForceDialog = rememberSaveable { mutableStateOf(false)}
     if(showPushForceDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.push_force),
@@ -1843,10 +1849,10 @@ fun ChangeListInnerPage(
     }
 
 
-    val showCherrypickDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val cherrypickTargetHash = StateUtil.getRememberSaveableState(initValue = "")
-    val cherrypickParentHash = StateUtil.getRememberSaveableState(initValue = "")
-    val cherrypickAutoCommit = StateUtil.getRememberSaveableState(initValue = false)
+    val showCherrypickDialog = rememberSaveable { mutableStateOf(false)}
+    val cherrypickTargetHash = rememberSaveable { mutableStateOf("")}
+    val cherrypickParentHash = rememberSaveable { mutableStateOf("")}
+    val cherrypickAutoCommit = rememberSaveable { mutableStateOf(false)}
 
     val initCherrypickDialog = {
         doJobThenOffLoading job@{
@@ -1943,7 +1949,7 @@ fun ChangeListInnerPage(
         }
     }
 
-    val showIgnoreDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showIgnoreDialog = rememberSaveable { mutableStateOf(false)}
     if(showIgnoreDialog.value) {
         ConfirmDialog(
             title = stringResource(R.string.ignore),
@@ -1973,9 +1979,9 @@ fun ChangeListInnerPage(
 
 
 
-    val showCreatePatchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val savePatchPath= StateUtil.getRememberSaveableState(initValue = "")  //给这变量一赋值app就崩溃，原因不明，报的是"java.lang.VerifyError: Verifier rejected class"之类的错误，日，后来升级gradle解决了
-    val showSavePatchSuccessDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showCreatePatchDialog = rememberSaveable { mutableStateOf(false)}
+    val savePatchPath= rememberSaveable { mutableStateOf("") } //给这变量一赋值app就崩溃，原因不明，报的是"java.lang.VerifyError: Verifier rejected class"之类的错误，日，后来升级gradle解决了
+    val showSavePatchSuccessDialog = rememberSaveable { mutableStateOf(false)}
 
     val clipboardManager = LocalClipboardManager.current
 
@@ -2117,9 +2123,9 @@ fun ChangeListInnerPage(
 
 
 
-    val checkoutForce = StateUtil.getRememberSaveableState(initValue = false)
-    val showCheckoutFilesDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val checkoutTargetHash = StateUtil.getRememberSaveableState(initValue = "")
+    val checkoutForce = rememberSaveable { mutableStateOf(false)}
+    val showCheckoutFilesDialog = rememberSaveable { mutableStateOf(false)}
+    val checkoutTargetHash = rememberSaveable { mutableStateOf("")}
 
     val initCheckoutDialog = { targetHash:String ->
         doJobThenOffLoading job@{
@@ -2191,7 +2197,7 @@ fun ChangeListInnerPage(
     }
 
     // 向下滚动监听，开始
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember {derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else itemListState.firstVisibleItemIndex }}
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -2340,7 +2346,7 @@ fun ChangeListInnerPage(
         {true}, // import as repo
     ) else listOf()  // empty list, always visible
 
-    val showRevertAlert = StateUtil.getRememberSaveableState(initValue = false)
+    val showRevertAlert = rememberSaveable { mutableStateOf(false)}
     val doRevert = {
             // impl Revert selected files
             //  需要弹窗确认，确认后loading，执行完操作后toast提示
@@ -2401,7 +2407,7 @@ fun ChangeListInnerPage(
         //关闭底栏，刷新页面
         bottomBarActDoneCallback(appContext.getString(R.string.unstage_success))
     }
-    val showUnstageConfirmDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showUnstageConfirmDialog = rememberSaveable { mutableStateOf(false)}
     if(showUnstageConfirmDialog.value) {
         ConfirmDialog(
             title = stringResource(R.string.unstage),
@@ -2417,12 +2423,12 @@ fun ChangeListInnerPage(
 
 
 
-    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
-    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+    val credentialList = mutableCustomStateListOf(stateKeyTag, "credentialList", listOf<CredentialEntity>())
+    val selectedCredentialIdx = rememberSaveable{mutableIntStateOf(0)}
 
 //    val fullPathForImport = StateUtil.getRememberSaveableState("")
-    val importList = StateUtil.getCustomSaveableStateList(stateKeyTag, "importList") { listOf<StatusTypeEntrySaver>() }
-    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
+    val importList = mutableCustomStateListOf(stateKeyTag, "importList", listOf<StatusTypeEntrySaver>())
+    val showImportToReposDialog = rememberSaveable { mutableStateOf(false)}
     if(showImportToReposDialog.value){
         ConfirmDialog2(
             title = appContext.getString(R.string.import_as_repo),
@@ -2573,10 +2579,10 @@ fun ChangeListInnerPage(
         selectedItemList.value.contains(item)
     }
 
-    val showOpenAsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val openAsDialogFilePath = StateUtil.getRememberSaveableState(initValue = "")
-    val openAsDialogFileName = StateUtil.getRememberSaveableState(initValue = "")
-//    val showOpenInEditor = StateUtil.getRememberSaveableState(initValue = false)
+    val showOpenAsDialog = rememberSaveable { mutableStateOf(false)}
+    val openAsDialogFilePath = rememberSaveable { mutableStateOf("")}
+    val openAsDialogFileName = rememberSaveable { mutableStateOf("")}
+//    val showOpenInEditor = rememberSaveable { mutableStateOf(false)}
 
     if(showOpenAsDialog.value) {
         OpenAsDialog(fileName = openAsDialogFileName.value, filePath = openAsDialogFilePath.value) {
@@ -2664,8 +2670,8 @@ fun ChangeListInnerPage(
     //这个页面，显示就是启用，禁用就不需要显示，所以直接把enableList作为visibleList即可
     val menuKeyVisibleList:List<(StatusTypeEntrySaver)->Boolean> = menuKeyEnableList
 
-    val hasError = StateUtil.getRememberSaveableState(initValue = false)
-    val errMsg = StateUtil.getRememberSaveableState(initValue = "")
+    val hasError = rememberSaveable { mutableStateOf(false)}
+    val errMsg = rememberSaveable { mutableStateOf("")}
     val setErrMsg = {msg:String ->
         errMsg.value = msg
         hasError.value = true
@@ -2693,7 +2699,7 @@ fun ChangeListInnerPage(
     //back handler block start
     //如果是从主页创建的此组件，按返回键应双击退出，需要注册个BackHandler，作为2级页面时则不用
     //换句话说：ChangeList页面需要注册双击返回；Index页面不需要
-    val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
+    val isBackHandlerEnable = rememberSaveable { mutableStateOf(true)}
     val backHandlerOnBack = getBackHandler(
         appContext,
         exitApp,
@@ -2709,8 +2715,8 @@ fun ChangeListInnerPage(
     BackHandler(enabled = isBackHandlerEnable.value, onBack = {backHandlerOnBack()})
     //back handler block end
 
-    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
-    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    val showSelectedItemsShortDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val selectedItemsShortDetailsStr = rememberSaveable { mutableStateOf("")}
     if(showSelectedItemsShortDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.selected_str),
@@ -2761,7 +2767,7 @@ fun ChangeListInnerPage(
                     .fillMaxSize()
                     .padding(contentPadding)
                     .padding(bottom = 80.dp)
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
 
                 ,
                 verticalArrangement = Arrangement.Center,
@@ -2777,7 +2783,7 @@ fun ChangeListInnerPage(
                         .fillMaxSize()
                         .padding(contentPadding)
 //                        .padding(bottom = 80.dp)  //不要在这加padding，如果想加，应在底部加个padding row
-                        .verticalScroll(StateUtil.getRememberScrollState())
+                        .verticalScroll(rememberScrollState())
                     ,
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -3095,7 +3101,7 @@ fun ChangeListInnerPage(
                     itemList.value
                 }
 
-                val listState = if(enableFilter) StateUtil.getRememberLazyListState() else itemListState
+                val listState = if(enableFilter) rememberLazyListState() else itemListState
                 if(enableFilter) {  //更新filter列表state
                     filterListState.value = listState
                 }
@@ -3645,7 +3651,7 @@ private fun getBackHandler(
     openDrawer:()->Unit
 
 ): () -> Unit {
-    val backStartSec = StateUtil.getRememberSaveableLongState(initValue = 0)
+    val backStartSec = rememberSaveable { mutableLongStateOf(0) }
     val pressBackAgainForExitText = stringResource(R.string.press_back_again_to_exit);
     val showTextAndUpdateTimeForPressBackBtn = {
         openDrawer()

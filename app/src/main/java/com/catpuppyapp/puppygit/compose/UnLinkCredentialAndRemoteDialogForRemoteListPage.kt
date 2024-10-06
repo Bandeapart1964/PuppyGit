@@ -6,6 +6,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,8 +26,8 @@ fun UnLinkCredentialAndRemoteDialogForRemoteListPage(
 ) {
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val fetchChecked = StateUtil.getRememberSaveableState(initValue = true)
-    val pushChecked = StateUtil.getRememberSaveableState(initValue = true)
+    val fetchChecked = rememberSaveable { mutableStateOf(true) }
+    val pushChecked = rememberSaveable { mutableStateOf(true) }
 
     AlertDialog(
         title = {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Text
@@ -22,7 +23,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -134,8 +138,8 @@ fun EditorInnerPage(
 //    val editorPageShowingFileText = rememberSaveable{ mutableStateOf("") }  //BasicTextField用的文本，用来存储打开的文件的所有内容
 //    val editorPageEditorFocusRequester = remember{ FocusRequester() }  //BasicTextField用的focusRequester
 //    val lastFilePath = StateUtil.getRememberSaveableState(initValue = "")
-    val editorPageShowingFileHasErr = StateUtil.getRememberSaveableState(initValue = false)  //BasicTextField用的文本，用来存储打开的文件的所有内容
-    val editorPageShowingFileErrMsg = StateUtil.getRememberSaveableState(initValue = "")  //BasicTextField用的文本，用来存储打开的文件的所有内容
+    val editorPageShowingFileHasErr = rememberSaveable { mutableStateOf(false)}  //BasicTextField用的文本，用来存储打开的文件的所有内容
+    val editorPageShowingFileErrMsg = rememberSaveable { mutableStateOf("")}  //BasicTextField用的文本，用来存储打开的文件的所有内容
 
     val editorPageFileSavedSuccess = stringResource(R.string.file_saved)
     val unknownErrStrRes = stringResource(R.string.unknown_err)
@@ -288,7 +292,7 @@ fun EditorInnerPage(
 
 //    if(!isSubPageMode) {  //如果是子页面模式，不注册back handler，因为不需要双击退出
     //back handler block start
-    val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
+    val isBackHandlerEnable = rememberSaveable { mutableStateOf(true) }
 
     val backHandlerOnBack = getBackHandler(
         appContext = appContext,
@@ -414,7 +418,7 @@ fun EditorInnerPage(
         }
     }
 
-    val showBackFromExternalAppAskReloadDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showBackFromExternalAppAskReloadDialog = rememberSaveable { mutableStateOf(false) }
     if(showBackFromExternalAppAskReloadDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.reload_file),
@@ -445,8 +449,8 @@ fun EditorInnerPage(
         }
     }
 
-    val showOpenAsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val openAsDialogFilePath = StateUtil.getRememberSaveableState(initValue = "")
+    val showOpenAsDialog = rememberSaveable { mutableStateOf(false)}
+    val openAsDialogFilePath = rememberSaveable { mutableStateOf("")}
     val fileName = remember{ derivedStateOf { getFileNameFromCanonicalPath(openAsDialogFilePath.value) }}
 //    val showOpenInEditor = StateUtil.getRememberSaveableState(initValue = false)
     if(showOpenAsDialog.value) {
@@ -644,7 +648,7 @@ fun EditorInnerPage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(StateUtil.getRememberScrollState())
+                .verticalScroll(rememberScrollState())
             ,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -1179,7 +1183,7 @@ private fun getBackHandler(
     openDrawer:()->Unit
 
 ): () -> Unit {
-    val backStartSec = StateUtil.getRememberSaveableLongState(initValue = 0)
+    val backStartSec = rememberSaveable { mutableLongStateOf( 0) }
     val pressBackAgainForExitText = stringResource(R.string.press_back_again_to_exit);
     val showTextAndUpdateTimeForPressBackBtn = {
         openDrawer()

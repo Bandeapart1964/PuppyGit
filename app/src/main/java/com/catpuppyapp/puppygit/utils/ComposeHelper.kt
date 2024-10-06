@@ -4,7 +4,9 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.stringResource
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.constants.Cons
@@ -30,7 +32,7 @@ object ComposeHelper {
         openDrawer:() -> Unit,
         exitApp: () -> Unit
     ): () -> Unit {
-        val backStartSec = StateUtil.getRememberSaveableLongState(initValue = 0)
+        val backStartSec = rememberSaveable { mutableLongStateOf(0) }
         val pressBackAgainForExitText = stringResource(R.string.press_back_again_to_exit);
         val showTextAndUpdateTimeForPressBackBtn = {
             openDrawer()

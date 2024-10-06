@@ -1,6 +1,7 @@
 package com.catpuppyapp.puppygit.screen
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -12,6 +13,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +38,8 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 
 private val TAG = "IndexScreen"
@@ -72,34 +76,29 @@ fun IndexScreen(
         changeStateTriggerRefreshPage(changeListRefreshRequiredByParentPage)
     }
 //    val changeListCurRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
-    val changeListCurRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "changeListCurRepo", initValue = RepoEntity(id=""))
-    val changeListIsShowRepoList = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageHasIndexItem = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListCurRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changeListCurRepo", initValue = RepoEntity(id=""))
+    val changeListIsShowRepoList = rememberSaveable { mutableStateOf(false)}
+    val changeListPageHasIndexItem = rememberSaveable { mutableStateOf(false)}
     val changeListShowRepoList = {
         changeListIsShowRepoList.value = true
     }
-    val changeListIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageNoRepo = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageHasNoConflictItems = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListIsFileSelectionMode = rememberSaveable { mutableStateOf( false)}
+    val changeListPageNoRepo = rememberSaveable { mutableStateOf( false)}
+    val changeListPageHasNoConflictItems = rememberSaveable { mutableStateOf(false)}
 
-    val changeListPageRebaseCurOfAll = StateUtil.getRememberSaveableState(initValue = "")
+    val changeListPageRebaseCurOfAll = rememberSaveable { mutableStateOf( "")}
 
 
-    val changeListPageFilterKeyWord = StateUtil.getCustomSaveableState(
+    val changeListPageFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "changeListPageFilterKeyWord",
         initValue = TextFieldValue("")
     )
-    val changeListPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListPageFilterModeOn = rememberSaveable { mutableStateOf(false)}
 
-    val changelistFilterListState = StateUtil.getCustomSaveableState(
-        keyTag = stateKeyTag,
-        keyName = "changelistFilterListState"
-    ) {
-        LazyListState(0,0)
-    }
+    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
 
-    val swap = StateUtil.getRememberSaveableState(initValue = false)
+    val swap =rememberSaveable { mutableStateOf(false)}
 
 //    val editorPageRequireOpenFilePath = rememberSaveable{ mutableStateOf("") } // canonicalPath
 ////    val needRefreshFilesPage = rememberSaveable { mutableStateOf(false) }
@@ -118,14 +117,14 @@ fun IndexScreen(
 //    val needRefreshEditorPage = rememberSaveable { mutableStateOf("") }
 //    val changeListRequirePull = rememberSaveable { mutableStateOf(false) }
 //    val changeListRequirePush = rememberSaveable { mutableStateOf(false) }
-    val requireDoActFromParent = StateUtil.getRememberSaveableState(initValue = false)
-    val requireDoActFromParentShowTextWhenDoingAct = StateUtil.getRememberSaveableState(initValue = "")
-    val enableAction = StateUtil.getRememberSaveableState(initValue = true)
-    val repoState = StateUtil.getRememberSaveableIntState(initValue = Repository.StateT.NONE.bit)  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
+    val requireDoActFromParent = rememberSaveable { mutableStateOf(false)}
+    val requireDoActFromParentShowTextWhenDoingAct = rememberSaveable { mutableStateOf("")}
+    val enableAction = rememberSaveable { mutableStateOf( true)}
+    val repoState = rememberSaveable{mutableIntStateOf(Repository.StateT.NONE.bit)}  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
     val fromTo = Cons.gitDiffFromHeadToIndex
-    val changeListPageItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changeListPageItemListState = StateUtil.getRememberLazyListState()
-    val changeListPageSelectedItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemListState = rememberLazyListState()
+    val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
 
     Scaffold(

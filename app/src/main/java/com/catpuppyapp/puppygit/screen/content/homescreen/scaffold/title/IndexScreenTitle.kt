@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -41,8 +44,8 @@ fun IndexScreenTitle(
     val haptic = LocalHapticFeedback.current
     val appContext = LocalContext.current
 
-    val needShowRepoState = StateUtil.getRememberSaveableState(initValue = false)
-    val repoStateText = StateUtil.getRememberSaveableState(initValue = "")
+    val needShowRepoState = rememberSaveable { mutableStateOf(false)}
+    val repoStateText = rememberSaveable { mutableStateOf("")}
 
     //设置仓库状态，主要是为了显示merge
     Libgit2Helper.setRepoStateText(repoState.intValue, needShowRepoState, repoStateText, appContext)
@@ -65,7 +68,7 @@ fun IndexScreenTitle(
         //外面的标题宽180.dp，这里的比外面的宽点，因为这个页面顶栏actions少
         .widthIn(max = 200.dp)
     ) {
-        Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
 
             Text(
                 text = curRepo.value.repoName,
@@ -75,7 +78,7 @@ fun IndexScreenTitle(
                 color = getTitleColor()
             )
         }
-        Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
             //"[Index]|Merging" or "[Index]"
             Text(text = "["+stringResource(id = R.string.index)+"]" + (if(needShowRepoState.value) "|"+repoStateText.value else ""),
                 maxLines = 1,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddLink
@@ -22,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +32,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -57,6 +60,8 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
 //private val TAG = "CredentialLinkedOrUnLinkedListScreen"
 private val TAG = "CredentialRemoteListScreen"
@@ -77,26 +82,26 @@ fun CredentialRemoteListScreen(
     val scope = rememberCoroutineScope()
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
+    val listState = rememberLazyListState()
     //如果再多几个"mode"，就改用字符串判断，直接把mode含义写成常量
-    val isSearchingMode = StateUtil.getRememberSaveableState(initValue = false)
-    val isShowSearchResultMode = StateUtil.getRememberSaveableState(initValue = false)
-    val searchKeyword = StateUtil.getRememberSaveableState(initValue = "")
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
-    val showUnLinkAllDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val isSearchingMode = rememberSaveable { mutableStateOf(false)}
+    val isShowSearchResultMode = rememberSaveable { mutableStateOf(false)}
+    val searchKeyword = rememberSaveable { mutableStateOf("")}
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
+    val showUnLinkAllDialog = rememberSaveable { mutableStateOf(false)}
 //    val curCommit = rememberSaveable{ mutableStateOf(CommitDto()) }
-    val curItemInPage = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curItemInPage", initValue = CredentialEntity())
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<RemoteDtoForCredential>())
-    val needOverrideLinkItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "needOverrideLinkItem", initValue = RemoteDtoForCredential())
-    val showOverrideLinkDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
+    val curItemInPage = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curItemInPage", initValue = CredentialEntity())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<RemoteDtoForCredential>())
+    val needOverrideLinkItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "needOverrideLinkItem", initValue = RemoteDtoForCredential())
+    val showOverrideLinkDialog = rememberSaveable { mutableStateOf(false)}
+    val needRefresh = rememberSaveable { mutableStateOf("")}
 
-    val showLinkOrUnLinkDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val requireDoLink = StateUtil.getRememberSaveableState(initValue = false)
-    val targetAll = StateUtil.getRememberSaveableState(initValue = false)
-    val curItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curItem", initValue = RemoteDtoForCredential())
-    val linkOrUnlinkDialogTitle = StateUtil.getRememberSaveableState(initValue = "")
+    val showLinkOrUnLinkDialog = rememberSaveable { mutableStateOf( false)}
+    val requireDoLink = rememberSaveable { mutableStateOf(false)}
+    val targetAll = rememberSaveable { mutableStateOf(false)}
+    val curItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curItem", initValue = RemoteDtoForCredential())
+    val linkOrUnlinkDialogTitle = rememberSaveable { mutableStateOf( "")}
 
 
     val doLink= { remoteId: String ->
@@ -173,25 +178,24 @@ fun CredentialRemoteListScreen(
 
 
     //filter相关，开始
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
     //filter相关，结束
 
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -359,7 +363,7 @@ fun CredentialRemoteListScreen(
         }else {
             list.value
         }
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+        val listState = if(enableFilter) rememberLazyListState() else listState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -24,7 +26,7 @@ fun CredentialSelector(
 
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val note = StateUtil.getRememberSaveableState("")
+    val note = rememberSaveable { mutableStateOf("")}
 
     Text(stringResource(R.string.select_credential) + ": ")
 

@@ -12,6 +12,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
@@ -45,7 +47,7 @@ fun RepoPageActions(
      */
 
 
-    val dropDownMenuExpendState = StateUtil.getRememberSaveableState(initValue = false)
+    val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false)}
 
     val closeMenu = {dropDownMenuExpendState.value = false}
 

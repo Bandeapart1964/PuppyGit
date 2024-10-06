@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +19,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,7 +63,7 @@ fun OpenAsDialog(fileName:String, filePath:String, showOpenInEditor:Boolean=fals
     mimeTextList.add(stringResource(R.string.file_open_as_by_extension))
 
 
-    val readOnly = StateUtil.getRememberSaveableState(initValue = false)
+    val readOnly = rememberSaveable { mutableStateOf(false)}
     val inDarkTheme = Theme.inDarkTheme
 
     val color = if(inDarkTheme) Color.LightGray else Color.DarkGray
@@ -76,7 +79,7 @@ fun OpenAsDialog(fileName:String, filePath:String, showOpenInEditor:Boolean=fals
         ) {
             Column(modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(StateUtil.getRememberScrollState())
+                .verticalScroll(rememberScrollState())
                 ,
             ) {
                 //文本

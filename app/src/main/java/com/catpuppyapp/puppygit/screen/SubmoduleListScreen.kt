@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,6 +44,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -86,6 +89,8 @@ import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 
 private val TAG = "SubmoduleListScreen"
@@ -106,18 +111,18 @@ fun SubmoduleListScreen(
     val inDarkTheme = Theme.inDarkTheme
 
     //获取假数据
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<SubmoduleDto>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<SubmoduleDto>())
 
-    val filterList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<SubmoduleDto>())
+    val filterList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<SubmoduleDto>())
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val listState = rememberLazyListState()
+    val needRefresh = rememberSaveable { mutableStateOf("") }
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val loading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val loading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf( defaultLoadingText)}
     val loadingOn = { text:String ->
         loadingText.value=text
         loading.value=true
@@ -128,13 +133,13 @@ fun SubmoduleListScreen(
     }
 
 
-    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
-    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+    val credentialList = mutableCustomStateListOf(stateKeyTag, "credentialList", listOf<CredentialEntity>())
+    val selectedCredentialIdx = rememberSaveable{mutableIntStateOf(0)}
 
 
-    val showCreateDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val remoteUrlForCreate = StateUtil.getRememberSaveableState(initValue = "")
-    val pathForCreate = StateUtil.getRememberSaveableState(initValue = "")
+    val showCreateDialog = rememberSaveable { mutableStateOf(false)}
+    val remoteUrlForCreate = rememberSaveable { mutableStateOf("")}
+    val pathForCreate = rememberSaveable { mutableStateOf("")}
     val initCreateDialog = {
         showCreateDialog.value = true
     }
@@ -206,8 +211,8 @@ fun SubmoduleListScreen(
     }
 
     // BottomBar相关变量，开始
-    val multiSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val selectedItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "selectedItemList") { listOf<SubmoduleDto>() }
+    val multiSelectionMode = rememberSaveable { mutableStateOf(false)}
+    val selectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "selectedItemList",listOf<SubmoduleDto>() )
     val quitSelectionMode = {
         selectedItemList.value.clear()  //清空选中文件列表
         multiSelectionMode.value=false  //关闭选择模式
@@ -276,8 +281,8 @@ fun SubmoduleListScreen(
 
     val clipboardManager = LocalClipboardManager.current
 
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val detailsString = rememberSaveable { mutableStateOf("")}
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.details),
@@ -290,9 +295,9 @@ fun SubmoduleListScreen(
         }
     }
 
-    val showSetUrlDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val urlForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
-    val nameForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val showSetUrlDialog = rememberSaveable { mutableStateOf(false)}
+    val urlForSetUrlDialog = rememberSaveable { mutableStateOf( "")}
+    val nameForSetUrlDialog = rememberSaveable { mutableStateOf( "")}
     if(showSetUrlDialog.value) {
         ConfirmDialog2(title = appContext.getString(R.string.set_url),
             requireShowTextCompose = true,
@@ -341,9 +346,9 @@ fun SubmoduleListScreen(
     }
 
 
-    val showSyncConfigDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val syncParentConfig = StateUtil.getRememberSaveableState(initValue = false)
-    val syncSubmoduleConfig = StateUtil.getRememberSaveableState(initValue = false)
+    val showSyncConfigDialog = rememberSaveable { mutableStateOf(false)}
+    val syncParentConfig = rememberSaveable { mutableStateOf(false)}
+    val syncSubmoduleConfig = rememberSaveable { mutableStateOf(false)}
     if(showSyncConfigDialog.value) {
         ConfirmDialog2(title = appContext.getString(R.string.sync_configs),
             requireShowTextCompose = true,
@@ -396,7 +401,7 @@ fun SubmoduleListScreen(
         }
     }
 
-    val showInitRepoDialog = StateUtil.getRememberSaveableState(false)
+    val showInitRepoDialog = rememberSaveable { mutableStateOf(false)}
     if(showInitRepoDialog.value) {
         ConfirmDialog2(title = appContext.getString(R.string.init_repo),
             requireShowTextCompose = true,
@@ -438,7 +443,7 @@ fun SubmoduleListScreen(
         }
     }
 
-    val showRestoreDotGitFileDialog = StateUtil.getRememberSaveableState(false)
+    val showRestoreDotGitFileDialog = rememberSaveable { mutableStateOf(false)}
     if(showRestoreDotGitFileDialog.value) {
         ConfirmDialog2(
             title = appContext.getString(R.string.restore_dot_git_file),
@@ -480,8 +485,8 @@ fun SubmoduleListScreen(
         }
     }
 
-    val showReloadDialog = StateUtil.getRememberSaveableState(false)
-    val forceReload = StateUtil.getRememberSaveableState(false)
+    val showReloadDialog = rememberSaveable { mutableStateOf(false)}
+    val forceReload = rememberSaveable { mutableStateOf(false)}
     if(showReloadDialog.value) {
         ConfirmDialog2(
             title = stringResource(R.string.reload),
@@ -524,7 +529,7 @@ fun SubmoduleListScreen(
         }
     }
 
-    val showResetToTargetDialog = StateUtil.getRememberSaveableState(false)
+    val showResetToTargetDialog = rememberSaveable { mutableStateOf(false)}
     val closeResetDialog = {showResetToTargetDialog.value=false}
     if(showResetToTargetDialog.value) {
         ResetDialog(
@@ -567,7 +572,7 @@ fun SubmoduleListScreen(
     }
 
 
-    val showImportToReposDialog = StateUtil.getRememberSaveableState(false)
+    val showImportToReposDialog = rememberSaveable { mutableStateOf(false)}
     if(showImportToReposDialog.value){
         ConfirmDialog2(
             title = appContext.getString(R.string.import_to_repos),
@@ -708,51 +713,51 @@ fun SubmoduleListScreen(
         },
     )
 
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword =mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
+
+//
+//    val showTagFetchPushDialog = rememberSaveable { mutableStateOf(false)}
+//    val showForce = rememberSaveable { mutableStateOf(false)}
+//    val remoteList = StateUtil.getCustomSaveableStateList(
+//        keyTag = stateKeyTag,
+//        keyName = "remoteList"
+//    ) {
+//        listOf<String>()
+//    }
+//    val selectedRemoteList = StateUtil.getCustomSaveableStateList(
+//        keyTag = stateKeyTag,
+//        keyName = "selectedRemoteList"
+//    ) {
+//        listOf<String>()
+//    }
+//
+//    val remoteCheckedList = StateUtil.getCustomSaveableStateList(
+//        keyTag = stateKeyTag,
+//        keyName = "remoteCheckedList"
+//    ) {
+//        listOf<Boolean>()
+//    }
+//
+//    val fetchPushDialogTitle = rememberSaveable { mutableStateOf("")}
+//
+//    val trueFetchFalsePush = rememberSaveable { mutableStateOf(true)}
+//    val requireDel = rememberSaveable { mutableStateOf(false)}
+//    val requireDelRemoteChecked = rememberSaveable { mutableStateOf( false)}
+//
+//    val loadingTextForFetchPushDialog = rememberSaveable { mutableStateOf("")}
+
+    val recursiveClone = rememberSaveable { mutableStateOf( false)}
+    val showCloneDialog = rememberSaveable { mutableStateOf( false)}
 
 
-    val showTagFetchPushDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showForce = StateUtil.getRememberSaveableState(initValue = false)
-    val remoteList = StateUtil.getCustomSaveableStateList(
-        keyTag = stateKeyTag,
-        keyName = "remoteList"
-    ) {
-        listOf<String>()
-    }
-    val selectedRemoteList = StateUtil.getCustomSaveableStateList(
-        keyTag = stateKeyTag,
-        keyName = "selectedRemoteList"
-    ) {
-        listOf<String>()
-    }
-
-    val remoteCheckedList = StateUtil.getCustomSaveableStateList(
-        keyTag = stateKeyTag,
-        keyName = "remoteCheckedList"
-    ) {
-        listOf<Boolean>()
-    }
-
-    val fetchPushDialogTitle = StateUtil.getRememberSaveableState(initValue = "")
-
-    val trueFetchFalsePush = StateUtil.getRememberSaveableState(initValue = true)
-    val requireDel = StateUtil.getRememberSaveableState(initValue = false)
-    val requireDelRemoteChecked = StateUtil.getRememberSaveableState(initValue = false)
-
-    val loadingTextForFetchPushDialog = StateUtil.getRememberSaveableState(initValue = "")
-
-    val recursiveClone = StateUtil.getRememberSaveableState(initValue = false)
-    val showCloneDialog = StateUtil.getRememberSaveableState(initValue = false)
-
-
-    val deleteConfigForDeleteDialog =StateUtil.getRememberSaveableState(initValue = false)
-    val deleteFilesForDeleteDialog =StateUtil.getRememberSaveableState(initValue = false)
-    val showDeleteDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val deleteConfigForDeleteDialog =rememberSaveable { mutableStateOf(false)}
+    val deleteFilesForDeleteDialog =rememberSaveable { mutableStateOf(false)}
+    val showDeleteDialog = rememberSaveable { mutableStateOf(false)}
 
     val initDelDialog = {
         deleteConfigForDeleteDialog.value = false
@@ -826,8 +831,8 @@ fun SubmoduleListScreen(
         showCloneDialog.value = true
     }
 
-    val showUpdateDialog = StateUtil.getRememberSaveableState(false)
-    val recursiveUpdate = StateUtil.getRememberSaveableState(false)
+    val showUpdateDialog = rememberSaveable { mutableStateOf(false)}
+    val recursiveUpdate = rememberSaveable { mutableStateOf(false)}
     val initUpdateDialog = {
         recursiveUpdate.value = false
         showUpdateDialog.value=true
@@ -998,13 +1003,12 @@ fun SubmoduleListScreen(
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false) }
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -1050,8 +1054,8 @@ fun SubmoduleListScreen(
     )
 
 
-    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
-    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    val showSelectedItemsShortDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val selectedItemsShortDetailsStr = rememberSaveable { mutableStateOf("")}
     if(showSelectedItemsShortDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.selected_str),
@@ -1098,14 +1102,14 @@ fun SubmoduleListScreen(
                         ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
                         }){
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.submodules),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= repoAndBranch,
                                     maxLines = 1,
@@ -1198,7 +1202,7 @@ fun SubmoduleListScreen(
                     .fillMaxSize()
                     .padding(contentPadding)
 //                        .padding(bottom = 80.dp)  //不要在这加padding，如果想加，应在底部加个padding row
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
                 ,
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -1253,7 +1257,7 @@ fun SubmoduleListScreen(
                 list.value
             }
 
-            val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+            val listState = if(enableFilter) rememberLazyListState() else listState
             if(enableFilter) {  //更新filter列表state
                 filterListState.value = listState
             }

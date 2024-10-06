@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -40,6 +43,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -98,6 +102,8 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Branch
 import com.github.git24j.core.Repository
 
@@ -125,31 +131,29 @@ fun BranchListScreen(
     val inDarkTheme = Theme.inDarkTheme
 
     //获取假数据
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<BranchNameAndTypeDto>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<BranchNameAndTypeDto>())
 
     //请求闪烁的条目，用来在定位某条目时，闪烁一下以便用户发现
-    val requireBlinkIdx = StateUtil.getRememberSaveableIntState(
-        initValue = -1
-    )
+    val requireBlinkIdx = rememberSaveable{mutableIntStateOf(-1)}
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
-    val showCreateBranchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val requireCheckout = StateUtil.getRememberSaveableState(initValue = false)
-    val showCheckoutBranchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val forceCheckoutForCreateBranch = StateUtil.getRememberSaveableState(initValue = false)
+    val listState = rememberLazyListState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
+    val showCreateBranchDialog = rememberSaveable { mutableStateOf(false)}
+    val requireCheckout = rememberSaveable { mutableStateOf(false)}
+    val showCheckoutBranchDialog = rememberSaveable { mutableStateOf(false)}
+    val forceCheckoutForCreateBranch = rememberSaveable { mutableStateOf(false)}
 //    val showCheckoutRemoteBranchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showSetUpstreamForLocalBranchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val branchName = StateUtil.getRememberSaveableState(initValue = "")
+    val showSetUpstreamForLocalBranchDialog = rememberSaveable { mutableStateOf(false)}
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val branchName = rememberSaveable { mutableStateOf("")}
 //    val curCommit = rememberSaveable{ mutableStateOf(CommitDto()) }
-    val curObjInPage = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curObjInPage", initValue =BranchNameAndTypeDto())  //如果是detached
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val curObjInPage = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curObjInPage", initValue =BranchNameAndTypeDto())  //如果是detached
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
-    val showMergeDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val requireRebase = StateUtil.getRememberSaveableState(initValue = false)
+    val showMergeDialog = rememberSaveable { mutableStateOf(false)}
+    val requireRebase = rememberSaveable { mutableStateOf(false)}
 
 
 
@@ -162,14 +166,14 @@ fun BranchListScreen(
 //    val checkoutRemoteCreateBranchName = StateUtil.getRememberSaveableState(initValue = "")
 
     //这个变量代表当前仓库的“活跃分支”，不要用来干别的，只是用来在创建分支的时候让用户知道是基于哪个分支创建的。
-    val repoCurrentActiveBranchOrShortDetachedHashForShown = StateUtil.getRememberSaveableState(initValue = "")  //用来显示给用户看的短分支名或提交号
-    val repoCurrentActiveBranchFullRefForDoAct = StateUtil.getRememberSaveableState(initValue = "")  //分支长引用名，只有在非detached时，才用到这个变量
-    val repoCurrentActiveBranchOrDetachedHeadFullHashForDoAct = StateUtil.getRememberSaveableState(initValue = "")  //合并detached head时用这个变量
-    val curRepoIsDetached = StateUtil.getRememberSaveableState(initValue = false)  //当前仓库是否detached
+    val repoCurrentActiveBranchOrShortDetachedHashForShown = rememberSaveable { mutableStateOf("")}  //用来显示给用户看的短分支名或提交号
+    val repoCurrentActiveBranchFullRefForDoAct = rememberSaveable { mutableStateOf("")}  //分支长引用名，只有在非detached时，才用到这个变量
+    val repoCurrentActiveBranchOrDetachedHeadFullHashForDoAct = rememberSaveable { mutableStateOf("")}  //合并detached head时用这个变量
+    val curRepoIsDetached = rememberSaveable { mutableStateOf(false)}  //当前仓库是否detached
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val loading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val loading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = { text:String ->
         loadingText.value=text
         loading.value=true
@@ -307,7 +311,7 @@ fun BranchListScreen(
         )
     }
 
-    val checkoutLocalBranch = StateUtil.getRememberSaveableState(initValue = false)
+    val checkoutLocalBranch = rememberSaveable { mutableStateOf(false)}
     if(showCheckoutBranchDialog.value) {
         //注意：这种写法，如果curObjInPage.value被重新赋值，本代码块将会被重复调用！不过实际不会有问题，因为显示弹窗时无法再长按条目进而无法改变本对象。
         // 另外如果在onOk里取对象也会有此问题，假如显示弹窗后对象被改变，那视图会更新，变成新对象的值，onOk最终执行时取出的对象自然也会和“最初”弹窗显示的不一致 (onOk取出的和“现在”视图显示的对象是一致的，都是修改后的值，“最初”的值已被覆盖)，
@@ -340,16 +344,16 @@ fun BranchListScreen(
         )
     }
 
-    val upstreamRemoteOptionsList = StateUtil.getCustomSaveableStateList(
+    val upstreamRemoteOptionsList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
         keyName = "upstreamRemoteOptionsList",
         initValue = listOf<String>()
     )  //初始化页面时更新这个列表
-    val upstreamSelectedRemote = StateUtil.getRememberSaveableIntState(initValue = 0)  //默认选中第一个remote，每个仓库至少有一个origin remote，应该不会出错
+    val upstreamSelectedRemote = rememberSaveable{mutableIntStateOf( 0)}  //默认选中第一个remote，每个仓库至少有一个origin remote，应该不会出错
     //默认选中为上游设置和本地分支相同名
-    val upstreamBranchSameWithLocal =StateUtil.getRememberSaveableState(initValue = true)
+    val upstreamBranchSameWithLocal =rememberSaveable { mutableStateOf(true)}
     //把远程分支名设成当前分支的完整名
-    val upstreamBranchShortRefSpec = StateUtil.getRememberSaveableState(initValue = "")
+    val upstreamBranchShortRefSpec = rememberSaveable { mutableStateOf("")}
 
     if(showSetUpstreamForLocalBranchDialog.value) {
         SetUpstreamDialog(
@@ -549,12 +553,12 @@ fun BranchListScreen(
         }
     }
 
-    val showLocalBranchDelDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val delUpstreamToo = StateUtil.getRememberSaveableState(initValue = false)  //如果没上游，禁用“删除上游”勾选框，注意，这个勾选框控制的是删除本地的上游分支本地与否，配置文件中为当前本地分支配置的上游设置是一定会删除的(libgit2负责)，不管是否勾选这个选项。
-    val delUpstreamPush = StateUtil.getRememberSaveableState(initValue = false)
-    val showRemoteBranchDelDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val userSpecifyRemoteName = StateUtil.getRememberSaveableState(initValue = "")  //删除远程分支时，如果remote有歧义，让用户指定一个具体remote名字
-    val curRequireDelRemoteNameIsAmbiguous = StateUtil.getRememberSaveableState(initValue = false)
+    val showLocalBranchDelDialog = rememberSaveable { mutableStateOf(false)}
+    val delUpstreamToo = rememberSaveable { mutableStateOf(false)}  //如果没上游，禁用“删除上游”勾选框，注意，这个勾选框控制的是删除本地的上游分支本地与否，配置文件中为当前本地分支配置的上游设置是一定会删除的(libgit2负责)，不管是否勾选这个选项。
+    val delUpstreamPush = rememberSaveable { mutableStateOf(false)}
+    val showRemoteBranchDelDialog = rememberSaveable { mutableStateOf(false)}
+    val userSpecifyRemoteName = rememberSaveable { mutableStateOf("")}  //删除远程分支时，如果remote有歧义，让用户指定一个具体remote名字
+    val curRequireDelRemoteNameIsAmbiguous = rememberSaveable { mutableStateOf(false)}
 
     if(showLocalBranchDelDialog.value) {
         ConfirmDialog(title = stringResource(R.string.delete_branch),
@@ -697,7 +701,7 @@ fun BranchListScreen(
         }
     }
 
-    val pushCheckBoxForRemoteBranchDelDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val pushCheckBoxForRemoteBranchDelDialog = rememberSaveable { mutableStateOf(false)}
     if(showRemoteBranchDelDialog.value) {
         ConfirmDialog(title = stringResource(R.string.delete_branch),
             okBtnEnabled = !pushCheckBoxForRemoteBranchDelDialog.value || !curRequireDelRemoteNameIsAmbiguous.value || userSpecifyRemoteName.value.isNotBlank(),
@@ -855,8 +859,8 @@ fun BranchListScreen(
     }
 
 //    val acceptHardReset = StateUtil.getRememberSaveableState(initValue = false)
-    val showResetDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val resetDialogOid = StateUtil.getRememberSaveableState(initValue = "")
+    val showResetDialog = rememberSaveable { mutableStateOf(false)}
+    val resetDialogOid = rememberSaveable { mutableStateOf("")}
 //    val resetDialogShortOid = StateUtil.getRememberSaveableState(initValue = "")
     val closeResetDialog = {
         showResetDialog.value = false
@@ -877,8 +881,8 @@ fun BranchListScreen(
 
     val clipboardManager = LocalClipboardManager.current
 
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val detailsString = rememberSaveable { mutableStateOf("")}
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.details),
@@ -892,10 +896,10 @@ fun BranchListScreen(
     }
 
 
-    val showRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val nameForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
-    val forceForRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val errMsgForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val showRenameDialog = rememberSaveable { mutableStateOf(false)}
+    val nameForRenameDialog = rememberSaveable { mutableStateOf("")}
+    val forceForRenameDialog = rememberSaveable { mutableStateOf(false)}
+    val errMsgForRenameDialog = rememberSaveable { mutableStateOf("")}
     if(showRenameDialog.value) {
         val curItem = curObjInPage.value
 
@@ -903,7 +907,7 @@ fun BranchListScreen(
             title = stringResource(R.string.rename),
             requireShowTextCompose = true,
             textCompose = {
-                Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     TextField(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -977,24 +981,23 @@ fun BranchListScreen(
 
 
     //filter相关，开始
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
     //filter相关，结束
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -1018,8 +1021,8 @@ fun BranchListScreen(
     }.value
     // 向下滚动监听，结束
 
-    val showPublishDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val forcePublish = StateUtil.getRememberSaveableState(initValue = false)
+    val showPublishDialog = rememberSaveable { mutableStateOf(false)}
+    val forcePublish = rememberSaveable { mutableStateOf(false)}
     if(showPublishDialog.value) {
         val curBranch = curObjInPage.value
         val upstream = curBranch.upstream
@@ -1105,9 +1108,7 @@ fun BranchListScreen(
 
     }
 
-    val filterList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filterList") {
-        listOf<BranchNameAndTypeDto>()
-    }
+    val filterList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<BranchNameAndTypeDto>())
 
     val getActuallyListState = {
         if(enableFilterState.value) filterListState.value else listState
@@ -1142,14 +1143,14 @@ fun BranchListScreen(
                         ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
                         }){
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.branches),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= repoAndBranch,
                                     maxLines = 1,
@@ -1531,7 +1532,7 @@ fun BranchListScreen(
         }
 
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+        val listState = if(enableFilter) rememberLazyListState() else listState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

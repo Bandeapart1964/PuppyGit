@@ -122,7 +122,7 @@ fun MainCompose() {
 
     val funName = "MainCompose"
     val appContext = LocalContext.current
-    val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.launching))
+    val loadingText = rememberSaveable { mutableStateOf(appContext.getString(R.string.launching))}
 
     val isInitDone = rememberSaveable { mutableStateOf(false) };
 

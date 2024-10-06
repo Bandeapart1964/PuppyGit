@@ -1,6 +1,7 @@
 package com.catpuppyapp.puppygit.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.VerticalAlignTop
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -42,6 +44,7 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.getParentPathEndsWithSeparator
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import java.io.File
 
 private val stateKeyTag = "DiffScreen"
@@ -74,28 +77,28 @@ fun DiffScreen(
 
     //这个值存到状态变量里之后就不用管了，与页面共存亡即可，如果旋转屏幕也没事，返回rememberSaveable可恢复
 //    val relativePathUnderRepoDecoded = (Cache.Map.getThenDel(Cache.Map.Key.diffScreen_UnderRepoPath) as? String)?:""
-    val relativePathUnderRepoState = StateUtil.getRememberSaveableState(initValue = (Cache.getByTypeThenDel<String>(underRepoPathKey)) ?: "")
+    val relativePathUnderRepoState = rememberSaveable { mutableStateOf((Cache.getByTypeThenDel<String>(underRepoPathKey)) ?: "")}
 
 //    val curRepo = rememberSaveable { mutableStateOf(RepoEntity()) }
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity())
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity())
     val fileNameOnly = remember{ derivedStateOf {  getFileNameFromCanonicalPath(relativePathUnderRepoState.value)} }
     val fileUnderRepoRelativePathOnly = remember{ derivedStateOf {getParentPathEndsWithSeparator(relativePathUnderRepoState.value)}}
 
     //考虑将这个功能做成开关，所以用状态变量存其值
     //ps: 这个值要么做成可在设置页面关闭（当然，其他与预览diff不相关的页面也行，总之别做成只能在正在执行O(nm)的diff页面开关就行），要么就默认app启动后重置为关闭，绝对不能做成只能在预览diff的页面开关，不然万一O(nm)算法太慢卡死导致这个东西关不了就尴尬了
     //20240618:目前临时开启O(nm)算法的机制是在预览diff页面三击屏幕，但app启动时会重置为关闭，日后需要添加相关设置项以方便用户使用
-    val requireBetterMatchingForCompare = StateUtil.getRememberSaveableState(initValue = false)
+    val requireBetterMatchingForCompare = rememberSaveable { mutableStateOf(false) }
 
 
-    val loading = StateUtil.getRememberSaveableState(true)
-    val needRefresh = StateUtil.getRememberSaveableState("")
+    val loading = rememberSaveable { mutableStateOf(true)}
+    val needRefresh = rememberSaveable { mutableStateOf("")}
 
-    val request = StateUtil.getRememberSaveableState("")
+    val request = rememberSaveable { mutableStateOf("")}
 
-    val listState = StateUtil.getRememberScrollState()
+    val listState = rememberScrollState()
     val fileFullPath = remember{ derivedStateOf{curRepo.value.fullSavePath + File.separator + relativePathUnderRepoState.value}}
 
-    val showBackFromExternalAppAskReloadDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showBackFromExternalAppAskReloadDialog = rememberSaveable { mutableStateOf(false)}
     if(showBackFromExternalAppAskReloadDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.reload_file),
@@ -110,8 +113,8 @@ fun DiffScreen(
     }
 
 
-    val showOpenAsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val openAsDialogFilePath = StateUtil.getRememberSaveableState(initValue = "")
+    val showOpenAsDialog = rememberSaveable { mutableStateOf(false)}
+    val openAsDialogFilePath = rememberSaveable { mutableStateOf("")}
 //    val showOpenInEditor = StateUtil.getRememberSaveableState(initValue = false)
     if(showOpenAsDialog.value) {
         OpenAsDialog(fileName=fileNameOnly.value, filePath = openAsDialogFilePath.value,
@@ -128,8 +131,8 @@ fun DiffScreen(
         }
     }
 
-    val detailsString = StateUtil.getRememberSaveableState("")
-    val showDetailsDialog = StateUtil.getRememberSaveableState(false)
+    val detailsString = rememberSaveable { mutableStateOf("")}
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
     if(showDetailsDialog.value){
         CopyableDialog(
             title = stringResource(id = R.string.details),

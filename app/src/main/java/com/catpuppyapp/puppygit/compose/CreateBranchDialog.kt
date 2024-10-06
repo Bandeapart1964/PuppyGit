@@ -16,6 +16,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -67,12 +70,12 @@ fun CreateBranchDialog(
 
     val optHEAD = 0;
     val optCommit = 1;
-    val selectedOption = StateUtil.getRememberSaveableIntState(initValue = optHEAD)
+    val selectedOption = rememberSaveable{mutableIntStateOf(optHEAD)}
     val createMethodList = listOf(appContext.getString(R.string.head), appContext.getString(R.string.commit))
-    val userInputHash = StateUtil.getRememberSaveableState(initValue = "")
+    val userInputHash = rememberSaveable { mutableStateOf("")}
 
 
-    val overwriteIfExist = StateUtil.getRememberSaveableState(initValue = false)
+    val overwriteIfExist = rememberSaveable { mutableStateOf(false)}
 
     //参数1，要创建的本地分支名；2是否基于HEAD创建分支，3如果不基于HEAD，提供一个引用名
     //只有在basedHead为假的时候，才会使用baseRefSpec

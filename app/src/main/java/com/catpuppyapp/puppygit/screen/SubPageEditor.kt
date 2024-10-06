@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.screen
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -13,6 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +43,7 @@ import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import jp.kaleidot725.texteditor.state.TextEditorState
 import jp.kaleidot725.texteditor.view.ScrollEvent
 import kotlinx.coroutines.Dispatchers
@@ -95,56 +101,56 @@ fun SubPageEditor(
 //    val editorPageRequireOpenFilePath = StateUtil.getRememberSaveableState(initValue = (Cache.getByTypeThenDel<String>(filePathKey))?:"")
 //    val needRefreshFilesPage = rememberSaveable { mutableStateOf(false) }
 
-    val editorPageShowingFilePath = StateUtil.getRememberSaveableState(initValue = (Cache.getByTypeThenDel<String>(filePathKey))?:"") //当前展示的文件的canonicalPath
-    val editorPageShowingFileIsReady = StateUtil.getRememberSaveableState(initValue =false) //当前展示的文件是否已经加载完毕
+    val editorPageShowingFilePath = rememberSaveable { mutableStateOf((Cache.getByTypeThenDel<String>(filePathKey))?:"")} //当前展示的文件的canonicalPath
+    val editorPageShowingFileIsReady = rememberSaveable { mutableStateOf(false)} //当前展示的文件是否已经加载完毕
     //TextEditor用的变量
-    val editorPageTextEditorState = StateUtil.getCustomSaveableState(
+    val editorPageTextEditorState = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "editorPageTextEditorState",
         initValue = TextEditorState.create("")
     )
-    val needRefreshEditorPage = StateUtil.getRememberSaveableState(initValue ="")
-    val editorPageIsSaving = StateUtil.getRememberSaveableState(initValue =false)
-    val editorPageIsEdited = StateUtil.getRememberSaveableState(initValue =false)
-    val showReloadDialog = StateUtil.getRememberSaveableState(initValue =false)
-    val editorPageShowingFileDto = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageShowingFileDto") { FileSimpleDto() }
-    val editorPageSnapshotedFileInfo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageSnapshotedFileInfo") { FileSimpleDto() }
+    val needRefreshEditorPage = rememberSaveable { mutableStateOf("")}
+    val editorPageIsSaving = rememberSaveable { mutableStateOf(false)}
+    val editorPageIsEdited = rememberSaveable { mutableStateOf(false)}
+    val showReloadDialog = rememberSaveable { mutableStateOf(false)}
+    val editorPageShowingFileDto = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageShowingFileDto",FileSimpleDto() )
+    val editorPageSnapshotedFileInfo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageSnapshotedFileInfo",FileSimpleDto() )
 
-    val editorPageLastScrollEvent = StateUtil.getRememberState<ScrollEvent?>(initValue = null)  //这个用remember就行，没必要在显示配置改变时还保留这个滚动状态，如果显示配置改变，直接设为null，从配置文件读取滚动位置重定位更好
-    val editorPageLazyListState = StateUtil.getRememberLazyListState()
-    val editorPageIsInitDone = StateUtil.getRememberState(initValue = false)  //这个也用remember就行，无需在配置改变时保存此状态，直接重置成false就行
-    val editorPageIsContentSnapshoted = StateUtil.getRememberState(initValue = false)  //是否已对当前内容创建了快照
-    val editorPageSearchMode = StateUtil.getRememberState(initValue = false)
-    val editorPageSearchKeyword = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageSearchKeyword") { TextFieldValue("") }
-    val editorReadOnlyMode = StateUtil.getRememberState(initValue = initReadOnly)
+    val editorPageLastScrollEvent = remember{ mutableStateOf<ScrollEvent?>(null)}  //这个用remember就行，没必要在显示配置改变时还保留这个滚动状态，如果显示配置改变，直接设为null，从配置文件读取滚动位置重定位更好
+    val editorPageLazyListState = rememberLazyListState()
+    val editorPageIsInitDone = remember{mutableStateOf(false)}  //这个也用remember就行，无需在配置改变时保存此状态，直接重置成false就行
+    val editorPageIsContentSnapshoted = remember{mutableStateOf(false)}  //是否已对当前内容创建了快照
+    val editorPageSearchMode = remember{mutableStateOf(false)}
+    val editorPageSearchKeyword = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageSearchKeyword", TextFieldValue("") )
+    val editorReadOnlyMode = remember{mutableStateOf(initReadOnly)}
 
     //如果用户pro且功能测试通过，允许使用url传来的初始值，否则一律false
-    val editorPageMergeMode = StateUtil.getRememberState(initValue = if(UserUtil.isPro() && (dev_EnableUnTestedFeature || editorMergeModeTestPassed)) initMergeMode else false)
+    val editorPageMergeMode = remember{mutableStateOf(if(UserUtil.isPro() && (dev_EnableUnTestedFeature || editorMergeModeTestPassed)) initMergeMode else false)}
 
 
     val settingsTmp = SettingsUtil.getSettingsSnapshot()  //避免状态变量里的设置项过旧，重新获取一个
-    val editorShowLineNum = StateUtil.getRememberState(initValue = settingsTmp.editor.showLineNum)
-    val editorLineNumFontSize = StateUtil.getRememberIntState(initValue = settingsTmp.editor.lineNumFontSize)
-    val editorFontSize = StateUtil.getRememberIntState(initValue = settingsTmp.editor.fontSize)
-    val editorAdjustFontSizeMode = StateUtil.getRememberState(initValue = false)
-    val editorAdjustLineNumFontSizeMode = StateUtil.getRememberState(initValue = false)
-    val editorLastSavedLineNumFontSize = StateUtil.getRememberIntState(initValue = editorLineNumFontSize.intValue)  //用来检查，如果没变，就不执行保存，避免写入硬盘
-    val editorLastSavedFontSize = StateUtil.getRememberIntState(initValue = editorFontSize.intValue)
-    val editorOpenFileErr = StateUtil.getRememberState(initValue = false)
+    val editorShowLineNum = remember{mutableStateOf(settingsTmp.editor.showLineNum)}
+    val editorLineNumFontSize = remember { mutableIntStateOf(settingsTmp.editor.lineNumFontSize)}
+    val editorFontSize = remember { mutableIntStateOf(settingsTmp.editor.fontSize)}
+    val editorAdjustFontSizeMode = remember{mutableStateOf(false)}
+    val editorAdjustLineNumFontSizeMode = remember{mutableStateOf(false)}
+    val editorLastSavedLineNumFontSize = remember { mutableIntStateOf(editorLineNumFontSize.intValue) } //用来检查，如果没变，就不执行保存，避免写入硬盘
+    val editorLastSavedFontSize = remember { mutableIntStateOf(editorFontSize.intValue)}
+    val editorOpenFileErr = remember{mutableStateOf(false)}
 
 
-    val showCloseDialog = StateUtil.getRememberSaveableState(initValue =false)
-    val editorPageRequestFromParent = StateUtil.getRememberSaveableState(initValue = "")
+    val showCloseDialog = rememberSaveable { mutableStateOf(false)}
+    val editorPageRequestFromParent = rememberSaveable { mutableStateOf("")}
 
-    val closeDialogCallback = StateUtil.getCustomSaveableState<(Boolean)->Unit>(
+    val closeDialogCallback = mutableCustomStateOf<(Boolean)->Unit>(
         keyTag = stateKeyTag,
         keyName = "closeDialogCallback",
         initValue = { requireSave:Boolean -> Unit}
     )
 
     val initLoadingText = appContext.getString(R.string.loading)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = initLoadingText)
-    val isLoading = StateUtil.getRememberSaveableState(initValue =false)
+    val loadingText = rememberSaveable { mutableStateOf(initLoadingText)}
+    val isLoading = rememberSaveable { mutableStateOf(false)}
 
     val loadingOn = {msg:String ->
         loadingText.value=msg
@@ -286,7 +292,7 @@ fun SubPageEditor(
             contentPadding = contentPadding,
 
             //editor作为子页面时其实不需要这个变量，只是调用的组件需要，又没默认值，所以姑且创建一个
-            currentHomeScreen = StateUtil.getRememberIntState(Cons.selectedItem_Repos),
+            currentHomeScreen = remember { mutableIntStateOf(Cons.selectedItem_Repos)},
 
 //            editorPageRequireOpenFilePath=editorPageRequireOpenFilePath,
             editorPageShowingFilePath=editorPageShowingFilePath,

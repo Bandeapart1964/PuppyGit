@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -26,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +37,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -68,6 +72,8 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 import com.github.git24j.core.Signature
 
@@ -89,23 +95,23 @@ fun StashListScreen(
     val inDarkTheme = Theme.inDarkTheme
 
     //获取假数据
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<StashDto>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<StashDto>())
 
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val listState = rememberLazyListState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
+    val needRefresh = rememberSaveable { mutableStateOf("")}
 
-    val curObjInPage = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curObjInPage", initValue =StashDto())
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val curObjInPage = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curObjInPage", initValue =StashDto())
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val loading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val loading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = { text:String ->
         loadingText.value=text
         loading.value=true
@@ -116,24 +122,23 @@ fun StashListScreen(
     }
 
     //filter相关，开始
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
     //filter相关，结束
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -159,8 +164,8 @@ fun StashListScreen(
 
     //Details弹窗，开始
     val clipboardManager = LocalClipboardManager.current
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val detailsString = rememberSaveable { mutableStateOf("")}
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.details),
@@ -174,15 +179,15 @@ fun StashListScreen(
     }
     //Details弹窗，结束
 
-    val showPopDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showApplyDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showDelDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showCreateDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showPopDialog = rememberSaveable { mutableStateOf(false)}
+    val showApplyDialog = rememberSaveable { mutableStateOf( false)}
+    val showDelDialog = rememberSaveable { mutableStateOf( false)}
+    val showCreateDialog = rememberSaveable { mutableStateOf( false)}
 
-    val stashMsgForCreateDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val stashMsgForCreateDialog = rememberSaveable { mutableStateOf( "")}
 
-    val gitUsername = StateUtil.getRememberSaveableState(initValue = "")
-    val gitEmail = StateUtil.getRememberSaveableState(initValue = "")
+    val gitUsername = rememberSaveable { mutableStateOf("")}
+    val gitEmail = rememberSaveable { mutableStateOf( "")}
 
     if(showPopDialog.value) {
         ConfirmDialog(
@@ -351,14 +356,14 @@ fun StashListScreen(
                         ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
                         }){
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.stash),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= repoAndBranch,
                                     maxLines = 1,
@@ -487,7 +492,7 @@ fun StashListScreen(
         }
 
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+        val listState = if(enableFilter) rememberLazyListState() else listState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -28,6 +29,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -53,6 +58,7 @@ import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -71,8 +77,8 @@ fun CredentialNewOrEdit(
 
     val appContext = LocalContext.current
 
-    val isEditMode = StateUtil.getRememberSaveableState(initValue = false)
-    val repoFromDb = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "repoFromDb", initValue = RepoEntity(id = ""))
+    val isEditMode = rememberSaveable { mutableStateOf(false)}
+    val repoFromDb = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "repoFromDb", initValue = RepoEntity(id = ""))
     //克隆完成后更新此变量，然后在重新渲染时直接返回。（注：因为无法在coroutine里调用naviUp()，所以才这样实现“存储完成返回上级页面”的功能）
 //    val isTimeNaviUp = rememberSaveable { mutableStateOf(false) }
 //
@@ -87,28 +93,28 @@ fun CredentialNewOrEdit(
 //    val gitUrl = rememberSaveable { mutableStateOf("") }
 //    val repoName = remember { mutableStateOf(TextFieldValue("")) }
 //    val repoName = mutableCustomStateOf(value = TextFieldValue(""))
-    val branch = StateUtil.getRememberSaveableState(initValue = "")
-    val depth = StateUtil.getRememberSaveableState(initValue = "")  //默认depth 为空，克隆全部；不为空则尝试解析，大于0，则传给git；小于0则克隆全部
+    val branch = rememberSaveable { mutableStateOf("")}
+    val depth = rememberSaveable { mutableStateOf("")}  //默认depth 为空，克隆全部；不为空则尝试解析，大于0，则传给git；小于0则克隆全部
 //    val credentialName = remember { mutableStateOf(TextFieldValue("")) }  //旋转手机，画面切换后值会被清，因为不是 rememberSaveable，不过rememberSaveable不适用于TextFieldValue，所以改用我写的自定义状态存储器了
-    val credentialName = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "credentialName", initValue = TextFieldValue(""))
-    val credentialVal = StateUtil.getRememberSaveableState(initValue = "")
-    val credentialPass = StateUtil.getRememberSaveableState(initValue = "")
+    val credentialName = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "credentialName", initValue = TextFieldValue(""))
+    val credentialVal = rememberSaveable { mutableStateOf("")}
+    val credentialPass = rememberSaveable { mutableStateOf("")}
 
 //    val gitUrlType = rememberSaveable { mutableIntStateOf(Cons.gitUrlTypeHttp) }
 
-    val credentialType = StateUtil.getRememberSaveableIntState(initValue = Cons.dbCredentialTypeHttp)
-    val credentialInThisPage = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "credentialInThisPage", initValue = CredentialEntity(id = ""))
-    val oldCredential = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "oldCredential", initValue = CredentialEntity(id = ""))
+    val credentialType = rememberSaveable{mutableIntStateOf(Cons.dbCredentialTypeHttp)}
+    val credentialInThisPage = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "credentialInThisPage", initValue = CredentialEntity(id = ""))
+    val oldCredential = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "oldCredential", initValue = CredentialEntity(id = ""))
 
     //获取输入焦点，弹出键盘
 //    val focusRequesterGitUrl = remember{ FocusRequester() }  // 1
 //    val focusRequesterRepoName = remember{ FocusRequester() }  // 2
-    val focusRequesterCredentialName = StateUtil.getRememberStateRawValue(initValue = FocusRequester())  // 3
+    val focusRequesterCredentialName = remember { FocusRequester() }  // 3
     val focusToNone = 0
 //    val focusToGitUrl = 1;
 //    val focusToRepoName = 2;
     val focusToCredentialName = 3;
-    val requireFocusTo = StateUtil.getRememberSaveableIntState(initValue = focusToNone)  //初始值0谁都不聚焦，修改后的值： 1聚焦url；2聚焦仓库名；3聚焦凭据名
+    val requireFocusTo = rememberSaveable{mutableIntStateOf(focusToNone)}  //初始值0谁都不聚焦，修改后的值： 1聚焦url；2聚焦仓库名；3聚焦凭据名
 
     val httpOrHttps = stringResource(R.string.http_https)
     val ssh = stringResource(R.string.ssh)
@@ -122,16 +128,16 @@ fun CredentialNewOrEdit(
     val radioOptions = listOf(httpOrHttps)  // nossh
     // 20240414 废弃ssh支持，修改结束
 
-    val credentialSelectedOption = StateUtil.getRememberSaveableIntState(initValue = optNumHttp)
+    val credentialSelectedOption = rememberSaveable{mutableIntStateOf(optNumHttp)}
 
-    val isReadyForSave = StateUtil.getRememberSaveableState(initValue = false)
+    val isReadyForSave = rememberSaveable { mutableStateOf(false)}
 
-    val passwordVisible = StateUtil.getRememberSaveableState(initValue = false)
+    val passwordVisible = rememberSaveable { mutableStateOf(false)}
 
 //    val dropDownMenuExpendState = rememberSaveable{ mutableStateOf(false) }
 
 //    val showRepoNameAlreadyExistsErr = rememberSaveable { mutableStateOf(false) }
-    val showCredentialNameAlreadyExistsErr = StateUtil.getRememberSaveableState(initValue = false)
+    val showCredentialNameAlreadyExistsErr = rememberSaveable { mutableStateOf(false)}
 //    val showRepoNameHasBadCharsErr = rememberSaveable { mutableStateOf(false) }
 
     val updateCredentialName:(TextFieldValue)->Unit = {
@@ -166,7 +172,7 @@ fun CredentialNewOrEdit(
         requireFocusTo.intValue = focusToCredentialName
     }
 
-    val showLoadingDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showLoadingDialog = rememberSaveable { mutableStateOf(false)}
 
     val doSave:()->Unit = {
         doJobThenOffLoading launch@{
@@ -216,7 +222,7 @@ fun CredentialNewOrEdit(
             }
         }
     }
-    val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
+    val loadingText = rememberSaveable { mutableStateOf(appContext.getString(R.string.loading))}
 
     val spacerPadding = 2.dp
     Scaffold(
@@ -269,7 +275,7 @@ fun CredentialNewOrEdit(
         Column (modifier = Modifier
             .padding(contentPadding)
             .fillMaxSize()
-            .verticalScroll(StateUtil.getRememberScrollState())
+            .verticalScroll(rememberScrollState())
             .padding(bottom = MyStyleKt.Padding.PageBottom)  //这个padding是为了使密码框不在底部，类似vscode中文件的最后一行也可滑到屏幕中间一样的意义
         ){
 

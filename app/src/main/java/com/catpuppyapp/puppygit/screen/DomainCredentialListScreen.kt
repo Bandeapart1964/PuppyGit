@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +39,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -75,6 +78,8 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
 
 private val TAG = "DomainCredentialListScreen"
@@ -99,14 +104,14 @@ fun DomainCredentialListScreen(
     val scope = rememberCoroutineScope()
 
 
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<DomainCredentialDto>() )
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<DomainCredentialDto>() )
     val listState = rememberLazyListState()
-    val curCredential =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curCredential", initValue = DomainCredentialDto())
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val showLoadingDialog = StateUtil.getRememberSaveableState(initValue = true)
+    val curCredential = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curCredential", initValue = DomainCredentialDto())
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val showLoadingDialog = rememberSaveable { mutableStateOf(true)}
 
     val loadingStrRes = stringResource(R.string.loading)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = loadingStrRes)
+    val loadingText = rememberSaveable { mutableStateOf( loadingStrRes)}
     val loadingOn = {text:String ->
         loadingText.value=text
         showLoadingDialog.value=true
@@ -116,12 +121,12 @@ fun DomainCredentialListScreen(
         loadingText.value=""
     }
 
-    val remote =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "remote", initValue = RemoteEntity(id=""))
-    val curRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val remote =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "remote", initValue = RemoteEntity(id=""))
+    val curRepo =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
 
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
     val doDelete = {
         doJobThenOffLoading {
             try{
@@ -134,15 +139,15 @@ fun DomainCredentialListScreen(
     }
 
 
-    val credentialList = StateUtil.getCustomSaveableStateList(stateKeyTag, "credentialList") { listOf<CredentialEntity>() }
-    val selectedCredentialIdx = StateUtil.getRememberSaveableIntState(0)
+    val credentialList = mutableCustomStateListOf(stateKeyTag, "credentialList", listOf<CredentialEntity>())
+    val selectedCredentialIdx = rememberSaveable{mutableIntStateOf(0)}
 
 
-    val showCreateOrEditDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val isCreate = StateUtil.getRememberSaveableState(initValue = false)
-    val curDomainNameErr = StateUtil.getRememberSaveableState(initValue = "")
-    val curDomainName = StateUtil.getRememberSaveableState(initValue = "")
-    val curId = StateUtil.getRememberSaveableState(initValue = "")  // current edit item id
+    val showCreateOrEditDialog = rememberSaveable { mutableStateOf( false)}
+    val isCreate = rememberSaveable { mutableStateOf(false)}
+    val curDomainNameErr = rememberSaveable { mutableStateOf("")}
+    val curDomainName = rememberSaveable { mutableStateOf("")}
+    val curId = rememberSaveable { mutableStateOf("")}  // current edit item id
 
     fun initCreateOrEditDialog(isCreateParam:Boolean, curDomainParam:String, curIdParam:String, curCredentialId:String){
         isCreate.value = isCreateParam
@@ -238,7 +243,7 @@ fun DomainCredentialListScreen(
     }
 
 
-    val showDeleteDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showDeleteDialog = rememberSaveable { mutableStateOf(false)}
 
     if(showDeleteDialog.value) {
         ConfirmDialog(
@@ -254,13 +259,12 @@ fun DomainCredentialListScreen(
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -285,12 +289,12 @@ fun DomainCredentialListScreen(
     // 向下滚动监听，结束
 
     //filter相关，开始
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
     //filter相关，结束
 
     Scaffold(
@@ -318,7 +322,7 @@ fun DomainCredentialListScreen(
 
                             }
                             if(remote.value.id.isNotEmpty()) {  //隐含 remoteId.isNotEmpty() 为 true
-                                Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                                Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                     Text(
                                         text= stringResource(id = R.string.link_mode)+": ["+remote.value.remoteName+":${curRepo.value.repoName}]",
                                         maxLines = 1,
@@ -437,7 +441,7 @@ fun DomainCredentialListScreen(
             }else {
                 list.value
             }
-            val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+            val listState = if(enableFilter) rememberLazyListState() else listState
             if(enableFilter) {  //更新filter列表state
                 filterListState.value = listState
             }

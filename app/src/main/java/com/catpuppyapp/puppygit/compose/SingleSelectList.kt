@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,7 +59,7 @@ fun<T> SingleSelectList(
     menuItemTrailIconEnable:(index:Int, value:T)->Boolean = {index, value-> true},
     menuItemTrailIconOnClick:(index:Int, value:T) ->Unit = {index, value->},
 ) {
-    val expandDropdownMenu = StateUtil.getRememberSaveableState(initValue = false)
+    val expandDropdownMenu = rememberSaveable { mutableStateOf(false) }
 
     val containerSize = remember { mutableStateOf(IntSize.Zero) }
 

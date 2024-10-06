@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -103,6 +106,8 @@ import com.catpuppyapp.puppygit.utils.getRequestDataByState
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Oid
 import com.github.git24j.core.Repository
@@ -149,9 +154,9 @@ fun CommitListScreen(
     val shortBranchName = Cache.getByTypeThenDel(shortBranchNameKey) ?: ""
 
     //"main" or "origin/main", get by ref#shorthand(), don't use full branchName, such as "refs/remotes/origin/main", will cause resolve branch failed
-    val fullOid = StateUtil.getRememberSaveableState(initValue = fullOidValue)  //这个值需要更新，但最终是否使用，取决于常量 useFullOidParam
-    val branchShortNameOrShortHashByFullOid = StateUtil.getRememberSaveableState(initValue = shortBranchName)  //如果checkout会改变此状态的值
-    val branchShortNameOrShortHashByFullOidForShowOnTitle = StateUtil.getRememberSaveableState(initValue = shortBranchName)  //显示在标题上的 "branch of repo" 字符串，当刷新页面时会更新此变量，此变量依赖branchShortNameOrShortHashByFullOid的值，所以，必须在checkout成功后更新其值（已更新），不然会显示过时信息
+    val fullOid = rememberSaveable { mutableStateOf(fullOidValue)}  //这个值需要更新，但最终是否使用，取决于常量 useFullOidParam
+    val branchShortNameOrShortHashByFullOid =rememberSaveable { mutableStateOf(shortBranchName)}  //如果checkout会改变此状态的值
+    val branchShortNameOrShortHashByFullOidForShowOnTitle = rememberSaveable { mutableStateOf(shortBranchName)}  //显示在标题上的 "branch of repo" 字符串，当刷新页面时会更新此变量，此变量依赖branchShortNameOrShortHashByFullOid的值，所以，必须在checkout成功后更新其值（已更新），不然会显示过时信息
 
     //测试旋转屏幕是否能恢复getThendel的值。测试结果：能
 //    println("fullOid: "+fullOid.value)
@@ -163,7 +168,7 @@ fun CommitListScreen(
     //获取假数据
 //    val list = remember { mutableStateListOf<CommitDto>() };
 //    val list = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyDesc = "list", initValue = mutableStateListOf<CommitDto>())
-    val list = StateUtil.getCustomSaveableStateList(
+    val list = mutableCustomStateListOf(
         keyTag = stateKeyTag,
         keyName = "list",
         initValue = listOf<CommitDto>()
@@ -174,30 +179,30 @@ fun CommitListScreen(
 //        mutableStateOf(getHolder(stateKeyTag, "list",  mutableListOf<CommitDto>()))
 //    }
     val pageCount = Cons.defaultPageCount;  //一页多少个条目
-    val nextCommitOid = StateUtil.getCustomSaveableState<Oid>(
+    val nextCommitOid = mutableCustomStateOf<Oid>(
         keyTag = stateKeyTag,
         keyName = "nextCommitOid",
         initValue = Cons.allZeroOid
     )
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
+    val listState = rememberLazyListState()
     //如果再多几个"mode"，就改用字符串判断，直接把mode含义写成常量
-    val showTopBarMenu = StateUtil.getRememberSaveableState(initValue = false)
-    val showDiffCommitDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val isSearchingMode = StateUtil.getRememberSaveableState(initValue = false)
-    val isShowSearchResultMode = StateUtil.getRememberSaveableState(initValue = false)
-    val searchKeyword = StateUtil.getRememberSaveableState(initValue = "")
-    val repoOnBranchOrDetachedHash = StateUtil.getRememberSaveableState(initValue = "")
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val showTopBarMenu = rememberSaveable { mutableStateOf(false)}
+    val showDiffCommitDialog = rememberSaveable { mutableStateOf(false)}
+    val isSearchingMode = rememberSaveable { mutableStateOf(false)}
+    val isShowSearchResultMode = rememberSaveable { mutableStateOf(false)}
+    val searchKeyword = rememberSaveable { mutableStateOf( "")}
+    val repoOnBranchOrDetachedHash = rememberSaveable { mutableStateOf( "")}
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 //    val curCommit = rememberSaveable{ mutableStateOf(CommitDto()) }
-    val curCommit = StateUtil.getCustomSaveableState(
+    val curCommit = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "curCommit",
         initValue = CommitDto()
     )
-    val curRepo = StateUtil.getCustomSaveableState(
+    val curRepo = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "curRepo",
         initValue = RepoEntity(id = "")
@@ -219,17 +224,17 @@ fun CommitListScreen(
     val requireShowToast: (String) -> Unit = Msg.requireShow
 
 
-    val loadMoreLoading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadMoreText = StateUtil.getRememberSaveableState(initValue = "")
-    val hasMore = StateUtil.getRememberSaveableState(initValue = false)
+    val loadMoreLoading = rememberSaveable { mutableStateOf(false)}
+    val loadMoreText = rememberSaveable { mutableStateOf("")}
+    val hasMore = rememberSaveable { mutableStateOf(false)}
 
 
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
+    val needRefresh = rememberSaveable { mutableStateOf("")}
 
 
     val loadingStrRes = stringResource(R.string.loading)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = loadingStrRes)
-    val showLoadingDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val loadingText = rememberSaveable { mutableStateOf(loadingStrRes)}
+    val showLoadingDialog = rememberSaveable { mutableStateOf(false)}
 
     val loadingOn = { msg:String->
         loadingText.value = msg
@@ -305,9 +310,9 @@ fun CommitListScreen(
     }
 
     val clipboardManager = LocalClipboardManager.current
-    val showViewDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val viewDialogText = StateUtil.getRememberSaveableState(initValue = "")
-    val viewDialogTitle = StateUtil.getRememberSaveableState(initValue = "")
+    val showViewDialog = rememberSaveable { mutableStateOf(false)}
+    val viewDialogText = rememberSaveable { mutableStateOf("")}
+    val viewDialogTitle = rememberSaveable { mutableStateOf("")}
 
     val requireShowViewDialog = { title: String, text: String ->
         viewDialogTitle.value = title
@@ -395,11 +400,11 @@ fun CommitListScreen(
 //    val checkoutSelectedOption = StateUtil.getRememberSaveableIntState(initValue = checkoutOptionDefault)
 //    val checkoutRemoteCreateBranchName = StateUtil.getRememberSaveableState(initValue = "")
 //    val checkoutUserInputCommitHash = StateUtil.getRememberSaveableState(initValue = "")
-    val requireUserInputCommitHash = StateUtil.getRememberSaveableState(initValue = false)
+    val requireUserInputCommitHash = rememberSaveable { mutableStateOf(false)}
 //    val forceCheckout = StateUtil.getRememberSaveableState(initValue = false)
-    val showCheckoutDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showCheckoutDialog = rememberSaveable { mutableStateOf(false)}
     //当前长按commit在列表中的索引，用来更新单个条目时使用，为-1时无效，不要执行操作
-    val curCommitIndex = StateUtil.getRememberSaveableIntState(initValue = -1)
+    val curCommitIndex = rememberSaveable{mutableIntStateOf(-1)}
 //    val initCheckoutDialog = { requireUserInputHash:Boolean ->
 //        checkoutSelectedOption.intValue = checkoutOptionDefault
 //        requireUserInputCommitHash.value = requireUserInputHash
@@ -420,31 +425,30 @@ fun CommitListScreen(
 
 
     //filter相关，开始
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
-
+    val filterModeOn = rememberSaveable { mutableStateOf(false)
+}
     //存储符合过滤条件的条目在源列表中的真实索引。本列表索引对应filter list条目索引，值对应原始列表索引
-    val filterIdxList = StateUtil.getCustomSaveableStateList(
+    val filterIdxList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
-        keyName = "filterIdxList"
-    ) {
+        keyName = "filterIdxList",
         listOf<Int>()
-    }
+    )
 
     //filter相关，结束
 
 
-    val nameOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val overwriteIfNameExistOfNewTag = StateUtil.getRememberSaveableState(initValue = false)  // force
-    val showDialogOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val hashOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val msgOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
+    val nameOfNewTag = rememberSaveable { mutableStateOf("")}
+    val overwriteIfNameExistOfNewTag = rememberSaveable { mutableStateOf(false)}  // force
+    val showDialogOfNewTag = rememberSaveable { mutableStateOf(false)}
+    val hashOfNewTag = rememberSaveable { mutableStateOf( "")}
+    val msgOfNewTag = rememberSaveable { mutableStateOf( "")}
 //    val requireUserInputHashOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val annotateOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
+    val annotateOfNewTag = rememberSaveable { mutableStateOf(false)}
     val initNewTagDialog = { hash:String ->
         hashOfNewTag.value = hash  //把hash设置为当前选中的commit的hash
 
@@ -539,9 +543,9 @@ fun CommitListScreen(
     }
 
 
-    val resetOid = StateUtil.getRememberSaveableState(initValue = "")
+    val resetOid = rememberSaveable { mutableStateOf("")}
 //    val acceptHardReset = StateUtil.getRememberSaveableState(initValue = false)
-    val showResetDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showResetDialog = rememberSaveable { mutableStateOf(false)}
     val closeResetDialog = {
         showResetDialog.value = false
     }
@@ -618,8 +622,8 @@ fun CommitListScreen(
 
     }
 
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf( false)}
+    val detailsString = rememberSaveable { mutableStateOf( "")}
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = "'${curCommit.value.shortOidStr}'"+ " " +stringResource(id = R.string.details),
@@ -635,17 +639,10 @@ fun CommitListScreen(
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val requireBlinkIdx = StateUtil.getRememberSaveableIntState(
-        initValue = -1
-    )
+    val requireBlinkIdx = rememberSaveable{mutableIntStateOf(-1)}
 
-    val filterListState = StateUtil.getCustomSaveableState(
-        keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
-        LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    val filterListState =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filterListState", LazyListState(0,0))
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -670,8 +667,8 @@ fun CommitListScreen(
     // 向下滚动监听，结束
 
 
-    val diffCommitsDialogCommit1 = StateUtil.getRememberSaveableState(initValue = "")
-    val diffCommitsDialogCommit2 = StateUtil.getRememberSaveableState(initValue = "")
+    val diffCommitsDialogCommit1 = rememberSaveable { mutableStateOf("")}
+    val diffCommitsDialogCommit2 = rememberSaveable { mutableStateOf("")}
     if(showDiffCommitDialog.value) {
         DiffCommitsDialog(
             showDiffCommitDialog,
@@ -682,8 +679,8 @@ fun CommitListScreen(
     }
 
 
-    val savePatchPath= StateUtil.getRememberSaveableState(initValue = "")
-    val showSavePatchSuccessDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val savePatchPath= rememberSaveable { mutableStateOf("")}
+    val showSavePatchSuccessDialog = rememberSaveable { mutableStateOf(false)}
 
     if(showSavePatchSuccessDialog.value) {
         val path = savePatchPath.value
@@ -703,12 +700,10 @@ fun CommitListScreen(
 
 
 
-    val showCreatePatchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val createPatchTargetHash = StateUtil.getRememberSaveableState(initValue = "")
-    val createPatchParentHash = StateUtil.getRememberSaveableState(initValue = "")
-    val createPatchParentList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "createPatchParentList") {
-        listOf<String>()
-    }
+    val showCreatePatchDialog = rememberSaveable { mutableStateOf(false)}
+    val createPatchTargetHash = rememberSaveable { mutableStateOf("")}
+    val createPatchParentHash = rememberSaveable { mutableStateOf("")}
+    val createPatchParentList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "createPatchParentList", listOf<String>())
 
     val initCreatePatchDialog = { targetFullHash:String, defaultParentFullHash:String, parentList:List<String> ->
         createPatchParentList.value.clear()
@@ -860,13 +855,11 @@ fun CommitListScreen(
 
 
 
-    val showCherrypickDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val cherrypickTargetHash = StateUtil.getRememberSaveableState(initValue = "")
-    val cherrypickParentHash = StateUtil.getRememberSaveableState(initValue = "")
-    val cherrypickParentList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "cherrypickParentList") {
-        listOf<String>()
-    }
-    val cherrypickAutoCommit = StateUtil.getRememberSaveableState(initValue = false)
+    val showCherrypickDialog = rememberSaveable { mutableStateOf(false)}
+    val cherrypickTargetHash = rememberSaveable { mutableStateOf("")}
+    val cherrypickParentHash = rememberSaveable { mutableStateOf("")}
+    val cherrypickParentList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "cherrypickParentList", listOf<String>())
+    val cherrypickAutoCommit = rememberSaveable { mutableStateOf(false)}
 
     val initCherrypickDialog = { targetFullHash:String, defaultParentFullHash:String, parentList:List<String> ->
         cherrypickParentList.value.clear()
@@ -1411,7 +1404,7 @@ fun CommitListScreen(
             list.value
         }
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+        val listState = if(enableFilter) rememberLazyListState() else listState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,6 +40,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -80,6 +83,8 @@ import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 
 private val TAG = "TagListScreen"
@@ -106,18 +111,18 @@ fun TagListScreen(
     val inDarkTheme = Theme.inDarkTheme
 
     //获取假数据
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<TagDto>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<TagDto>())
 
-    val filterList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<TagDto>())
+    val filterList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<TagDto>())
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val listState = rememberLazyListState()
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val loading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val loading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = { text:String ->
         loadingText.value=text
         loading.value=true
@@ -129,13 +134,13 @@ fun TagListScreen(
 
 
 
-    val nameOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val overwriteIfNameExistOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val showDialogOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val hashOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
-    val msgOfNewTag = StateUtil.getRememberSaveableState(initValue = "")
+    val nameOfNewTag = rememberSaveable { mutableStateOf("")}
+    val overwriteIfNameExistOfNewTag = rememberSaveable { mutableStateOf(false)}
+    val showDialogOfNewTag = rememberSaveable { mutableStateOf(false)}
+    val hashOfNewTag = rememberSaveable { mutableStateOf( "")}
+    val msgOfNewTag = rememberSaveable { mutableStateOf( "")}
 //    val requireUserInputHashOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
-    val annotateOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
+    val annotateOfNewTag = rememberSaveable { mutableStateOf(false)}
     val initNewTagDialog = { hash:String ->
 //        hashOfNewTag.value = hash  //这里不重置hash值了，感觉不重置用户体验更好？
 
@@ -158,8 +163,8 @@ fun TagListScreen(
     }
 
     // BottomBar相关变量，开始
-    val multiSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val selectedItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "selectedItemList") { listOf<TagDto>() }
+    val multiSelectionMode = rememberSaveable { mutableStateOf(false) }
+    val selectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "selectedItemList", listOf<TagDto>())
     val quitSelectionMode = {
         selectedItemList.value.clear()  //清空选中文件列表
         multiSelectionMode.value=false  //关闭选择模式
@@ -218,8 +223,8 @@ fun TagListScreen(
 
     // hardReset start
 //    val acceptHardReset = StateUtil.getRememberSaveableState(initValue = false)
-    val resetOid = StateUtil.getRememberSaveableState(initValue = "")
-    val showResetDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val resetOid = rememberSaveable { mutableStateOf("") }
+    val showResetDialog = rememberSaveable { mutableStateOf(false) }
     val closeResetDialog = {
         showResetDialog.value = false
     }
@@ -251,7 +256,7 @@ fun TagListScreen(
 
 
     //checkout start
-    val showCheckoutDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showCheckoutDialog = rememberSaveable { mutableStateOf(false) }
     val invalidCurItemIndex = -1  //本页面不要更新被选中执行checkout的条目，所以设个无效id即可
 
     //初始化 checkout对话框
@@ -293,8 +298,8 @@ fun TagListScreen(
 
     val clipboardManager = LocalClipboardManager.current
 
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false) }
+    val detailsString = rememberSaveable { mutableStateOf("") }
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.details),
@@ -339,43 +344,40 @@ fun TagListScreen(
         },
     )
 
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false) }
 
 
-    val showTagFetchPushDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showForce = StateUtil.getRememberSaveableState(initValue = false)
-    val remoteList = StateUtil.getCustomSaveableStateList(
+    val showTagFetchPushDialog = rememberSaveable { mutableStateOf(false) }
+    val showForce = rememberSaveable { mutableStateOf( false) }
+    val remoteList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
-        keyName = "remoteList"
-    ) {
+        keyName = "remoteList",
         listOf<String>()
-    }
-    val selectedRemoteList = StateUtil.getCustomSaveableStateList(
+    )
+    val selectedRemoteList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
-        keyName = "selectedRemoteList"
-    ) {
+        keyName = "selectedRemoteList",
         listOf<String>()
-    }
+    )
 
-    val remoteCheckedList = StateUtil.getCustomSaveableStateList(
+    val remoteCheckedList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
-        keyName = "remoteCheckedList"
-    ) {
+        keyName = "remoteCheckedList",
         listOf<Boolean>()
-    }
+    )
 
-    val fetchPushDialogTitle = StateUtil.getRememberSaveableState(initValue = "")
+    val fetchPushDialogTitle = rememberSaveable { mutableStateOf("") }
 
-    val trueFetchFalsePush = StateUtil.getRememberSaveableState(initValue = true)
-    val requireDel = StateUtil.getRememberSaveableState(initValue = false)
-    val requireDelRemoteChecked = StateUtil.getRememberSaveableState(initValue = false)
+    val trueFetchFalsePush = rememberSaveable { mutableStateOf(true) }
+    val requireDel = rememberSaveable { mutableStateOf(false) }
+    val requireDelRemoteChecked = rememberSaveable { mutableStateOf(false) }
 
-    val loadingTextForFetchPushDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val loadingTextForFetchPushDialog = rememberSaveable { mutableStateOf("") }
 
     if(showTagFetchPushDialog.value) {
         TagFetchPushDialog(
@@ -452,13 +454,12 @@ fun TagListScreen(
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
-        LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+        keyName = "filterListState",
+        initValue = LazyListState(0,0)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false) }
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -501,8 +502,8 @@ fun TagListScreen(
     )
 
 
-    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
-    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    val showSelectedItemsShortDetailsDialog = rememberSaveable { mutableStateOf(false) }
+    val selectedItemsShortDetailsStr = rememberSaveable { mutableStateOf("") }
     if(showSelectedItemsShortDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.selected_str),
@@ -549,14 +550,14 @@ fun TagListScreen(
                         ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
                         }){
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.tags),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= repoAndBranch,
                                     maxLines = 1,
@@ -658,7 +659,7 @@ fun TagListScreen(
                     .fillMaxSize()
                     .padding(contentPadding)
 //                        .padding(bottom = 80.dp)  //不要在这加padding，如果想加，应在底部加个padding row
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
                 ,
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -728,7 +729,7 @@ fun TagListScreen(
                 list.value
             }
 
-            val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+            val listState = if(enableFilter) rememberLazyListState() else listState
             if(enableFilter) {  //更新filter列表state
                 filterListState.value = listState
             }

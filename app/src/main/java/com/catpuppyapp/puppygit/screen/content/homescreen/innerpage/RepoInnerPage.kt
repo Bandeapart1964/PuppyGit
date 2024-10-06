@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,8 +36,10 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,6 +97,8 @@ import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.strHasIllegalChars
 import com.github.git24j.core.Clone
 import com.github.git24j.core.Remote
@@ -149,7 +155,7 @@ fun RepoInnerPage(
     val activity = ActivityUtil.getCurrentActivity()
 
     //back handler block start
-    val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
+    val isBackHandlerEnable = rememberSaveable { mutableStateOf(true)}
     val backHandlerOnBack = ComposeHelper.getDoubleClickBackHandler(appContext = appContext, openDrawer = openDrawer, exitApp = exitApp)
     //注册BackHandler，拦截返回键，实现双击返回和返回上级目录
     BackHandler(enabled = isBackHandlerEnable.value, onBack = {
@@ -163,10 +169,10 @@ fun RepoInnerPage(
 
     val inDarkTheme = Theme.inDarkTheme
 
-    val requireBlinkIdx = StateUtil.getRememberSaveableIntState(-1)
+    val requireBlinkIdx = rememberSaveable{mutableIntStateOf(-1)}
 
-    val isLoading = StateUtil.getRememberSaveableState(initValue = true)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
+    val isLoading = rememberSaveable { mutableStateOf(true)}
+    val loadingText = rememberSaveable { mutableStateOf(appContext.getString(R.string.loading))}
     val loadingOn = {text:String->
         loadingText.value = text
         isLoading.value=true
@@ -184,15 +190,15 @@ fun RepoInnerPage(
 //    ShowToast(showToast, toastMsg)
     val requireShowToast:(String)->Unit = Msg.requireShowLongDuration
 
-    val filterList = StateUtil.getCustomSaveableStateList(stateKeyTag, "filterList") { listOf<RepoEntity>() }
+    val filterList = mutableCustomStateListOf( stateKeyTag, "filterList", listOf<RepoEntity>() )
 
     val errWhenQuerySettingsFromDbStrRes = stringResource(R.string.err_when_querying_settings_from_db)
     val saved = stringResource(R.string.saved)
 
 //    val showSetGlobalGitUsernameAndEmailDialog = rememberSaveable { mutableStateOf(false) }
     val setGlobalGitUsernameAndEmailStrRes = stringResource(R.string.set_global_username_and_email)
-    val globalUsername = StateUtil.getRememberSaveableState(initValue = "")
-    val globalEmail = StateUtil.getRememberSaveableState(initValue = "")
+    val globalUsername = rememberSaveable { mutableStateOf("")}
+    val globalEmail = rememberSaveable { mutableStateOf("")}
 
     // global username and email dialog
     if(showSetGlobalGitUsernameAndEmailDialog.value) {
@@ -235,9 +241,9 @@ fun RepoInnerPage(
 
     val setCurRepoGitUsernameAndEmailStrRes = stringResource(R.string.set_username_and_email_for_repo)
 
-    val showSetCurRepoGitUsernameAndEmailDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val curRepoUsername = StateUtil.getRememberSaveableState(initValue = "")
-    val curRepoEmail = StateUtil.getRememberSaveableState(initValue = "")
+    val showSetCurRepoGitUsernameAndEmailDialog = rememberSaveable { mutableStateOf( false)}
+    val curRepoUsername = rememberSaveable { mutableStateOf("")}
+    val curRepoEmail = rememberSaveable { mutableStateOf( "")}
     // repo username and email dialog
     if(showSetCurRepoGitUsernameAndEmailDialog.value) {
         AskGitUsernameAndEmailDialog(
@@ -280,8 +286,8 @@ fun RepoInnerPage(
 
     }
 
-    val importRepoPath = StateUtil.getRememberSaveableState("")
-    val isReposParentFolderForImport = StateUtil.getRememberSaveableState(false)
+    val importRepoPath = rememberSaveable { mutableStateOf("") }
+    val isReposParentFolderForImport = rememberSaveable { mutableStateOf(false) }
 
     if(showImportRepoDialog.value) {
         ConfirmDialog(
@@ -289,7 +295,7 @@ fun RepoInnerPage(
             requireShowTextCompose = true,
             textCompose = {
                 Column(modifier = Modifier
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
                     .fillMaxWidth()
                     .padding(5.dp)
                 ) {
@@ -720,9 +726,9 @@ fun RepoInnerPage(
 
     }
 
-    val showDelRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val willDeleteRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "willDeleteRepo", initValue = RepoEntity(id=""))
-    val requireDelFilesOnDisk = StateUtil.getRememberSaveableState(initValue = false)
+    val showDelRepoDialog = rememberSaveable { mutableStateOf(false)}
+    val willDeleteRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "willDeleteRepo", initValue = RepoEntity(id=""))
+    val requireDelFilesOnDisk = rememberSaveable { mutableStateOf(false)}
     val requireDelRepo = {expectDelRepo:RepoEntity ->
         willDeleteRepo.value = expectDelRepo
         requireDelFilesOnDisk.value = false
@@ -830,9 +836,9 @@ fun RepoInnerPage(
 
     }
 
-    val showRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val repoNameForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
-    val errMsgForRenameDialog = StateUtil.getRememberSaveableState(initValue = "")
+    val showRenameDialog = rememberSaveable { mutableStateOf(false)}
+    val repoNameForRenameDialog = rememberSaveable { mutableStateOf( "")}
+    val errMsgForRenameDialog = rememberSaveable { mutableStateOf("")}
     if(showRenameDialog.value) {
         val curRepo = curRepo.value
 
@@ -840,7 +846,7 @@ fun RepoInnerPage(
             title = stringResource(R.string.rename_repo),
             requireShowTextCompose = true,
             textCompose = {
-                Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     TextField(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -914,7 +920,7 @@ fun RepoInnerPage(
     }
 
 
-    val showUnshallowDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showUnshallowDialog = rememberSaveable { mutableStateOf(false)}
     if(showUnshallowDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.unshallow),
@@ -975,9 +981,9 @@ fun RepoInnerPage(
     }
 
     //点击某个仓库卡片上的status文案，把仓库存上，方便弹窗执行后续操作
-    val statusClickedRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "statusClickedRepo") { RepoEntity(id="") }
+    val statusClickedRepo =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "statusClickedRepo", RepoEntity(id=""))
 
-    val showRequireActionsDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showRequireActionsDialog = rememberSaveable { mutableStateOf(false)}
     if(showRequireActionsDialog.value) {
         val targetRepo = statusClickedRepo.value
 
@@ -1207,7 +1213,7 @@ fun RepoInnerPage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(StateUtil.getRememberScrollState())
+                .verticalScroll(rememberScrollState())
 
                 ,
             verticalArrangement = Arrangement.Center,
@@ -1242,7 +1248,7 @@ fun RepoInnerPage(
 
 
     // 向下滚动监听，开始
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else repoPageListState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -1295,7 +1301,7 @@ fun RepoInnerPage(
             repoList.value
         }
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else repoPageListState
+        val listState = if(enableFilter) rememberLazyListState() else repoPageListState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

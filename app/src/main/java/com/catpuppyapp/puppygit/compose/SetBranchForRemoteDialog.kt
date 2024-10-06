@@ -16,6 +16,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,11 +49,11 @@ fun SetBranchForRemoteDialog(
     onOk: (remoteName:String, isAll: Boolean, branchCsvStr: String) -> Unit
 ) {
     val appContext = LocalContext.current
-    val isAll = StateUtil.getRememberSaveableState(initValue = isAllInitValue)
+    val isAll = rememberSaveable { mutableStateOf(isAllInitValue)}
 //    val branchList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "branchList") {
 //        listOf<String>()
 //    }
-    val branchCsvStr = StateUtil.getRememberSaveableState(initValue = "")
+    val branchCsvStr = rememberSaveable { mutableStateOf("")}
     val strListSeparator = Cons.stringListSeparator
 
     AlertDialog(

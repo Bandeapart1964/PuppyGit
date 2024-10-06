@@ -15,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
@@ -64,7 +66,7 @@ fun ChangeListPageActions(
     val isWorktreePage = fromTo == Cons.gitDiffFromIndexToWorktree
     val navController = AppModel.singleInstanceHolder.navController
     val appContext = AppModel.singleInstanceHolder.appContext
-    val dropDownMenuExpendState = StateUtil.getRememberSaveableState(initValue = false)
+    val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false) }
 
     val repoIsDetached = dbIntToBool(changeListCurRepo.value.isDetached)
 //    val hasTmpStatus = changeListCurRepo.value.tmpStatus.isNotBlank()  //为了避免和repoCard执行的操作冲突，检查下此变量

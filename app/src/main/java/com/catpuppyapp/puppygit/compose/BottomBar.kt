@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
@@ -114,7 +115,7 @@ fun BottomBar(
             }
 
             Row(
-                modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState()),
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.End  //加这个为了让图标靠右边，使列表从最右往左排，和最左边的关闭按钮分开
             ){
                 Row (

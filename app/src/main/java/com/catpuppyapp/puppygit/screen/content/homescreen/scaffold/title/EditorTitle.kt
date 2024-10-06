@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
@@ -94,7 +95,7 @@ fun EditorTitle(editorPageShowingFilePath: MutableState<String>,
 //                        modifier = Modifier, //避免默认的fillMaxWidth()导致显示不出箭头图标
                     )
             }else {
-                Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState()),
+                Row(modifier = Modifier.horizontalScroll(rememberScrollState()),
                     verticalAlignment = Alignment.CenterVertically
                 ) {  //话说这名如果超了，在Row上加个滚动属性让用户能滚动查看，怎么样？（20240411加了，测试了下，勉强能用，还行，好！
                     if(readOnly) {
@@ -111,7 +112,7 @@ fun EditorTitle(editorPageShowingFilePath: MutableState<String>,
                         color = if(editorPageMergeMode) MyStyleKt.TextColor.danger else Color.Unspecified
                     )
                 }
-                Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                     Text(
                         text = filePathNoFileNameNoEndSlash,
                         fontSize = 11.sp,

@@ -8,6 +8,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -21,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -28,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -65,6 +69,8 @@ import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 
 private val TAG = "ReflogListScreen"
@@ -91,21 +97,21 @@ fun ReflogListScreen(
     val inDarkTheme = Theme.inDarkTheme
 
     //获取假数据
-    val curClickItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curClickItem", initValue = ReflogEntryDto())
-    val curLongClickItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curLongClickItem", initValue = ReflogEntryDto())
+    val curClickItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curClickItem", initValue = ReflogEntryDto())
+    val curLongClickItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curLongClickItem", initValue = ReflogEntryDto())
 
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<ReflogEntryDto>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<ReflogEntryDto>())
 
-    val filterList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<ReflogEntryDto>())
+    val filterList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filterList", initValue = listOf<ReflogEntryDto>())
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val listState = StateUtil.getRememberLazyListState()
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
+    val listState = rememberLazyListState()
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val loading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val loading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = { text:String ->
         loadingText.value=text
         loading.value=true
@@ -117,8 +123,8 @@ fun ReflogListScreen(
 
 
     val clipboardManager = LocalClipboardManager.current
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val detailsString = StateUtil.getRememberSaveableState(initValue = "")
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val detailsString = rememberSaveable { mutableStateOf("")}
     if(showDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.details),
@@ -130,24 +136,23 @@ fun ReflogListScreen(
             Msg.requireShow(appContext.getString(R.string.copied))
         }
     }
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
 
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -172,12 +177,12 @@ fun ReflogListScreen(
     // 向下滚动监听，结束
 
 
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 
-    val checkoutNew = StateUtil.getRememberSaveableState(initValue = false)
-    val requireUserInputCommitHash = StateUtil.getRememberSaveableState(initValue = false)
-    val showCheckoutDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val checkoutNew = rememberSaveable { mutableStateOf( false)}
+    val requireUserInputCommitHash = rememberSaveable { mutableStateOf(false)}
+    val showCheckoutDialog = rememberSaveable { mutableStateOf(false)}
     //初始化组件版本的checkout对话框
     val initCheckoutDialog = { requireUserInputHash:Boolean ->
         requireUserInputCommitHash.value = requireUserInputHash
@@ -219,9 +224,9 @@ fun ReflogListScreen(
     }
 
 
-    val resetOid = StateUtil.getRememberSaveableState(initValue = "")
-    val resetNew = StateUtil.getRememberSaveableState(initValue = false)
-    val showResetDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val resetOid = rememberSaveable { mutableStateOf("")}
+    val resetNew = rememberSaveable { mutableStateOf( false)}
+    val showResetDialog = rememberSaveable { mutableStateOf(false)}
     val closeResetDialog = {
         showResetDialog.value = false
     }
@@ -272,14 +277,14 @@ fun ReflogListScreen(
                         ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
                         }){
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.reflog),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= repoAndBranch,
                                     maxLines = 1,
@@ -416,7 +421,7 @@ fun ReflogListScreen(
             list.value
         }
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else listState
+        val listState = if(enableFilter) rememberLazyListState() else listState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

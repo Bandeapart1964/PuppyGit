@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -20,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,12 +70,12 @@ fun ChangeListTitle(
 
     val inDarkTheme = Theme.inDarkTheme
 
-    val dropDownMenuExpendState = StateUtil.getRememberSaveableState(initValue = false)
-    val needReQueryRepoList = StateUtil.getRememberSaveableState(initValue = "")
+    val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false)}
+    val needReQueryRepoList = rememberSaveable { mutableStateOf("")}
 
 
-    val needShowRepoState = StateUtil.getRememberSaveableState(initValue = false)
-    val repoStateText = StateUtil.getRememberSaveableState(initValue = "")
+    val needShowRepoState = rememberSaveable { mutableStateOf(false)}
+    val repoStateText = rememberSaveable { mutableStateOf("")}
 
     //设置仓库状态，主要是为了显示merge
     Libgit2Helper.setRepoStateText(repoState.intValue, needShowRepoState, repoStateText, appContext)
@@ -132,7 +135,7 @@ fun ChangeListTitle(
             ) {
                 Row(
                     modifier = Modifier
-                        .horizontalScroll(StateUtil.getRememberScrollState())
+                        .horizontalScroll(rememberScrollState())
 
                     ,
 //                    .heightIn(max=MyStyleKt.Title.lineHeight)  //弃用，因为会使字体上下部分都显示不全！
@@ -151,7 +154,7 @@ fun ChangeListTitle(
                 }
                 Row(
                     modifier = Modifier
-                        .horizontalScroll(StateUtil.getRememberScrollState()),
+                        .horizontalScroll(rememberScrollState()),
                 ){
 
                     Text(

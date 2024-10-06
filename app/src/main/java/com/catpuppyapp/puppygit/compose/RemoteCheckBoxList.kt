@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,9 +42,9 @@ fun RemoteCheckBoxList(
         }
     }
 
-    val selectAll = StateUtil.getRememberSaveableState(initValue = getSelectedAllState())
+    val selectAll = rememberSaveable { mutableStateOf(getSelectedAllState())}
 
-    val checkedListState = checkedList.map { StateUtil.getRememberSaveableState(initValue = it) }
+    val checkedListState = checkedList.map { rememberSaveable { mutableStateOf(it) }}
 
     val selectItem = { name:String->
         UIHelper.selectIfNotInSelectedListElseNoop(name, selectedList)
@@ -52,7 +54,7 @@ fun RemoteCheckBoxList(
         selectedList.remove(name)
     }
 
-    val showChildren = StateUtil.getRememberSaveableState(initValue = false)
+    val showChildren = rememberSaveable { mutableStateOf(false)}
 
     Row (
         verticalAlignment = Alignment.CenterVertically,

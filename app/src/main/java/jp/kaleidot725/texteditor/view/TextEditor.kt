@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -65,6 +66,7 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import jp.kaleidot725.texteditor.controller.EditorController
 import jp.kaleidot725.texteditor.state.TextEditorState
 import java.io.File
@@ -143,13 +145,13 @@ fun TextEditor(
     //没找到合适的方法手动启用，因此默认启用，暂时没更改的场景
     val allowKeyboard = remember { mutableStateOf(true) }
 
-    val nextSearchPos = StateUtil.getCustomSaveableState(
+    val nextSearchPos = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "nextSearchPos",
         initValue = SearchPos.NotFound
     )
 
-    val lastFoundPos = StateUtil.getCustomSaveableState(
+    val lastFoundPos = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "lastFoundPos",
         initValue = SearchPos.NotFound
@@ -391,7 +393,7 @@ fun TextEditor(
             textCompose = {
                 Column(
                     modifier=Modifier.fillMaxWidth()
-                        .verticalScroll(StateUtil.getRememberScrollState())
+                        .verticalScroll(rememberScrollState())
                     ,
                 ) {
 
@@ -657,7 +659,7 @@ fun TextEditor(
             Column(modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPaddingValues)
-                .verticalScroll(StateUtil.getRememberScrollState())
+                .verticalScroll(rememberScrollState())
                 ,
             ) {
                 // noop

@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,6 +46,7 @@ import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Diff
 import com.github.git24j.core.Repository
 
@@ -78,9 +82,9 @@ fun DiffContent(
     val appContext = AppModel.singleInstanceHolder.appContext
     val inDarkTheme = Theme.inDarkTheme
 
-    val diffItem = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "diffItem", initValue = DiffItemSaver())
+    val diffItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "diffItem", initValue = DiffItemSaver())
 
-    val submoduleIsDirty = StateUtil.getRememberSaveableState(false)
+    val submoduleIsDirty = rememberSaveable { mutableStateOf(false)}
 
     val oldLineAt = stringResource(R.string.old_line_at)
     val newLineAt = stringResource(R.string.new_line_at)
@@ -118,7 +122,7 @@ fun DiffContent(
                 //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(StateUtil.getRememberScrollState())
+                .verticalScroll(rememberScrollState())
             ,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,

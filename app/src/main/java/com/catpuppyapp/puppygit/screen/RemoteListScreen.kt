@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -36,6 +38,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -81,6 +84,8 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Remote
 import com.github.git24j.core.Repository
 import java.net.URI
@@ -107,7 +112,7 @@ fun RemoteListScreen(
 
     //获取假数据
 //    val list = MockData.getErrorList(repoId,1,100);
-    val list = StateUtil.getCustomSaveableStateList(
+    val list = mutableCustomStateListOf(
         keyTag = stateKeyTag,
         keyName = "list",
         initValue = listOf<RemoteDto>()
@@ -119,31 +124,31 @@ fun RemoteListScreen(
 //    }
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val lazyListState = StateUtil.getRememberLazyListState()
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val lazyListState = rememberLazyListState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 //    val curObjInState = rememberSaveable{ mutableStateOf(ErrorEntity()) }
-    val curRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id="") )
-    val curObjInState = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curObjInState", initValue = RemoteDto())
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id="") )
+    val curObjInState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curObjInState", initValue = RemoteDto())
 //    val showClearAllConfirmDialog = StateUtil.getRememberSaveableState(initValue = false)
 //    val userIsPro = UserInfo.isPro()
 
 
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val showFetchAllDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val showFetchAllDialog = rememberSaveable { mutableStateOf(false)}
 
-    val showSetUrlDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val isPushUrl = StateUtil.getRememberSaveableState(initValue = false)
-    val urlTextForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
-    val oldUrlTextForSetUrlDialog = StateUtil.getRememberSaveableState(initValue = "")
-    val urlErrMsg = StateUtil.getRememberSaveableState(initValue = "")
+    val showSetUrlDialog = rememberSaveable { mutableStateOf(false)}
+    val isPushUrl = rememberSaveable { mutableStateOf(false)}
+    val urlTextForSetUrlDialog = rememberSaveable { mutableStateOf("")}
+    val oldUrlTextForSetUrlDialog = rememberSaveable { mutableStateOf("")}
+    val urlErrMsg = rememberSaveable { mutableStateOf( "")}
 
-    val showUnlinkCredentialDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val showSetBranchDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showUnlinkCredentialDialog = rememberSaveable { mutableStateOf(false)}
+    val showSetBranchDialog = rememberSaveable { mutableStateOf( false)}
 
     val defaultLoadingText = stringResource(R.string.loading)
-    val isLoading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val isLoading = rememberSaveable { mutableStateOf( false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = {msg:String ->
         loadingText.value=msg
         isLoading.value=true
@@ -153,9 +158,9 @@ fun RemoteListScreen(
         loadingText.value = defaultLoadingText
     }
 
-    val showCreateRemoteDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val remoteNameForCreate = StateUtil.getRememberSaveableState(initValue = "")
-    val remoteUrlForCreate = StateUtil.getRememberSaveableState(initValue = "")
+    val showCreateRemoteDialog = rememberSaveable { mutableStateOf(false)}
+    val remoteNameForCreate = rememberSaveable { mutableStateOf( "")}
+    val remoteUrlForCreate = rememberSaveable { mutableStateOf("")}
 
     if(showCreateRemoteDialog.value) {
         CreateRemoteDialog(
@@ -178,7 +183,7 @@ fun RemoteListScreen(
         )
     }
 
-    val showDelRemoteDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showDelRemoteDialog = rememberSaveable { mutableStateOf(false)}
     if(showDelRemoteDialog.value) {
         val remoteWillDel = curObjInState.value
         val remoteNameWillDel = remoteWillDel.remoteName
@@ -226,8 +231,8 @@ fun RemoteListScreen(
         }
     }
 
-    val showViewDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val viewDialogText = StateUtil.getRememberSaveableState(initValue = "")
+    val showViewDialog = rememberSaveable { mutableStateOf(false)}
+    val viewDialogText = rememberSaveable { mutableStateOf("")}
     val clipboardManager = LocalClipboardManager.current
     if(showViewDialog.value) {
         CopyableDialog(
@@ -602,24 +607,23 @@ fun RemoteListScreen(
         return@doFetch fetchSuccessRetVal
     }
 
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
 
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else lazyListState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -855,7 +859,7 @@ fun RemoteListScreen(
             }else {
                 list.value
             }
-            val listState = if(enableFilter) StateUtil.getRememberLazyListState() else lazyListState
+            val listState = if(enableFilter) rememberLazyListState() else lazyListState
             if(enableFilter) {  //更新filter列表state
                 filterListState.value = listState
             }

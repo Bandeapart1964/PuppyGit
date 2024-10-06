@@ -161,4 +161,8 @@ class MyStyleKt{
     object TopBar {
         val dropDownMenuTopPaddingSize = 70.dp
     }
+
+    object BottomSheet{
+        val skipPartiallyExpanded = true
+    }
 }

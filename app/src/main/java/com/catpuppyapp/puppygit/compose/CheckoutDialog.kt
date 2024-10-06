@@ -13,6 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -81,12 +84,12 @@ fun CheckoutDialog(
     )
 
 
-    val checkoutSelectedOption = StateUtil.getRememberSaveableIntState(initValue = checkoutOptionDefault)
-    val checkoutRemoteCreateBranchName = StateUtil.getRememberSaveableState(initValue = "")
-    val checkoutUserInputCommitHash = StateUtil.getRememberSaveableState(initValue = "")
-    val forceCheckout = StateUtil.getRememberSaveableState(initValue = false)
-    val dontCheckout = StateUtil.getRememberSaveableState(initValue = false)
-    val overwriteIfExist = StateUtil.getRememberSaveableState(initValue = false)
+    val checkoutSelectedOption = rememberSaveable{mutableIntStateOf(checkoutOptionDefault)}
+    val checkoutRemoteCreateBranchName = rememberSaveable { mutableStateOf("")}
+    val checkoutUserInputCommitHash = rememberSaveable { mutableStateOf("")}
+    val forceCheckout = rememberSaveable { mutableStateOf(false)}
+    val dontCheckout = rememberSaveable { mutableStateOf(false)}
+    val overwriteIfExist = rememberSaveable { mutableStateOf(false)}
 
     val getCheckoutOkBtnEnabled:()->Boolean = getCheckoutOkBtnEnabled@{
         //请求checkout时创建分支但没填分支，返回假

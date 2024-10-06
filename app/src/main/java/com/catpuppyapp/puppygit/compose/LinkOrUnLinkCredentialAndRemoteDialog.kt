@@ -5,6 +5,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.res.stringResource
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.dto.RemoteDtoForCredential
@@ -29,8 +31,8 @@ fun LinkOrUnLinkCredentialAndRemoteDialog(
 ) {
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val fetchChecked = StateUtil.getRememberSaveableState(initValue = if(targetAll) true else if(requireDoLink) thisItem.credentialId!=curItemInPage.value.id else thisItem.credentialId==curItemInPage.value.id)
-    val pushChecked = StateUtil.getRememberSaveableState(initValue = if(targetAll) true else if(requireDoLink) thisItem.pushCredentialId!=curItemInPage.value.id else thisItem.pushCredentialId==curItemInPage.value.id)
+    val fetchChecked = rememberSaveable { mutableStateOf(if(targetAll) true else if(requireDoLink) thisItem.credentialId!=curItemInPage.value.id else thisItem.credentialId==curItemInPage.value.id)}
+    val pushChecked = rememberSaveable { mutableStateOf(if(targetAll) true else if(requireDoLink) thisItem.pushCredentialId!=curItemInPage.value.id else thisItem.pushCredentialId==curItemInPage.value.id)}
 
 
     AlertDialog(

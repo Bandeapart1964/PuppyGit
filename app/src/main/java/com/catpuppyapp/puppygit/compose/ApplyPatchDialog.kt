@@ -6,6 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +20,7 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.github.git24j.core.Repository
 import java.io.File
 
@@ -40,11 +43,9 @@ fun ApplyPatchDialog(
 
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val loading = StateUtil.getRememberSaveableState(true)
+    val loading = rememberSaveable { mutableStateOf(true)}
 
-    val repoList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "repoList") {
-        listOf<RepoEntity>()
-    }
+    val repoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "repoList", initValue = listOf<RepoEntity>())
 
 
     if(!loading.value) {

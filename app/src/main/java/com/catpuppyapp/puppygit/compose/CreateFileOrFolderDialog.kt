@@ -20,6 +20,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,12 +48,11 @@ fun CreateFileOrFolderDialog(
     onOk: (String, Int) -> Boolean,
 ) {
     val appContext = LocalContext.current
-    val fileName = StateUtil.getRememberSaveableState(initValue = "")
+    val fileName = rememberSaveable { mutableStateOf("")}
     val fileTypeOptions =
         listOf(stringResource(R.string.file), stringResource(R.string.folder))  // idx: 0 1
-    val (selectedFileTypeOption, onFileTypeOptionSelected) = StateUtil.getRememberSaveableIntState(
-        initValue = 0
-    )
+    val (selectedFileTypeOption, onFileTypeOptionSelected) = rememberSaveable{mutableIntStateOf(0)}
+
     val doCreate = doCreate@{
         val fileType = if (selectedFileTypeOption == 0) Cons.fileTypeFile else Cons.fileTypeFolder
         //执行用户传入的callback

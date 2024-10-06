@@ -16,6 +16,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -56,7 +58,7 @@ fun ResetDialog(
 
     )
 
-    val selectedOpt = StateUtil.getRememberSaveableIntState(initValue = optDefault)
+    val selectedOpt = rememberSaveable{mutableIntStateOf(optDefault)}
 
     AlertDialog(
         title = {

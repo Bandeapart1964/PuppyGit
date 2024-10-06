@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
@@ -46,6 +47,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -94,6 +99,8 @@ import com.catpuppyapp.puppygit.utils.getRepoNameFromGitUrl
 import com.catpuppyapp.puppygit.utils.getStoragePermission
 import com.catpuppyapp.puppygit.utils.isPathExists
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -115,7 +122,7 @@ fun CloneScreen(
 
 
     val isEditMode = repoId != null && repoId.isNotBlank() && repoId != "null"
-    val repoFromDb = StateUtil.getCustomSaveableState(keyTag=stateKeyTag, keyName = "repoFromDb", initValue = RepoEntity(id = ""))
+    val repoFromDb = mutableCustomStateOf(keyTag=stateKeyTag, keyName = "repoFromDb", initValue = RepoEntity(id = ""))
     //克隆完成后更新此变量，然后在重新渲染时直接返回。（注：因为无法在coroutine里调用naviUp()，所以才这样实现“存储完成返回上级页面”的功能）
 //    val isTimeNaviUp = rememberSaveable { mutableStateOf(false) }
 //
@@ -129,38 +136,38 @@ fun CloneScreen(
 
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir
 
-    val gitUrl = StateUtil.getRememberSaveableState(initValue = "")
+    val gitUrl = rememberSaveable { mutableStateOf("")}
 //    val repoName = remember { mutableStateOf(TextFieldValue("")) }
-    val repoName = StateUtil.getCustomSaveableState(keyTag=stateKeyTag, keyName = "repoName",  initValue = TextFieldValue(""))
-    val branch = StateUtil.getRememberSaveableState(initValue = "")
-    val depth = StateUtil.getRememberSaveableState(initValue = "")  //默认depth 为空，克隆全部；不为空则尝试解析，大于0，则传给git；小于0则克隆全部
+    val repoName = mutableCustomStateOf(keyTag=stateKeyTag, keyName = "repoName",  initValue = TextFieldValue(""))
+    val branch = rememberSaveable { mutableStateOf("")}
+    val depth = rememberSaveable { mutableStateOf("")}  //默认depth 为空，克隆全部；不为空则尝试解析，大于0，则传给git；小于0则克隆全部
 //    val credentialName = remember { mutableStateOf(TextFieldValue("")) }  //旋转手机，画面切换后值会被清，因为不是 rememberSaveable，不过rememberSaveable不适用于TextFieldValue，所以改用我写的自定义状态存储器了
-    val credentialName = StateUtil.getCustomSaveableState(keyTag=stateKeyTag, keyName = "credentialName", initValue = TextFieldValue(""))
-    val credentialVal = StateUtil.getRememberSaveableState(initValue = "")
-    val credentialPass = StateUtil.getRememberSaveableState(initValue = "")
+    val credentialName = mutableCustomStateOf(keyTag=stateKeyTag, keyName = "credentialName", initValue = TextFieldValue(""))
+    val credentialVal = rememberSaveable { mutableStateOf("")}
+    val credentialPass = rememberSaveable { mutableStateOf("")}
 
-    val gitUrlType = StateUtil.getRememberSaveableIntState(initValue = Cons.gitUrlTypeHttp)
+    val gitUrlType = rememberSaveable{mutableIntStateOf(Cons.gitUrlTypeHttp)}
 
-    val curCredentialType = StateUtil.getRememberSaveableIntState(initValue = Cons.dbCredentialTypeHttp)
+    val curCredentialType = rememberSaveable{mutableIntStateOf(Cons.dbCredentialTypeHttp)}
 //    val credentialListHttp = MockData.getAllCredentialList(type = Cons.dbCredentialTypeHttp)
 //    val credentialListSsh = MockData.getAllCredentialList(type = Cons.dbCredentialTypeSsh)
-    val credentialHttpList = StateUtil.getCustomSaveableStateList(keyTag=stateKeyTag, keyName = "credentialHttpList", initValue = listOf<CredentialEntity>())
-    val credentialSshList = StateUtil.getCustomSaveableStateList(keyTag=stateKeyTag, keyName = "credentialSshList", initValue = listOf<CredentialEntity>())
+    val credentialHttpList = mutableCustomStateListOf(keyTag=stateKeyTag, keyName = "credentialHttpList", initValue = listOf<CredentialEntity>())
+    val credentialSshList = mutableCustomStateListOf(keyTag=stateKeyTag, keyName = "credentialSshList", initValue = listOf<CredentialEntity>())
     //这个用我写的自定义状态存储器没意义，因为如果屏幕旋转（手机的显示设置改变），本质上就会重新创建组件，重新加载列表，除非改成如果列表不为空，就不查询，但那样意义不大
 //    val curCredentialList:SnapshotStateList<CredentialEntity> = remember { mutableStateListOf() }  //切换http和ssh后里面存对应的列表
 
-    val selectedCredentialId= StateUtil.getRememberSaveableState(initValue = "")
-    val selectedCredentialName= StateUtil.getRememberSaveableState(initValue = "")
+    val selectedCredentialId= rememberSaveable { mutableStateOf("")}
+    val selectedCredentialName= rememberSaveable { mutableStateOf("")}
 
     //获取输入焦点，弹出键盘
-    val focusRequesterGitUrl = StateUtil.getRememberStateRawValue(initValue = FocusRequester())  // 1
-    val focusRequesterRepoName = StateUtil.getRememberStateRawValue(initValue = FocusRequester())  // 2
-    val focusRequesterCredentialName = StateUtil.getRememberStateRawValue(initValue = FocusRequester())  // 3
+    val focusRequesterGitUrl = remember { FocusRequester()}  // 1
+    val focusRequesterRepoName = remember { FocusRequester()}  // 2
+    val focusRequesterCredentialName = remember { FocusRequester()}  // 3
     val focusToNone = 0
     val focusToGitUrl = 1;
     val focusToRepoName = 2;
     val focusToCredentialName = 3;
-    val requireFocusTo = StateUtil.getRememberSaveableIntState(initValue = focusToNone)  //初始值0谁都不聚焦，修改后的值： 1聚焦url；2聚焦仓库名；3聚焦凭据名
+    val requireFocusTo = rememberSaveable{mutableIntStateOf(focusToNone)}  //初始值0谁都不聚焦，修改后的值： 1聚焦url；2聚焦仓库名；3聚焦凭据名
 
     val noCredential = stringResource(R.string.no_credential)
     val newCredential = stringResource(R.string.new_credential)
@@ -172,20 +179,20 @@ fun CloneScreen(
     val optNumSelectCredential = 2
     val optNumMatchCredentialByDomain = 3
     val credentialRadioOptions = listOf(noCredential, newCredential, selectCredential, matchCredentialByDomain)  // 编号: 文本
-    val (credentialSelectedOption, onCredentialOptionSelected) = StateUtil.getRememberSaveableIntState(initValue = optNumNoCredential)
+    val (credentialSelectedOption, onCredentialOptionSelected) = rememberSaveable{mutableIntStateOf(optNumNoCredential)}
 
-    val (isRecursiveClone, onIsRecursiveCloneStateChange) = StateUtil.getRememberSaveableState(false)
-    val (isSingleBranch, onIsSingleBranchStateChange) = StateUtil.getRememberSaveableState(false)
+    val (isRecursiveClone, onIsRecursiveCloneStateChange) = rememberSaveable { mutableStateOf(false)}
+    val (isSingleBranch, onIsSingleBranchStateChange) = rememberSaveable { mutableStateOf(false)}
 
-    val isReadyForClone = StateUtil.getRememberSaveableState(false)
+    val isReadyForClone = rememberSaveable { mutableStateOf(false)}
 
-    val passwordVisible =StateUtil.getRememberSaveableState(false)
+    val passwordVisible =rememberSaveable { mutableStateOf(false)}
 
-    val dropDownMenuExpendState = StateUtil.getRememberSaveableState(false)
+    val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false)}
 
-    val showRepoNameAlreadyExistsErr = StateUtil.getRememberSaveableState(false)
-    val showCredentialNameAlreadyExistsErr =StateUtil.getRememberSaveableState(false)
-    val showRepoNameHasIllegalCharsOrTooLongErr = StateUtil.getRememberSaveableState(false)
+    val showRepoNameAlreadyExistsErr = rememberSaveable { mutableStateOf(false)}
+    val showCredentialNameAlreadyExistsErr =rememberSaveable { mutableStateOf(false)}
+    val showRepoNameHasIllegalCharsOrTooLongErr = rememberSaveable { mutableStateOf(false)}
 
     val updateRepoName:(TextFieldValue)->Unit = {
         val newVal = it
@@ -249,7 +256,7 @@ fun CloneScreen(
 
     //vars of storage select begin
     val settings = SettingsUtil.getSettingsSnapshot()
-    val storagePathList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "storagePathList") {
+    val getStoragePathList = {
         // internal storage at first( index 0 )
 //        val list = mutableListOf<String>(appContext.getString(R.string.internal_storage))
         val list = mutableListOf<String>(allRepoParentDir.canonicalPath)
@@ -259,18 +266,15 @@ fun CloneScreen(
 
         list
     }
+    val storagePathList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "storagePathList", initValue = getStoragePathList())
 
-    val storagePathSelectedPath = StateUtil.getRememberSaveableState {
-        settings.storagePathLastSelected.ifBlank { storagePathList.value[0] }
-    }
+    val storagePathSelectedPath = rememberSaveable { mutableStateOf(settings.storagePathLastSelected.ifBlank { storagePathList.value[0] })}
 
-    val storagePathSelectedIndex = StateUtil.getRememberSaveableIntState {
-        storagePathList.value.toList().indexOf(storagePathSelectedPath.value)
-    }
+    val storagePathSelectedIndex = rememberSaveable{mutableIntStateOf(storagePathList.value.toList().indexOf(storagePathSelectedPath.value))}
 
-    val showAddStoragePathDialog = StateUtil.getRememberSaveableState(false)
+    val showAddStoragePathDialog = rememberSaveable { mutableStateOf(false)}
 
-    val storagePathForAdd = StateUtil.getRememberSaveableState("")
+    val storagePathForAdd = rememberSaveable { mutableStateOf("")}
 
     //vars of  storage select end
 
@@ -281,7 +285,7 @@ fun CloneScreen(
             requireShowTextCompose = true,
             textCompose = {
                 Column(modifier = Modifier
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
                     .fillMaxWidth()
                     .padding(5.dp)
                 ) {
@@ -347,7 +351,7 @@ fun CloneScreen(
 
 
 
-    val showLoadingDialog = StateUtil.getRememberSaveableState(false)
+    val showLoadingDialog = rememberSaveable { mutableStateOf(false)}
 
     val doSave:()->Unit = {
         /*查询repo名以及repo在仓库存储目录是否已经存在，若存在，设 isReadyForClone为假，调用setRepoNameExistAndFocus()提示用户改名
@@ -492,7 +496,7 @@ fun CloneScreen(
     }
 
 
-    val loadingText = StateUtil.getRememberSaveableState(initValue = appContext.getString(R.string.loading))
+    val loadingText = rememberSaveable { mutableStateOf(appContext.getString(R.string.loading))}
 
     val spacerPadding = 2.dp
     Scaffold(
@@ -540,7 +544,7 @@ fun CloneScreen(
         Column (modifier = Modifier
             .padding(contentPadding)
             .fillMaxSize()
-            .verticalScroll(StateUtil.getRememberScrollState())
+            .verticalScroll(rememberScrollState())
             .padding(bottom = MyStyleKt.Padding.PageBottom)  //这个padding是为了使密码框不在底部，类似vscode中文件的最后一行也可滑到屏幕中间一样的意义
         ){
             TextField(

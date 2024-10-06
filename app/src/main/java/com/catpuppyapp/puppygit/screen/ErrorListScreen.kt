@@ -6,6 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -20,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +59,8 @@ import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
 
 private val TAG = "ErrorListScreen"
@@ -79,7 +83,7 @@ fun ErrorListScreen(
 
     //获取假数据
 //    val list = MockData.getErrorList(repoId,1,100);
-    val list = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "list", initValue = listOf<ErrorEntity>())
+    val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<ErrorEntity>())
 //    val sumPage = MockData.getErrorSum(repoId)
 
     val requireShowToast:(String)->Unit = Msg.requireShow
@@ -89,13 +93,13 @@ fun ErrorListScreen(
 
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
-    val lazyListState = StateUtil.getRememberLazyListState()
-    val needRefresh = StateUtil.getRememberSaveableState(initValue = "")
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val lazyListState = rememberLazyListState()
+    val needRefresh = rememberSaveable { mutableStateOf("")}
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 //    val curObjInState = rememberSaveable{ mutableStateOf(ErrorEntity()) }
-    val curObjInState = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curObjInState",initValue = ErrorEntity())
-    val showClearAllConfirmDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val curObjInState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curObjInState",initValue = ErrorEntity())
+    val showClearAllConfirmDialog = rememberSaveable { mutableStateOf(false)}
 
     val doClearAll={
         doJobThenOffLoading {
@@ -108,23 +112,22 @@ fun ErrorListScreen(
         }
     }
 
-    val filterKeyword = StateUtil.getCustomSaveableState(
+    val filterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filterKeyword",
         initValue = TextFieldValue("")
     )
-    val filterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val filterModeOn = rememberSaveable { mutableStateOf(false)}
 
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = StateUtil.getCustomSaveableState(
+    val filterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "filterListState"
-    ) {
+        keyName = "filterListState",
         LazyListState(0,0)
-    }
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    )
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else lazyListState.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -307,7 +310,7 @@ fun ErrorListScreen(
             list.value
         }
 
-        val listState = if(enableFilter) StateUtil.getRememberLazyListState() else lazyListState
+        val listState = if(enableFilter) rememberLazyListState() else lazyListState
         if(enableFilter) {  //更新filter列表state
             filterListState.value = listState
         }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -22,9 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -54,6 +57,8 @@ import com.catpuppyapp.puppygit.utils.addPrefix
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
 
 //for debug
@@ -82,13 +87,13 @@ fun TreeToTreeChangeListScreen(
 ) {
     //避免导航出现 "//" 导致导航失败
     //因为title要改变这个值，所以用State
-    val commit1OidStrState = StateUtil.getRememberSaveableState(initValue = commit1OidStr)
+    val commit1OidStrState = rememberSaveable { mutableStateOf(commit1OidStr) }
     if(commit1OidStrState.value.isBlank()) {
         commit1OidStrState.value = Cons.allZeroOid.toString()
     }
     val commit2OidStr = commit2OidStr.ifBlank { Cons.allZeroOid.toString() }
 
-    val commitParentList = StateUtil.getCustomSaveableStateList(
+    val commitParentList = mutableCustomStateListOf(
         keyTag = stateKeyTag,
         keyName = "commitParentList",
         initValue = listOf<String>()
@@ -108,33 +113,32 @@ fun TreeToTreeChangeListScreen(
     val appContext = AppModel.singleInstanceHolder.appContext
 
     //取出title desc，存到状态变量里，与页面共存亡就行
-    val titleDesc = StateUtil.getRememberSaveableState(initValue = (Cache.getByTypeThenDel<String>(titleDescKey))?:"")
+    val titleDesc = rememberSaveable { mutableStateOf((Cache.getByTypeThenDel<String>(titleDescKey))?:"") }
 
     //替换成我的cusntomstateSaver，然后把所有实现parcellzier的类都取消实现parcellzier，改成用我的saver
 //    val curRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
 //    val curRepo = mutableCustomStateOf(value = RepoEntity())
 
-    val changeListRefreshRequiredByParentPage =StateUtil.getRememberSaveableState(initValue = "")
+    val changeListRefreshRequiredByParentPage = rememberSaveable { mutableStateOf("") }
     val changeListRequireRefreshFromParentPage = {
-        //TODO 显示个loading遮罩啥的
         changeStateTriggerRefreshPage(changeListRefreshRequiredByParentPage)
     }
 //    val changeListCurRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
-    val changeListCurRepo = StateUtil.getCustomSaveableState(
+    val changeListCurRepo = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "changeListCurRepo",
         initValue = RepoEntity(id="")
     )
-    val changeListIsShowRepoList = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageHasIndexItem = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListIsShowRepoList = rememberSaveable { mutableStateOf(false) }
+    val changeListPageHasIndexItem = rememberSaveable { mutableStateOf(false) }
     val changeListShowRepoList = {
         changeListIsShowRepoList.value = true
     }
-    val changeListIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageNoRepo = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageHasNoConflictItems = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListIsFileSelectionMode = rememberSaveable { mutableStateOf(false) }
+    val changeListPageNoRepo = rememberSaveable { mutableStateOf(false) }
+    val changeListPageHasNoConflictItems = rememberSaveable { mutableStateOf(false) }
 
-    val swap = StateUtil.getRememberSaveableState(initValue = false)
+    val swap = rememberSaveable { mutableStateOf(false) }
 //    val isDiffToHead = StateUtil.getRememberSaveableState(initValue = false)
 
 
@@ -155,32 +159,31 @@ fun TreeToTreeChangeListScreen(
 //    val needRefreshEditorPage = rememberSaveable { mutableStateOf("") }
 //    val changeListRequirePull = rememberSaveable { mutableStateOf(false) }
 //    val changeListRequirePush = rememberSaveable { mutableStateOf(false) }
-    val requireDoActFromParent = StateUtil.getRememberSaveableState(initValue = false)
-    val requireDoActFromParentShowTextWhenDoingAct = StateUtil.getRememberSaveableState(initValue = "")
-    val enableAction = StateUtil.getRememberSaveableState(initValue = true)
-    val repoState = StateUtil.getRememberSaveableIntState(initValue = Repository.StateT.NONE.bit)  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
+    val requireDoActFromParent = rememberSaveable { mutableStateOf(false) }
+    val requireDoActFromParentShowTextWhenDoingAct = rememberSaveable { mutableStateOf("") }
+    val enableAction = rememberSaveable { mutableStateOf(true) }
+    val repoState = rememberSaveable{mutableIntStateOf(Repository.StateT.NONE.bit)}  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
     val fromTo = Cons.gitDiffFromTreeToTree
-    val changeListPageItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changeListPageItemListState = StateUtil.getRememberLazyListState()
-    val changeListPageSelectedItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemListState = rememberLazyListState()
+    val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
 
-    val changeListPageFilterKeyWord = StateUtil.getCustomSaveableState(
+    val changeListPageFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "changeListPageFilterKeyWord",
         initValue = TextFieldValue("")
     )
-    val changeListPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListPageFilterModeOn = rememberSaveable { mutableStateOf(false) }
 
-    val changelistFilterListState = StateUtil.getCustomSaveableState(
+    val changelistFilterListState = mutableCustomStateOf(
         keyTag = stateKeyTag,
-        keyName = "changelistFilterListState"
-    ) {
+        keyName = "changelistFilterListState",
         LazyListState(0,0)
-    }
+    )
 
 
-    val showParentListDropDownMenu = StateUtil.getRememberSaveableState(initValue = false)
+    val showParentListDropDownMenu = rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),

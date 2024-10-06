@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -42,8 +44,11 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -109,6 +114,8 @@ import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import java.io.File
 
 private val TAG = "FilesInnerPage"
@@ -156,7 +163,7 @@ fun FilesInnerPage(
     val activity = ActivityUtil.getCurrentActivity()
 
 
-    val settingsSnapshot = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
+    val settingsSnapshot = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
 
 
 
@@ -172,12 +179,7 @@ fun FilesInnerPage(
 //    val filesPageSelectionBarHeight = 60.dp
 //    val filesPageSelectionBarBackgroundColor = MaterialTheme.colorScheme.primaryContainer
 
-    val filterList = StateUtil.getCustomSaveableStateList(
-        keyTag = stateKeyTag,
-        keyName = "filterList"
-    ) {
-        listOf<FileItemDto>()
-    }
+    val filterList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filterList", listOf<FileItemDto>())
 
 //    val selFilePathListJsonObjStr = rememberSaveable{ mutableStateOf("{}") }  //key是文件名，所以这个列表只能存储相同目录下的文件，不同目录有可能名称冲突，但由于选择模式只能在当前目录选择，所以这个缺陷可以接受。json格式:{fileName:canonicalPath}
 //    val opType = remember{ mutableStateOf("") }
@@ -192,7 +194,7 @@ fun FilesInnerPage(
 
 
 //    val currentPathBreadCrumbList = remember{ mutableStateListOf<FileItemDto>() }
-    val currentPathBreadCrumbList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "currentPathBreadCrumbList", initValue = listOf<FileItemDto>())
+    val currentPathBreadCrumbList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "currentPathBreadCrumbList", initValue = listOf<FileItemDto>())
 
     //实现了点击更新list并且避免并发修改异常，但我发现，只要每次在切换路径后重新生成一下面包屑就行了，虽然代码执行起来可能有点麻烦，效率可能差一点点，但是逻辑更简单而且，总之没必要整这么麻烦，废弃这个方案了
 //    val currentPathBreadCrumbList = remember{ mutableIntStateOf(1) }  //为0时刚进页面，初始化，后续为1时读取list1修改list2，为2时读取list2修改list1，避免并发修改异常
@@ -226,19 +228,19 @@ fun FilesInnerPage(
     }
 
 
-    val renameFileItemDto = StateUtil.getCustomSaveableState(
+    val renameFileItemDto = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "renameFileItemDto",
         initValue = FileItemDto()
     )
-    val renameFileName = StateUtil.getCustomSaveableState(
+    val renameFileName = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "renameFileName",
         initValue = TextFieldValue("")
     )
-    val renameHasErr = StateUtil.getRememberSaveableState(initValue = false)
-    val renameErrText = StateUtil.getRememberSaveableState(initValue = "")
-    val showRenameDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val renameHasErr = rememberSaveable { mutableStateOf(false)}
+    val renameErrText = rememberSaveable { mutableStateOf( "")}
+    val showRenameDialog = rememberSaveable { mutableStateOf(false)}
     val updateRenameFileName:(TextFieldValue)->Unit = {
         val newVal = it
         val oldVal = renameFileName.value
@@ -260,8 +262,8 @@ fun FilesInnerPage(
         changeStateTriggerRefreshPage(needRefreshFilesPage)
     }
 
-    val showGoToPathDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val pathToGo = StateUtil.getRememberSaveableState(initValue = "")
+    val showGoToPathDialog = rememberSaveable { mutableStateOf(false)}
+    val pathToGo = rememberSaveable { mutableStateOf("")}
     if(showGoToPathDialog.value) {
         ConfirmDialog(
             requireShowTextCompose = true,
@@ -321,8 +323,8 @@ fun FilesInnerPage(
 
 
 
-    val showApplyAsPatchDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val fileFullPathForApplyAsPatch =  StateUtil.getRememberSaveableState(initValue = "")
+    val showApplyAsPatchDialog = rememberSaveable { mutableStateOf(false)}
+    val fileFullPathForApplyAsPatch =  rememberSaveable { mutableStateOf("")}
 
     if(showApplyAsPatchDialog.value) {
         ApplyPatchDialog(
@@ -348,9 +350,9 @@ fun FilesInnerPage(
     }
 
 
-    val showOpenAsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val openAsDialogFilePath = StateUtil.getRememberSaveableState(initValue = "")
-    val showOpenInEditor = StateUtil.getRememberSaveableState(initValue = false)
+    val showOpenAsDialog = rememberSaveable { mutableStateOf( false)}
+    val openAsDialogFilePath = rememberSaveable { mutableStateOf( "")}
+    val showOpenInEditor = rememberSaveable { mutableStateOf(false)}
     val fileNameForOpenAsDialog = remember{ derivedStateOf { getFileNameFromCanonicalPath(openAsDialogFilePath.value) } }
 
     if(showOpenAsDialog.value) {
@@ -480,17 +482,17 @@ fun FilesInnerPage(
         }
     )
 
-    val isImportMode = StateUtil.getRememberSaveableState(initValue = false)
-    val showImportResultDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val isImportMode = rememberSaveable { mutableStateOf(false)}
+    val showImportResultDialog = rememberSaveable { mutableStateOf(false)}
 //    val successImportList = rememberSaveable { mutableStateListOf<String>() }
 //    val failedImportList = rememberSaveable { mutableStateListOf<String>() }
-    val failedImportListStr = StateUtil.getRememberSaveableState(initValue = "")
-    val successImportCount = StateUtil.getRememberSaveableIntState(initValue = 0)
-    val failedImportCount = StateUtil.getRememberSaveableIntState(initValue = 0)
+    val failedImportListStr = rememberSaveable { mutableStateOf("")}
+    val successImportCount = rememberSaveable{mutableIntStateOf(0)}
+    val failedImportCount = rememberSaveable{mutableIntStateOf(0)}
 
     val defaultLoadingText = appContext.getString(R.string.loading)
-    val isLoading = StateUtil.getRememberSaveableState(initValue = false)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = defaultLoadingText)
+    val isLoading = rememberSaveable { mutableStateOf(false)}
+    val loadingText = rememberSaveable { mutableStateOf(defaultLoadingText)}
     val loadingOn = { msg:String ->
         loadingText.value=msg
         isLoading.value=true
@@ -500,7 +502,7 @@ fun FilesInnerPage(
         loadingText.value=defaultLoadingText
     }
 
-    val openDirErr = StateUtil.getRememberSaveableState("")
+    val openDirErr = rememberSaveable { mutableStateOf("")}
 
     val getListState:(String)->LazyListState = { path:String ->
         // key有点太长了
@@ -514,10 +516,10 @@ fun FilesInnerPage(
             restoreListState
         }
     }
-    val breadCrumbListState = StateUtil.getRememberLazyListState()
+    val breadCrumbListState = rememberLazyListState()
 
     //back handler block start
-    val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
+    val isBackHandlerEnable = rememberSaveable { mutableStateOf(true)}
 
     val backHandlerOnBack = getBackHandler(
         appContext,
@@ -686,7 +688,7 @@ fun FilesInnerPage(
     }
 
 
-    val createFileOrFolderErrMsg = StateUtil.getRememberSaveableState(initValue = "")
+    val createFileOrFolderErrMsg = rememberSaveable { mutableStateOf("")}
     if (showCreateFileOrFolderDialog.value) {
         CreateFileOrFolderDialog(
             errMsg = createFileOrFolderErrMsg,
@@ -745,7 +747,7 @@ fun FilesInnerPage(
     }
 
     // 向下滚动监听，开始
-    val enableFilterState = StateUtil.getRememberSaveableState(initValue = false)
+    val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else curListState.value.firstVisibleItemIndex } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -785,7 +787,7 @@ fun FilesInnerPage(
             if(currentPathBreadCrumbList.value.isEmpty()) {
                 Row (modifier = Modifier
                     .padding(5.dp)
-                    .horizontalScroll(StateUtil.getRememberScrollState())
+                    .horizontalScroll(rememberScrollState())
                 ){
                     // noop
                 }
@@ -854,7 +856,7 @@ fun FilesInnerPage(
                         //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
                         .fillMaxSize()
                         .padding(contentPadding)
-                        .verticalScroll(StateUtil.getRememberScrollState())
+                        .verticalScroll(rememberScrollState())
                     ,
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -876,7 +878,7 @@ fun FilesInnerPage(
                 }
 
 
-                val listState = if(enableFilter) StateUtil.getRememberLazyListState() else curListState.value
+                val listState = if(enableFilter) rememberLazyListState() else curListState.value
                 if(enableFilter) {  //更新filter列表state
                     filterListState.value = listState
                 }
@@ -990,7 +992,7 @@ fun FilesInnerPage(
 
 
     //这个应该用remember，因为屏幕一旋转，选中列表会被清空，所以，就算显示删除对话框，也不知道该删什么
-    val showRemoveFromGitDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showRemoveFromGitDialog = rememberSaveable { mutableStateOf(false)}
     if(showRemoveFromGitDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.remove_from_git),
@@ -1056,7 +1058,7 @@ fun FilesInnerPage(
         }
     }
 
-    val showDelFileDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showDelFileDialog = rememberSaveable { mutableStateOf(false)}
     if(showDelFileDialog.value) {
         ConfirmDialog(
             title = stringResource(id = R.string.delete),
@@ -1133,19 +1135,19 @@ fun FilesInnerPage(
     val pasteMode_Move = 1
     val pasteMode_Copy = 2
     val pasteMode_None = 0  //不执行任何操作
-    val pasteMode = StateUtil.getRememberSaveableIntState(initValue = pasteMode_None)
+    val pasteMode = rememberSaveable{mutableIntStateOf(pasteMode_None)}
     val setPasteModeThenShowPasteBar = { pastModeVal:Int ->
         pasteMode.intValue = pastModeVal
         isFileSelectionMode.value=false
         isPasteMode.value=true
     }
 
-    val showExportDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showExportDialog = rememberSaveable { mutableStateOf(false)}
 
 //    val userChosenExportDirUri = StateUtil.getRememberSaveableState<Uri?>(initValue = null)
     //ActivityResultContracts.OpenMultipleDocuments() 多选文件，这个应该可用来导入，不过现在有分享，足够了，虽然分享不能导入目录
-    val exportErrorMsg = StateUtil.getRememberSaveableState(initValue = "")
-    val showExportErrorDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val exportErrorMsg = rememberSaveable { mutableStateOf("")}
+    val showExportErrorDialog = rememberSaveable { mutableStateOf(false)}
     val chooseDirLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) exportSaf@{ uri ->
         //执行导出
         if(uri!=null) {
@@ -1174,7 +1176,7 @@ fun FilesInnerPage(
         }
     }
 
-    val showInitRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showInitRepoDialog = rememberSaveable { mutableStateOf(false)}
     if(showInitRepoDialog.value) {
         val selctedDirs = selectedItems.value.filter { it.isDir }
 
@@ -1214,8 +1216,8 @@ fun FilesInnerPage(
 
     }
 
-    val showImportAsRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val isReposParentFolderForImport = StateUtil.getRememberSaveableState(initValue = false)
+    val showImportAsRepoDialog = rememberSaveable { mutableStateOf(false)}
+    val isReposParentFolderForImport = rememberSaveable { mutableStateOf(false)}
     if(showImportAsRepoDialog.value) {
         val selctedDirs = selectedItems.value.filter { it.isDir }
 
@@ -1228,7 +1230,7 @@ fun FilesInnerPage(
                 requireShowTextCompose = true,
                 textCompose = {
                     Column(modifier = Modifier
-                        .verticalScroll(StateUtil.getRememberScrollState())
+                        .verticalScroll(rememberScrollState())
                         .fillMaxWidth()
                         .padding(5.dp)
                     ) {
@@ -1294,12 +1296,12 @@ fun FilesInnerPage(
         }
     }
 
-    val showDetailsDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val details_ItemsSize = StateUtil.getRememberSaveableLongState(initValue = 0L)  // this is not items count, is file size. this size is a recursive count
-    val details_AllCount = StateUtil.getRememberSaveableIntState(initValue = 0)  // selected items count(folder + files). note: this is not a recursive count
-    val details_FilesCount = StateUtil.getRememberSaveableIntState(initValue = 0)  // files count in selected items. not recursive count
-    val details_FoldersCount = StateUtil.getRememberSaveableIntState(initValue = 0)  // folders count in selected items. not recursive count
-    val details_CountingItemsSize = StateUtil.getRememberSaveableState(initValue = false)  // indicate is calculating file size or finished
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val details_ItemsSize = rememberSaveable { mutableLongStateOf(0L) }  // this is not items count, is file size. this size is a recursive count
+    val details_AllCount = rememberSaveable{mutableIntStateOf(0)}  // selected items count(folder + files). note: this is not a recursive count
+    val details_FilesCount = rememberSaveable{mutableIntStateOf(0)}  // files count in selected items. not recursive count
+    val details_FoldersCount = rememberSaveable{mutableIntStateOf(0)}  // folders count in selected items. not recursive count
+    val details_CountingItemsSize = rememberSaveable { mutableStateOf(false)}  // indicate is calculating file size or finished
 
     if(showDetailsDialog.value) {
         ConfirmDialog2(
@@ -1308,7 +1310,7 @@ fun FilesInnerPage(
             //用compose，这样就可仅更新大小记数，size(counting...): 变化的size
             textCompose = {
                 MySelectionContainer {
-                    Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
 
                         //when only selected 1 item, show it's name and path
                         if(selectedItems.value.size==1) {
@@ -1353,8 +1355,8 @@ fun FilesInnerPage(
     }
 
 
-    val showSelectedItemsShortDetailsDialog = StateUtil.getRememberSaveableState { false }
-    val selectedItemsShortDetailsStr = StateUtil.getRememberSaveableState("")
+    val showSelectedItemsShortDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val selectedItemsShortDetailsStr = rememberSaveable { mutableStateOf("")}
     if(showSelectedItemsShortDetailsDialog.value) {
         CopyableDialog(
             title = stringResource(id = R.string.selected_str),
@@ -2136,7 +2138,7 @@ private fun getBackHandler(
     openDrawer:()->Unit
 
 ): () -> Unit {
-    val backStartSec =  StateUtil.getRememberSaveableLongState(initValue = 0)
+    val backStartSec =  rememberSaveable { mutableLongStateOf(0) }
     val pressBackAgainForExitText = stringResource(R.string.press_back_again_to_exit);
     val showTextAndUpdateTimeForPressBackBtn = {
         openDrawer()

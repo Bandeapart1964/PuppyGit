@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -30,15 +32,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.RectangleShape
@@ -89,6 +94,8 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
+import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository.StateT
 import jp.kaleidot725.texteditor.state.TextEditorState
 import jp.kaleidot725.texteditor.view.ScrollEvent
@@ -124,16 +131,16 @@ fun HomeScreen(
 
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir
 
-    val settingsSnapshot = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
-    val showWelcomeToNewUser = StateUtil.getRememberSaveableState(initValue = false)
-    val sheetState = StateUtil.getRememberModalBottomSheetState()
-    val showBottomSheet = StateUtil.getRememberSaveableState(initValue = false)
+    val settingsSnapshot = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
+    val showWelcomeToNewUser = rememberSaveable { mutableStateOf(false)}
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = MyStyleKt.BottomSheet.skipPartiallyExpanded)
+    val showBottomSheet = rememberSaveable { mutableStateOf(false)}
 
     //替换成我的cusntomstateSaver，然后把所有实现parcellzier的类都取消实现parcellzier，改成用我的saver
 //    val curRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
-    val repoPageCurRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
+    val repoPageCurRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
     //使用前检查，大于等于0才是有效索引
-    val repoPageCurRepoIndex = StateUtil.getRememberIntState(initValue = -1)
+    val repoPageCurRepoIndex = remember { mutableIntStateOf(-1)}
 
 //    val repoPageRepoList = StateUtil.getCustomSaveableState(
 //        keyTag = stateKeyTag,
@@ -141,64 +148,63 @@ fun HomeScreen(
 //        initValue =mutableListOf<RepoEntity>()
 //    )
 
-    val repoPageRepoList = StateUtil.getCustomSaveableStateList(stateKeyTag, "repoPageRepoList", listOf<RepoEntity>())
+    val repoPageRepoList = mutableCustomStateListOf(stateKeyTag, "repoPageRepoList", listOf<RepoEntity>())
 
-    val changeListRefreshRequiredByParentPage= StateUtil.getRememberSaveableState(initValue = "")
+    val changeListRefreshRequiredByParentPage= rememberSaveable { mutableStateOf( "")}
     val changeListRequireRefreshFromParentPage = {
-        //TODO 显示个loading遮罩啥的
         changeStateTriggerRefreshPage(changeListRefreshRequiredByParentPage)
     }
 //    val changeListCurRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
-    val changeListCurRepo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "changeListCurRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
-    val changeListIsShowRepoList = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListCurRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changeListCurRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
+    val changeListIsShowRepoList = rememberSaveable { mutableStateOf(false)}
     val changeListShowRepoList = {
         changeListIsShowRepoList.value=true
     }
-    val changeListIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageNoRepo = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageHasNoConflictItems = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListPageRebaseCurOfAll = StateUtil.getRememberSaveableState(initValue = "")
+    val changeListIsFileSelectionMode = rememberSaveable { mutableStateOf(false)}
+    val changeListPageNoRepo = rememberSaveable { mutableStateOf(false)}
+    val changeListPageHasNoConflictItems = rememberSaveable { mutableStateOf(false)}
+    val changeListPageRebaseCurOfAll = rememberSaveable { mutableStateOf("")}
 
-    val changeListPageFilterKeyWord = StateUtil.getCustomSaveableState(
+    val changeListPageFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "changeListPageFilterKeyWord",
         initValue = TextFieldValue("")
     )
-    val changeListPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
+    val changeListPageFilterModeOn = rememberSaveable { mutableStateOf( false)}
 
-    val repoPageFilterKeyWord = StateUtil.getCustomSaveableState(
+    val repoPageFilterKeyWord =mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "repoPageFilterKeyWord",
         initValue = TextFieldValue("")
     )
-    val repoPageFilterModeOn = StateUtil.getRememberSaveableState(initValue = false)
-    val repoPageShowImportRepoDialog = StateUtil.getRememberSaveableState(initValue = false)
-    val repoPageGoToId = StateUtil.getRememberSaveableState(initValue = "")
+    val repoPageFilterModeOn = rememberSaveable { mutableStateOf( false)}
+    val repoPageShowImportRepoDialog = rememberSaveable { mutableStateOf(false)}
+    val repoPageGoToId = rememberSaveable { mutableStateOf("")}
 
 
-    val subscriptionPageNeedRefresh = StateUtil.getRememberSaveableState(initValue = "")
+    val subscriptionPageNeedRefresh = rememberSaveable { mutableStateOf("")}
 
-    val swapForChangeListPage = StateUtil.getRememberSaveableState(initValue = false)
+    val swapForChangeListPage = rememberSaveable { mutableStateOf(false)}
 
 
 //    val editorPageRequireOpenFilePath = StateUtil.getRememberSaveableState(initValue = "") // canonicalPath
 //    val needRefreshFilesPage = rememberSaveable { mutableStateOf(false) }
-    val needRefreshFilesPage = StateUtil.getRememberSaveableState(initValue = "")
+    val needRefreshFilesPage = rememberSaveable { mutableStateOf("")}
 
 
-    val filesPageIsFileSelectionMode = StateUtil.getRememberSaveableState(initValue = false)
-    val filesPageIsPasteMode = StateUtil.getRememberSaveableState(initValue = false)
-    val filesPageSelectedItems = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageSelectedItems", initValue = listOf<FileItemDto>())
+    val filesPageIsFileSelectionMode = rememberSaveable { mutableStateOf(false)}
+    val filesPageIsPasteMode = rememberSaveable { mutableStateOf(false)}
+    val filesPageSelectedItems = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filesPageSelectedItems", initValue = listOf<FileItemDto>())
 
 
     //这个filter有点重量级，比较适合做成全局搜索之类的功能
-    val filesPageFilterMode = StateUtil.getRememberSaveableIntState(initValue = 0)  //0关闭，1正在搜索，显示输入框，2显示搜索结果
-    val filesPageFilterKeyword = StateUtil.getCustomSaveableState(
+    val filesPageFilterMode = rememberSaveable{mutableIntStateOf(0)}  //0关闭，1正在搜索，显示输入框，2显示搜索结果
+    val filesPageFilterKeyword = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filesPageFilterKeyword",
         initValue = TextFieldValue("")
     )
-    val filesPageFilterTextFieldFocusRequester = StateUtil.getRememberStateRawValue(initValue = FocusRequester())
+    val filesPageFilterTextFieldFocusRequester = remember { FocusRequester() }
     val filesPageFilterOn = {
         filesPageFilterMode.intValue = 1
 
@@ -241,70 +247,55 @@ fun HomeScreen(
         changeStateTriggerRefreshPage(needRefreshFilesPage)  //刷新页面
     }
 
-    val filesPageScrollingDown = StateUtil.getRememberSaveableState(initValue = false)
-    val filesPageListState = StateUtil.getCustomSaveableState(stateKeyTag, "filesPageListState", initValue = LazyListState(0,0))
+    val filesPageScrollingDown = rememberSaveable { mutableStateOf(false)}
+    val filesPageListState = mutableCustomStateOf(stateKeyTag, "filesPageListState", initValue = LazyListState(0,0))
 
-    val filesPageSimpleFilterOn = StateUtil.getRememberSaveableState(initValue = false)
-    val filesPageSimpleFilterKeyWord = StateUtil.getCustomSaveableState(
+    val filesPageSimpleFilterOn = rememberSaveable { mutableStateOf(false)}
+    val filesPageSimpleFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "filesPageSimpleFilterKeyWord",
         initValue = TextFieldValue("")
     )
 
-    val filesPageCurrentPath = StateUtil.getRememberSaveableState(initValue = "")
-    val showCreateFileOrFolderDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val filesPageCurrentPath = rememberSaveable { mutableStateOf("")}
+    val showCreateFileOrFolderDialog = rememberSaveable { mutableStateOf(false)}
 
-    val showSetGlobalGitUsernameAndEmailDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val showSetGlobalGitUsernameAndEmailDialog = rememberSaveable { mutableStateOf(false)}
 
 
-    val changelistFilterListState = StateUtil.getCustomSaveableState(
-        keyTag = stateKeyTag,
-        keyName = "changelistFilterListState"
-    ) {
-        LazyListState(0,0)
-    }
+    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
 
-    val filesFilterListState = StateUtil.getCustomSaveableState(
-        keyTag = stateKeyTag,
-        keyName = "filesFilterListState"
-    ) {
-        LazyListState(0,0)
-    }
-    val repoFilterListState = StateUtil.getCustomSaveableState(
-        keyTag = stateKeyTag,
-        keyName = "repoFilterListState"
-    ) {
-        LazyListState(0,0)
-    }
+    val filesFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filesFilterListState", LazyListState(0,0));
+    val repoFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "repoFilterListState", LazyListState(0,0))
 
     //当前展示的文件的canonicalPath
-    val editorPageShowingFilePath = StateUtil.getRememberSaveableState(initValue = "")
+    val editorPageShowingFilePath = rememberSaveable { mutableStateOf("")}
     //当前展示的文件是否已经加载完毕
-    val editorPageShowingFileIsReady = StateUtil.getRememberSaveableState(initValue = false)
+    val editorPageShowingFileIsReady = rememberSaveable { mutableStateOf(false)}
     //TextEditor用的变量
-    val editorPageTextEditorState = StateUtil.getCustomSaveableState(
+    val editorPageTextEditorState = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "editorPageTextEditorState",
         initValue =TextEditorState.create("")
     )
-    val editorPageShowSaveDoneToast = StateUtil.getRememberSaveableState(initValue = false)
+    val editorPageShowSaveDoneToast = rememberSaveable { mutableStateOf(false)}
 //    val needRefreshEditorPage = rememberSaveable { mutableStateOf(false) }
-    val needRefreshEditorPage = StateUtil.getRememberSaveableState(initValue = "")
-    val editorPageIsSaving = StateUtil.getRememberSaveableState(initValue = false)
-    val editorPageIsEdited = StateUtil.getRememberSaveableState(initValue = false)
-    val showReloadDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val needRefreshEditorPage = rememberSaveable { mutableStateOf("")}
+    val editorPageIsSaving = rememberSaveable { mutableStateOf(false)}
+    val editorPageIsEdited = rememberSaveable { mutableStateOf( false)}
+    val showReloadDialog = rememberSaveable { mutableStateOf( false)}
 
-    val changeListHasIndexItems = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListRequirePull = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListRequirePush = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListRequireDoActFromParent = StateUtil.getRememberSaveableState(initValue = false)
-    val changeListRequireDoActFromParentShowTextWhenDoingAct = StateUtil.getRememberSaveableState(initValue = "")
-    val changeListEnableAction = StateUtil.getRememberSaveableState(initValue = true)
-    val changeListCurRepoState = StateUtil.getRememberSaveableIntState(initValue = StateT.NONE.bit)  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
+    val changeListHasIndexItems = rememberSaveable { mutableStateOf( false)}
+    val changeListRequirePull = rememberSaveable { mutableStateOf(false)}
+    val changeListRequirePush = rememberSaveable { mutableStateOf(false)}
+    val changeListRequireDoActFromParent = rememberSaveable { mutableStateOf( false)}
+    val changeListRequireDoActFromParentShowTextWhenDoingAct = rememberSaveable { mutableStateOf("")}
+    val changeListEnableAction = rememberSaveable { mutableStateOf( true)}
+    val changeListCurRepoState = rememberSaveable{mutableIntStateOf(StateT.NONE.bit)}  //初始状态是NONE，后面会在ChangeListInnerPage检查并更新状态，只要一创建innerpage或刷新（重新执行init），就会更新此状态
     val changeListPageFromTo = Cons.gitDiffFromIndexToWorktree
-    val changeListPageItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changeListPageItemListState = StateUtil.getRememberLazyListState()
-    val changeListPageSelectedItemList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changeListPageItemListState = rememberLazyListState()
+    val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
 
     val changeListPageDropDownMenuItemOnClick={item:RepoEntity->
         //如果切换仓库，清空选中项列表
@@ -316,26 +307,26 @@ fun HomeScreen(
         changeListRequireRefreshFromParentPage()
     }
 
-    val filesPageRequireImportFile = StateUtil.getRememberSaveableState(initValue = false)
-    val importListConsumed = StateUtil.getRememberSaveableState(initValue = false)  //此变量用来确保导入模式只启动一次，避免以导入模式进入app后，进入子页面再返回再次以导入模式进入Files页面
-    val filesPageRequireImportUriList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageRequireImportUriList", initValue = listOf<Uri>())
-    val filesPageCurrentPathFileList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "filesPageCurrentPathFileList", initValue = listOf<FileItemDto>()) //路径字符串，用路径分隔符分隔后的list
-    val filesPageRequestFromParent = StateUtil.getRememberSaveableState(initValue = "")
-    val filesPageCheckOnly = StateUtil.getRememberSaveableState(initValue = false)
-    val filesPageSelectedRepo =StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "selectedRepo") { RepoEntity(id="") }
+    val filesPageRequireImportFile = rememberSaveable { mutableStateOf( false)}
+    val importListConsumed = rememberSaveable { mutableStateOf(false)}  //此变量用来确保导入模式只启动一次，避免以导入模式进入app后，进入子页面再返回再次以导入模式进入Files页面
+    val filesPageRequireImportUriList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filesPageRequireImportUriList", initValue = listOf<Uri>())
+    val filesPageCurrentPathFileList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filesPageCurrentPathFileList", initValue = listOf<FileItemDto>()) //路径字符串，用路径分隔符分隔后的list
+    val filesPageRequestFromParent = rememberSaveable { mutableStateOf("")}
+    val filesPageCheckOnly = rememberSaveable { mutableStateOf(false)}
+    val filesPageSelectedRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "selectedRepo",RepoEntity(id="") )
 
-    val initDone = StateUtil.getRememberSaveableState(initValue = false)
-    val editorPageShowCloseDialog = StateUtil.getRememberSaveableState(initValue = false)
+    val initDone = rememberSaveable { mutableStateOf(false)}
+    val editorPageShowCloseDialog = rememberSaveable { mutableStateOf(false)}
 
-    val editorPageCloseDialogCallback = StateUtil.getCustomSaveableState(
+    val editorPageCloseDialogCallback = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "editorPageCloseDialogCallback",
         initValue = { requireSave:Boolean -> }
     )
     val initLoadingText = appContext.getString(R.string.loading)
-    val loadingText = StateUtil.getRememberSaveableState(initValue = initLoadingText)
+    val loadingText = rememberSaveable { mutableStateOf(initLoadingText)}
 
-    val editorPageIsLoading = StateUtil.getRememberSaveableState(initValue = false)
+    val editorPageIsLoading = rememberSaveable { mutableStateOf(false)}
     if(editorPageIsLoading.value) {
         LoadingDialog(loadingText.value)
     }
@@ -353,27 +344,27 @@ fun HomeScreen(
 //        changeStateTriggerRefreshPage(needRefreshEditorPage)
     }
 
-    val editorPageRequestFromParent = StateUtil.getRememberSaveableState(initValue = "")
-    val editorPageShowingFileDto = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageShowingFileDto") { FileSimpleDto() }
-    val editorPageSnapshotedFileInfo = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageSnapshotedFileInfo") { FileSimpleDto() }
-    val editorPageLastScrollEvent = StateUtil.getRememberState<ScrollEvent?>(initValue = null)  //这个用remember就行，没必要在显示配置改变时还保留这个滚动状态，如果显示配置改变，直接设为null，从配置文件读取滚动位置重定位更好
-    val editorPageLazyListState = StateUtil.getRememberLazyListState()
-    val editorPageIsInitDone = StateUtil.getRememberState(initValue = false)  //这个也用remember就行，无需在配置改变时保存此状态，直接重置成false就行
-    val editorPageIsContentSnapshoted = StateUtil.getRememberState(initValue = false)  //是否已对当前内容创建了快照
-    val editorPageSearchMode = StateUtil.getRememberState(initValue = false)
-    val editorPageSearchKeyword = StateUtil.getCustomSaveableState(keyTag = stateKeyTag, keyName = "editorPageSearchKeyword") { TextFieldValue("") }
-    val editorPageMergeMode = StateUtil.getRememberState(initValue = false)
-    val editorReadOnlyMode = StateUtil.getRememberState(initValue = false)
+    val editorPageRequestFromParent = rememberSaveable { mutableStateOf("")}
+    val editorPageShowingFileDto = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageShowingFileDto",FileSimpleDto() )
+    val editorPageSnapshotedFileInfo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageSnapshotedFileInfo",FileSimpleDto())
+    val editorPageLastScrollEvent = remember{mutableStateOf<ScrollEvent?>(null)}  //这个用remember就行，没必要在显示配置改变时还保留这个滚动状态，如果显示配置改变，直接设为null，从配置文件读取滚动位置重定位更好
+    val editorPageLazyListState = rememberLazyListState()
+    val editorPageIsInitDone = remember{mutableStateOf(false)}  //这个也用remember就行，无需在配置改变时保存此状态，直接重置成false就行
+    val editorPageIsContentSnapshoted = remember{mutableStateOf(false)}  //是否已对当前内容创建了快照
+    val editorPageSearchMode = remember{mutableStateOf(false)}
+    val editorPageSearchKeyword = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "editorPageSearchKeyword",TextFieldValue("") )
+    val editorPageMergeMode = remember{mutableStateOf(false)}
+    val editorReadOnlyMode = remember{mutableStateOf(false)}
 
     val settingsTmp = SettingsUtil.getSettingsSnapshot()  //避免状态变量里的设置项过旧，重新获取一个
-    val editorShowLineNum = StateUtil.getRememberState(initValue = settingsTmp.editor.showLineNum)
-    val editorLineNumFontSize = StateUtil.getRememberIntState(initValue = settingsTmp.editor.lineNumFontSize)
-    val editorLastSavedLineNumFontSize = StateUtil.getRememberIntState(initValue = editorLineNumFontSize.intValue)  //用来检查，如果没变，就不执行保存，避免写入硬盘
-    val editorFontSize = StateUtil.getRememberIntState(initValue = settingsTmp.editor.fontSize)
-    val editorLastSavedFontSize = StateUtil.getRememberIntState(initValue = editorFontSize.intValue)
-    val editorAdjustFontSizeMode = StateUtil.getRememberState(initValue = false)
-    val editorAdjustLineNumFontSizeMode = StateUtil.getRememberState(initValue = false)
-    val editorOpenFileErr = StateUtil.getRememberState(initValue = false)
+    val editorShowLineNum = remember{mutableStateOf(settingsTmp.editor.showLineNum)}
+    val editorLineNumFontSize = remember { mutableIntStateOf( settingsTmp.editor.lineNumFontSize)}
+    val editorLastSavedLineNumFontSize = remember { mutableIntStateOf( editorLineNumFontSize.intValue) } //用来检查，如果没变，就不执行保存，避免写入硬盘
+    val editorFontSize = remember { mutableIntStateOf( settingsTmp.editor.fontSize)}
+    val editorLastSavedFontSize = remember { mutableIntStateOf( editorFontSize.intValue)}
+    val editorAdjustFontSizeMode = remember{mutableStateOf(false)}
+    val editorAdjustLineNumFontSizeMode = remember{mutableStateOf(false)}
+    val editorOpenFileErr = remember{mutableStateOf(false)}
 
 
     //给Files页面点击打开文件用的
@@ -391,7 +382,7 @@ fun HomeScreen(
         changeStateTriggerRefreshPage(needRefreshEditorPage)  //这个其实可有可无，因为一切换页面，组件会重建，必然会执行一次LaunchedEffect，也就起到了刷新的作用
     }
 
-    val needRefreshRepoPage = StateUtil.getRememberSaveableState(initValue = "")
+    val needRefreshRepoPage = rememberSaveable { mutableStateOf("")}
     val doSave: suspend () -> Unit = FsUtils.getDoSaveForEditor(
         editorPageShowingFilePath = editorPageShowingFilePath,
         editorPageLoadingOn = editorPageLoadingOn,
@@ -436,7 +427,7 @@ fun HomeScreen(
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
     val repoPageScrollingDown = remember { mutableStateOf(false) }
 
-    val changeListRepoList = StateUtil.getCustomSaveableStateList(keyTag = stateKeyTag, keyName = "changeListRepoList", initValue = listOf<RepoEntity>())
+    val changeListRepoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListRepoList", initValue = listOf<RepoEntity>())
 
 
     //用不到这段代码了，当初用这个是因为有些地方不能用Toast，后来发现直接withMainContext就可在任何地方用Toast了
@@ -563,7 +554,7 @@ fun HomeScreen(
                 modifier= Modifier
                     .fillMaxHeight()
                     .widthIn(max = 320.dp)
-                    .verticalScroll(StateUtil.getRememberScrollState())
+                    .verticalScroll(rememberScrollState())
                 ,
                 drawerShape = RectangleShape,
                 content = drawerContent(

@@ -3,12 +3,15 @@ package com.catpuppyapp.puppygit.compose
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +54,7 @@ fun TagFetchPushDialog(
 
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val force = StateUtil.getRememberSaveableState(initValue = false)
+    val force = rememberSaveable { mutableStateOf(false) }
 
     val repoId = curRepo.id
 
@@ -153,7 +156,7 @@ fun TagFetchPushDialog(
             Text(title)
         },
         text = {
-            Column(modifier = Modifier.verticalScroll(StateUtil.getRememberScrollState())) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
 
                 if(requireDel) {
                     Row(modifier = Modifier.padding(10.dp)) {

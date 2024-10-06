@@ -1,8 +1,12 @@
 package com.catpuppyapp.puppygit.screen
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.catpuppyapp.puppygit.constants.Cons
@@ -20,15 +24,15 @@ fun AppScreenNavigator() {
 
 //    val startScreen = Cons.selectedItem_Repos
     //初始启动页面的子页面（Repos/Files之类的）
-    val currentHomeScreen = StateUtil.getRememberSaveableIntState(initValue = Cons.selectedItem_Repos)
+    val currentHomeScreen = rememberSaveable{ mutableIntStateOf(Cons.selectedItem_Repos) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
 //    val scope = ComposeHelper.getCoroutineScope()
 
 //    val homeTopBarScrollBehavior = AppModel.singleInstanceHolder.homeTopBarScrollBehavior
-    val editorPageLastFilePath = StateUtil.getRememberSaveableState(initValue = "")
+    val editorPageLastFilePath = rememberSaveable { mutableStateOf("")}
 
-    val repoPageListState = StateUtil.getRememberLazyListState()
+    val repoPageListState = rememberLazyListState()
 //    val filePageListState = StateUtil.getRememberLazyListState()
     //网上拷贝的声称能记住滚动状态的lazyColumn listState，实际上，没有用，我记得默认的listState是能记住的，现在不能记住，可能是bug
 //    val repoPageListState = rememberForeverLazyListState("repo")

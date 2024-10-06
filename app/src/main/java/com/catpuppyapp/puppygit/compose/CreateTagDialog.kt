@@ -13,6 +13,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -47,11 +49,11 @@ fun CreateTagDialog(showDialog:MutableState<Boolean>,
 ) {
     val appContext = AppModel.singleInstanceHolder.appContext
 
-    val tagNameErrMsg = StateUtil.getRememberSaveableState(initValue = "")
-    val commitHashShortOrLongErrMsg = StateUtil.getRememberSaveableState(initValue = "")
-    val tagMsgErrMsg = StateUtil.getRememberSaveableState(initValue = "")
-    val gitConfigUsername = StateUtil.getRememberSaveableState(initValue = "")
-    val gitConfigEmail = StateUtil.getRememberSaveableState(initValue = "")
+    val tagNameErrMsg = rememberSaveable { mutableStateOf("")}
+    val commitHashShortOrLongErrMsg = rememberSaveable { mutableStateOf("")}
+    val tagMsgErrMsg = rememberSaveable { mutableStateOf("")}
+    val gitConfigUsername = rememberSaveable { mutableStateOf( "")}
+    val gitConfigEmail = rememberSaveable { mutableStateOf( "")}
 
     ConfirmDialog(title = appContext.getString(R.string.new_tag),
         requireShowTextCompose = true,

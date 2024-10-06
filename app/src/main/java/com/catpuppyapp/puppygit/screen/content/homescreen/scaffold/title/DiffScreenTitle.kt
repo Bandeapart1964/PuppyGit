@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -44,14 +45,14 @@ fun DiffScreenTitle(
                 request.value = PageRequest.showDetails
             }
         ) {
-            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 Text(fileName,
                     fontSize = 15.sp,
                     maxLines=1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Row(modifier = Modifier.horizontalScroll(StateUtil.getRememberScrollState())) {
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 Text(
                     text = filePath,
                     fontSize = 11.sp,

@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -41,7 +44,7 @@ fun SubscriptionPage(contentPadding: PaddingValues, needRefresh: MutableState<St
     }
 
     //back handler block start
-    val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
+    val isBackHandlerEnable = rememberSaveable { mutableStateOf(true) }
     val backHandlerOnBack = ComposeHelper.getDoubleClickBackHandler(appContext = appContext, openDrawer=openDrawer, exitApp= exitApp)
     //注册BackHandler，拦截返回键，实现双击返回和返回上级目录
     BackHandler(enabled = isBackHandlerEnable.value, onBack = {backHandlerOnBack()})
@@ -53,7 +56,7 @@ fun SubscriptionPage(contentPadding: PaddingValues, needRefresh: MutableState<St
         .padding(contentPadding)
         .padding(top = 10.dp)
         .fillMaxSize()
-        .verticalScroll(StateUtil.getRememberScrollState())
+        .verticalScroll(rememberScrollState())
         ,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
