@@ -168,8 +168,9 @@ fun ChangeListInnerPage(
 
     openDrawer:()->Unit,
     goToRepoPage:(targetRepoId:String)->Unit = {},  // only show workdir changes at ChangeList need this
-    changeListRepoList:CustomStateListSaveable<RepoEntity>?=null,
-    goToChangeListPage:(goToThisRepo:RepoEntity)->Unit={},
+    changeListRepoList:CustomStateListSaveable<RepoEntity>? =null,
+    goToChangeListPage:(goToThisRepo:RepoEntity)->Unit ={},
+    needReQueryRepoList:MutableState<String>? =null,
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
 ) {
@@ -2478,8 +2479,14 @@ fun ChangeListInnerPage(
                     createAndInsertError(curRepo.value.id, "import repo(s) err: $errMsg")
                     MyLog.e(TAG, "import repo(s) from ChangeList err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
                 }finally {
-                    // refresh for get new repos list
-                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
+                    //require refresh repo list for go to submodule after import
+                    // since only worktree(ChangeList) can go to sub, so only need trans this param at ChangeList page, index and treeToTree page no need yet
+                    if(needReQueryRepoList != null) {
+                        changeStateTriggerRefreshPage(needReQueryRepoList)
+                    }
+
+                    // refresh ChangeList page is unnecessary yet
+//                    changeStateTriggerRefreshPage(needRefreshChangeListPage)
                 }
             }
 

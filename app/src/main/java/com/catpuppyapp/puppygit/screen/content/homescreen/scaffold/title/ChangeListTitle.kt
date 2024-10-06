@@ -62,7 +62,8 @@ fun ChangeListTitle(
     listState: LazyListState,
     scope: CoroutineScope,
     enableAction:Boolean,
-    repoList:CustomStateListSaveable<RepoEntity>
+    repoList:CustomStateListSaveable<RepoEntity>,
+    needReQueryRepoList:MutableState<String>
 )
 {
     val haptic = LocalHapticFeedback.current
@@ -71,7 +72,6 @@ fun ChangeListTitle(
     val inDarkTheme = Theme.inDarkTheme
 
     val dropDownMenuExpendState = rememberSaveable { mutableStateOf(false)}
-    val needReQueryRepoList = rememberSaveable { mutableStateOf("")}
 
 
     val needShowRepoState = rememberSaveable { mutableStateOf(false)}

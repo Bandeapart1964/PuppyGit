@@ -93,7 +93,6 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository.StateT
@@ -427,6 +426,8 @@ fun HomeScreen(
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
     val repoPageScrollingDown = remember { mutableStateOf(false) }
 
+    // two usages: 1. re query repo list when click title;  2. after imported submodules at ChangeList page
+    val needReQueryRepoListForChangeListTitle = rememberSaveable { mutableStateOf("")}
     val changeListRepoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListRepoList", initValue = listOf<RepoEntity>())
 
 
@@ -612,7 +613,8 @@ fun HomeScreen(
                                     listState = changeListPageItemListState,
                                     scope = scope,
                                     enableAction = changeListEnableAction.value,
-                                    repoList = changeListRepoList
+                                    repoList = changeListRepoList,
+                                    needReQueryRepoList=needReQueryRepoListForChangeListTitle,
                                 )
                             }
                         } else if (currentHomeScreen.intValue == Cons.selectedItem_Settings) {
@@ -972,6 +974,7 @@ fun HomeScreen(
                     goToRepoPage = goToRepoPage,
                     changeListRepoList= changeListRepoList,
                     goToChangeListPage=goToChangeListPage,
+                    needReQueryRepoList = needReQueryRepoListForChangeListTitle,
                     // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
 //                    commit1OidStr = Cons.gitIndexCommitHash,
 //                    commit2OidStr = Cons.gitLocalWorktreeCommitHash
