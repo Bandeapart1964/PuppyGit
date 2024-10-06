@@ -1,8 +1,5 @@
-import org.jetbrains.kotlin.fir.expressions.FirEmptyArgumentList.arguments
-import org.jetbrains.kotlin.fir.resolve.calls.ResolvedCallArgument.DefaultArgument.arguments
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCallArgument.DefaultArgument.arguments
-
 plugins {
+
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 //    id("kotlin-android-extensions")  //不能和kotlin-parcelize一起启用
@@ -10,7 +7,12 @@ plugins {
     id("com.google.devtools.ksp")
     id("androidx.room")
 //    kotlin("jvm") version "1.9.23"
-    kotlin("plugin.serialization") version "1.9.23"
+//    kotlin("plugin.serialization")  == id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.compose")
+
+
+
 }
 val dbSchemaLocation="$projectDir/schemas"
 room {
@@ -83,7 +85,7 @@ android {
         buildConfig = true  //不开这个不能用BuildConfig，我是为了用来获取versionName和versionCode
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.12"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {
