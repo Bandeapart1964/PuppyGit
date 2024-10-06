@@ -516,24 +516,6 @@ fun FilesInnerPage(
     }
     val breadCrumbListState = StateUtil.getRememberLazyListState()
 
-    //只有当目录改变时(需要刷新页面)，才需要执行initFilesPage，选择文件之类的操作不需要执行此操作
-    val initFilesPage = getInit(currentPath, currentPathFileList, currentPathBreadCrumbList,settingsSnapshot,
-        filesPageGetFilterMode,
-        filesPageFilterKeyword,
-        curListState,
-        getListState,
-        loadingOn,
-        loadingOff,
-        appContext,
-        requireImportFile=requireImportFile,
-        requireImportUriList = requireImportUriList,
-        filesPageQuitSelectionMode = filesPageQuitSelectionMode,
-        isImportedMode = isImportMode,
-        selecteItem=selecteItem,
-        filesPageRequestFromParent = filesPageRequestFromParent,
-        openDirErr=openDirErr
-    )
-
     //back handler block start
     val isBackHandlerEnable = StateUtil.getRememberSaveableState(initValue = true)
 
@@ -1901,12 +1883,24 @@ fun FilesInnerPage(
 
 
     LaunchedEffect(needRefreshFilesPage.value) {
-        // TODO 仓库页面检查仓库状态，对所有状态为notReadyNeedClone的仓库执行clone，卡片把所有状态为notReadyNeedClone的仓库都设置成不可操作，显示正在克隆loading信息
         try {
-            //TODO 执行文件管理器页面的初始化操作
-            //  读取上次退出时的目录之类的
-            // 这里得做判断，只有启动app后第一次或从其他页面返回时，打开这个页面才从配置文件读取上次退出时的目录，如果就在主页面切换又回来，那再进就直接使用currentPath就行了
-            initFilesPage()
+            //只有当目录改变时(需要刷新页面)，才需要执行initFilesPage，选择文件之类的操作不需要执行此操作
+            doInit(currentPath, currentPathFileList, currentPathBreadCrumbList,settingsSnapshot,
+                filesPageGetFilterMode,
+                filesPageFilterKeyword,
+                curListState,
+                getListState,
+                loadingOn,
+                loadingOff,
+                appContext,
+                requireImportFile=requireImportFile,
+                requireImportUriList = requireImportUriList,
+                filesPageQuitSelectionMode = filesPageQuitSelectionMode,
+                isImportedMode = isImportMode,
+                selecteItem=selecteItem,
+                filesPageRequestFromParent = filesPageRequestFromParent,
+                openDirErr=openDirErr
+            )
 
 
         } catch (cancel: Exception) {
@@ -1918,8 +1912,7 @@ fun FilesInnerPage(
 
 
 
-@Composable
-private fun getInit(
+private fun doInit(
     currentPath: MutableState<String>,
     currentPathFileList: CustomStateListSaveable<FileItemDto>,
     currentPathBreadCrumbList: CustomStateListSaveable<FileItemDto>,
@@ -1941,7 +1934,7 @@ private fun getInit(
 //    currentPathBreadCrumbList: MutableIntState,
 //    currentPathBreadCrumbList1: SnapshotStateList<FileItemDto>,
 //    currentPathBreadCrumbList2: SnapshotStateList<FileItemDto>
-): () -> Unit = {
+){
     doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
         //如果路径为空，从配置文件读取上次打开的路径
         if(currentPath.value.isBlank()) {

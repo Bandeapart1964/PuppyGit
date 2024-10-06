@@ -1044,17 +1044,6 @@ fun RepoInnerPage(
         }
     }
 
-    val initRepoPage = getInit(
-        dbContainer = dbContainer,
-        repoDtoList = repoList,
-        cloningText = cloningText,
-        unknownErrWhenCloning = unknownErrWhenCloning,
-        loadingOn = loadingOn,
-        loadingOff = loadingOff,
-        appContext = appContext,
-        goToThisRepoId = goToThisRepoId,
-        goToThisRepoAndHighlightingIt = goToThisRepoAndHighlightingIt
-    )
 
 
     if(showBottomSheet.value) {
@@ -1380,9 +1369,19 @@ fun RepoInnerPage(
 //    }
     //compose创建时的副作用
     LaunchedEffect(needRefreshRepoPage.value) {
-        // TODO 仓库页面检查仓库状态，对所有状态为notReadyNeedClone的仓库执行clone，卡片把所有状态为notReadyNeedClone的仓库都设置成不可操作，显示正在克隆loading信息
         try {
-            initRepoPage()
+            // 仓库页面检查仓库状态，对所有状态为notReadyNeedClone的仓库执行clone，卡片把所有状态为notReadyNeedClone的仓库都设置成不可操作，显示正在克隆loading信息
+            doInit(
+                dbContainer = dbContainer,
+                repoDtoList = repoList,
+                cloningText = cloningText,
+                unknownErrWhenCloning = unknownErrWhenCloning,
+                loadingOn = loadingOn,
+                loadingOff = loadingOff,
+                appContext = appContext,
+                goToThisRepoId = goToThisRepoId,
+                goToThisRepoAndHighlightingIt = goToThisRepoAndHighlightingIt
+            )
 
         } catch (cancel: Exception) {
 //            println("LaunchedEffect: job cancelled")
@@ -1390,8 +1389,7 @@ fun RepoInnerPage(
     }
 }
 
-@Composable
-private fun getInit(
+private fun doInit(
     dbContainer: AppContainer,
     repoDtoList: CustomStateListSaveable<RepoEntity>,
     cloningText: String,
@@ -1401,7 +1399,7 @@ private fun getInit(
     appContext:Context,
     goToThisRepoId: MutableState<String>,
     goToThisRepoAndHighlightingIt:(id:String) ->Unit
-): () -> Unit = {
+){
     doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
         //执行仓库页面的初始化操作
         val repoRepository = dbContainer.repoRepository

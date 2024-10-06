@@ -2441,7 +2441,7 @@ fun ChangeListInnerPage(
             },
             onCancel = { showImportToReposDialog.value = false },
 
-            ) {
+        ) {
             showImportToReposDialog.value = false
 
             val curRepo = curRepoFromParentPage
@@ -2675,42 +2675,6 @@ fun ChangeListInnerPage(
         errMsg.value="";
     }
 
-    //执行changelist的初始化操作
-    val initChangeListPage = getInit(
-        dbContainer = dbContainer,
-        appContext = appContext,
-//        needRefresh = needRefreshChangeListPage,
-//        needRefreshParent = refreshRequiredByParentPage,
-        curRepoUpstream=curRepoUpstream,
-        isFileSelectionMode = isFileSelectionMode,
-        changeListPageNoRepo = changeListPageNoRepo,
-        changeListPageHasIndexItem = changeListPageHasIndexItem,
-        changeListPageHasWorktreeItem = changeListPageHasWorktreeItem,
-        itemList = itemList,
-        requireShowToast=requireShowToast,
-        curRepoFromParentPage = curRepoFromParentPage,
-        isLoading = isLoading,
-        selectedItemList = selectedItemList,
-        fromTo = fromTo,
-        repoState=repoState,
-        commit1OidStr = commit1OidStr,
-        commit2OidStr=commit2OidStr,
-        commitParentList=commitParentList,
-        repoId = repoId,
-        setErrMsg=setErrMsg,
-        clearErrMsg=clearErrMsg,
-        loadingOn=loadingOn,
-        loadingOff=loadingOff,
-        hasNoConflictItems=hasNoConflictItems,
-        swap=swap,
-        commitForQueryParents=commitForQueryParents,
-        rebaseCurOfAll=rebaseCurOfAll,
-        credentialList=credentialList,
-
-//        isDiffToHead=isDiffToHead,
-//        headCommitHash=headCommitHash
-//        scope
-    )
 
 //    if (needRefreshChangeListPage.value) {
 //        initChangeListPage()
@@ -3247,10 +3211,41 @@ fun ChangeListInnerPage(
 
 
     LaunchedEffect(needRefreshChangeListPage.value + refreshRequiredByParentPage.value) {
-        // TODO 仓库页面检查仓库状态，对所有状态为notReadyNeedClone的仓库执行clone，卡片把所有状态为notReadyNeedClone的仓库都设置成不可操作，显示正在克隆loading信息
         try {
-            isLoading.value=true  //不一定好使，因为initChangeListPage是异步coroutine，有可能先执行完coroutine，然后这个true才生效，那就卡loading了
-            initChangeListPage()
+            changeListInit(
+                dbContainer = dbContainer,
+                appContext = appContext,
+//        needRefresh = needRefreshChangeListPage,
+//        needRefreshParent = refreshRequiredByParentPage,
+                curRepoUpstream=curRepoUpstream,
+                isFileSelectionMode = isFileSelectionMode,
+                changeListPageNoRepo = changeListPageNoRepo,
+                changeListPageHasIndexItem = changeListPageHasIndexItem,
+                changeListPageHasWorktreeItem = changeListPageHasWorktreeItem,
+                itemList = itemList,
+                requireShowToast=requireShowToast,
+                curRepoFromParentPage = curRepoFromParentPage,
+                selectedItemList = selectedItemList,
+                fromTo = fromTo,
+                repoState=repoState,
+                commit1OidStr = commit1OidStr,
+                commit2OidStr=commit2OidStr,
+                commitParentList=commitParentList,
+                repoId = repoId,
+                setErrMsg=setErrMsg,
+                clearErrMsg=clearErrMsg,
+                loadingOn=loadingOn,
+                loadingOff=loadingOff,
+                hasNoConflictItems=hasNoConflictItems,
+                swap=swap,
+                commitForQueryParents=commitForQueryParents,
+                rebaseCurOfAll=rebaseCurOfAll,
+                credentialList=credentialList,
+
+//        isDiffToHead=isDiffToHead,
+//        headCommitHash=headCommitHash
+//        scope
+            )
 
         } catch (cancel: Exception) {
 //            LaunchedEffect: job cancelled
@@ -3265,27 +3260,26 @@ fun ChangeListInnerPage(
     }
 }
 
-@Composable
-private fun getInit(
+
+private fun changeListInit(
     dbContainer: AppContainer,
     appContext: Context,
 //    needRefresh:MutableState<String>,
 //    needRefreshParent:MutableState<String>,
-    curRepoUpstream:CustomStateSaveable<Upstream>,
-    isFileSelectionMode:MutableState<Boolean>,
+    curRepoUpstream: CustomStateSaveable<Upstream>,
+    isFileSelectionMode: MutableState<Boolean>,
     changeListPageNoRepo: MutableState<Boolean>,
     changeListPageHasIndexItem: MutableState<Boolean>,
     changeListPageHasWorktreeItem: MutableState<Boolean>,
     itemList: CustomStateListSaveable<StatusTypeEntrySaver>,
     requireShowToast:(String)->Unit,
     curRepoFromParentPage: CustomStateSaveable<RepoEntity>,
-    isLoading: MutableState<Boolean>,
-    selectedItemList:CustomStateListSaveable<StatusTypeEntrySaver>,
+    selectedItemList: CustomStateListSaveable<StatusTypeEntrySaver>,
     fromTo: String,
-    repoState:MutableIntState,
+    repoState: MutableIntState,
     commit1OidStr:String,  //只有fromTo是tree to tree时才用到这两个tree oid
     commit2OidStr:String,
-    commitParentList:CustomStateListSaveable<String>,
+    commitParentList: CustomStateListSaveable<String>,
     repoId:String,
     setErrMsg:(String)->Unit,
     clearErrMsg:()->Unit,
@@ -3294,12 +3288,12 @@ private fun getInit(
     hasNoConflictItems: MutableState<Boolean>,
     swap:Boolean,
     commitForQueryParents:String,
-    rebaseCurOfAll:MutableState<String>?,
-    credentialList:CustomStateListSaveable<CredentialEntity>,
+    rebaseCurOfAll: MutableState<String>?,
+    credentialList: CustomStateListSaveable<CredentialEntity>,
 //    isDiffToHead:MutableState<Boolean>?,
 //    headCommitHash:MutableState<String>
 //    scope:CoroutineScope
-): () -> Unit = {
+){
     doJobThenOffLoading (loadingOn, loadingOff, appContext.getString(R.string.loading)) launch@{
         try {
             val tmpCommit1 = commit1OidStr
@@ -3570,11 +3564,11 @@ private fun getInit(
 
                     //更新下仓库状态的状态变量
                     //这个值应该不会是null，除非libgit2添加了新状态，git24j没跟着添加
-                    repoState.intValue = gitRepository.state()?.bit?:Cons.gitRepoStateInvalid
+                    repoState.intValue = gitRepository.state()?.bit?: Cons.gitRepoStateInvalid
                     //如果状态是rebase，更新计数，仅在worktree页面和index页面需要查询此值，tree to tree不需要
                     //TODO 日后如果实现multi commits cherrypick，也需要添加一个cherrypick计数的变量。(另外，merge因为总是只有一个合并对象，所以不需要显示计数)
                     if(repoState.intValue == Repository.StateT.REBASE_MERGE.bit
-                        && (fromTo==Cons.gitDiffFromIndexToWorktree || fromTo==Cons.gitDiffFromHeadToIndex)
+                        && (fromTo== Cons.gitDiffFromIndexToWorktree || fromTo== Cons.gitDiffFromHeadToIndex)
                     ) {
                         rebaseCurOfAll?.value = Libgit2Helper.rebaseCurOfAllFormatted(gitRepository)
                     }
@@ -3637,6 +3631,7 @@ private fun getInit(
         }
     }
 }
+
 
 @Composable
 private fun getBackHandler(

@@ -861,30 +861,6 @@ fun EditorInnerPage(
         )
     }
 //    }
-    val initEditorPage = getInit(
-//        editorPageRequireOpenFilePath,
-        editorPageShowingFilePath,
-        editorPageShowingFileIsReady,
-        editorPageClearShowingFileErrWhenLoading,
-        editorPageTextEditorState,
-        unknownErrStrRes,
-        editorPageSetShowingFileErrWhenLoading,
-        loadingOn,
-        loadingOff,
-        appContext,
-        requestFromParent,
-        editorPageShowingFileDto = editorPageShowingFileDto,
-        isSubPageMode,
-        editorLastScrollEvent,
-        editorPageIsInitDone,
-        isEdited,
-        isSaving,
-        editorPageIsContentSnapshoted,
-        readOnlyMode,
-        editorMergeMode,
-        saveLastOpenPath
-//        editorPageOpenedFileMap,
-    )
 
     //按Home键把app切到后台时保存文件（准确地说是当前Activity失焦就自动保存，注意是Activity不是compose，这个函数监听的是Activity的生命周期事件)
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
@@ -906,7 +882,30 @@ fun EditorInnerPage(
 
     LaunchedEffect(needRefreshEditorPage.value) {
         try {
-            initEditorPage()
+            doInit(
+//        editorPageRequireOpenFilePath,
+                editorPageShowingFilePath,
+                editorPageShowingFileIsReady,
+                editorPageClearShowingFileErrWhenLoading,
+                editorPageTextEditorState,
+                unknownErrStrRes,
+                editorPageSetShowingFileErrWhenLoading,
+                loadingOn,
+                loadingOff,
+                appContext,
+                requestFromParent,
+                editorPageShowingFileDto = editorPageShowingFileDto,
+                isSubPageMode,
+                editorLastScrollEvent,
+                editorPageIsInitDone,
+                isEdited,
+                isSaving,
+                editorPageIsContentSnapshoted,
+                readOnlyMode,
+                editorMergeMode,
+                saveLastOpenPath
+//        editorPageOpenedFileMap,
+            )
 
         } catch (e: Exception) {
             MyLog.e(TAG, "EditorInnerPage#LaunchedEffect() err: ${e.stackTraceToString()}")
@@ -938,8 +937,7 @@ fun EditorInnerPage(
     }
 }
 
-@Composable
-private fun getInit(
+private fun doInit(
 //    editorPageRequireOpenFilePath: MutableState<String>,
     editorPageShowingFilePath: MutableState<String>,
     editorPageShowingFileIsReady: MutableState<Boolean>,
@@ -962,7 +960,7 @@ private fun getInit(
     mergeMode: MutableState<Boolean>,
     saveLastOpenPath:(path:String)->Unit
 
-): () -> Unit = {
+) {
     //异步读取文件内容
     //这里不需要loadingOn和loadingOff，靠editorPageShowingFileIsReady来判断是否加载完毕文件，历史遗留问题，这个页面的loading有点混乱
 //    doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)){
