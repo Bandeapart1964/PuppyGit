@@ -28,6 +28,7 @@ import com.catpuppyapp.puppygit.utils.app.upgrade.migrator.AppVersionMan
 import com.catpuppyapp.puppygit.utils.cert.CertMan
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
+import com.catpuppyapp.puppygit.utils.storagepaths.StoragePathsMan
 import com.github.git24j.core.Libgit2
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
@@ -261,7 +262,15 @@ class AppModel {
                 val requireClearSettingsEditedHistory = settings.editor.filesLastEditPosition.isNotEmpty()
                 FileOpenHistoryMan.init(limit, requireClearSettingsEditedHistory)
             }catch (e:Exception) {
-                MyLog.e(TAG, "#$funName init FileOpenHistory err:"+e.stackTraceToString())
+                MyLog.e(TAG, "#$funName init FileOpenHistoryMan err:"+e.stackTraceToString())
+            }
+
+            try {
+                val oldPaths = settings.storagePaths.ifEmpty { null }
+                val oldSelectedPath = settings.storagePathLastSelected.ifBlank { null }
+                StoragePathsMan.init(oldPaths, oldSelectedPath)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#$funName init StoragePathsMan err:"+e.stackTraceToString())
             }
 
             //初始化与谷歌play的连接，查询支付信息之类的

@@ -1,8 +1,6 @@
 package com.catpuppyapp.puppygit.screen
 
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,7 +25,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -80,7 +77,6 @@ import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.dev.shallowAndSingleBranchTestPassed
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
@@ -98,9 +94,9 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getRepoNameFromGitUrl
 import com.catpuppyapp.puppygit.utils.getStoragePermission
 import com.catpuppyapp.puppygit.utils.isPathExists
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
+import com.catpuppyapp.puppygit.utils.storagepaths.StoragePathsMan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -255,20 +251,20 @@ fun CloneScreen(
 
 
     //vars of storage select begin
-    val settings = SettingsUtil.getSettingsSnapshot()
+//    val settings = SettingsUtil.getSettingsSnapshot()
     val getStoragePathList = {
         // internal storage at first( index 0 )
 //        val list = mutableListOf<String>(appContext.getString(R.string.internal_storage))
         val list = mutableListOf<String>(allRepoParentDir.canonicalPath)
 
         // add other paths if have
-        list.addAll(settings.storagePaths)
+        list.addAll(StoragePathsMan.get().storagePaths)
 
         list
     }
     val storagePathList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "storagePathList", initValue = getStoragePathList())
 
-    val storagePathSelectedPath = rememberSaveable { mutableStateOf(settings.storagePathLastSelected.ifBlank { storagePathList.value[0] })}
+    val storagePathSelectedPath = rememberSaveable { mutableStateOf(StoragePathsMan.get().storagePathLastSelected.ifBlank { storagePathList.value[0] })}
 
     val storagePathSelectedIndex = rememberSaveable{mutableIntStateOf(storagePathList.value.toList().indexOf(storagePathSelectedPath.value))}
 
@@ -321,6 +317,8 @@ fun CloneScreen(
 
                 val newPath = storagePathForAdd.value
                 if(newPath.isNotBlank()) {
+                    val spForSave = StoragePathsMan.get()
+
                     // add to list
                     if(!storagePathList.value.contains(newPath)) {
                         storagePathList.value.add(newPath)
@@ -329,17 +327,24 @@ fun CloneScreen(
                         storagePathSelectedIndex.intValue = newItemIndex
                         storagePathSelectedPath.value = newPath
                         // update settings
-                        SettingsUtil.update {
-                            it.storagePaths.add(newPath)
-                            it.storagePathLastSelected = newPath
-                        }
-                    }else {
+//                        SettingsUtil.update {
+//                            it.storagePaths.add(newPath)
+//                            it.storagePathLastSelected = newPath
+//                        }
+
+                        spForSave.storagePaths.add(newPath)
+                        spForSave.storagePathLastSelected = newPath
+                    }else {  // contains, only need update last selected
                         storagePathSelectedPath.value = newPath
                         storagePathSelectedIndex.intValue = storagePathList.value.indexOf(newPath)
-                        SettingsUtil.update {
-                            it.storagePathLastSelected = newPath
-                        }
+//                        SettingsUtil.update {
+//                            it.storagePathLastSelected = newPath
+//                        }
+                        spForSave.storagePathLastSelected = newPath
                     }
+
+                    StoragePathsMan.save(spForSave)
+
                 }
 
                 showAddStoragePathDialog.value = false
@@ -673,7 +678,7 @@ fun CloneScreen(
                         storagePathSelectedIndex.intValue = index
                         storagePathSelectedPath.value = value
 
-                        SettingsUtil.update {
+                        StoragePathsMan.update {
                             it.storagePathLastSelected = value
                         }
                     },
@@ -688,24 +693,25 @@ fun CloneScreen(
                         }else {
                             storagePathList.value.removeAt(index)
                             val removedCurrent = index == storagePathSelectedIndex.intValue
+                            val spForSave = StoragePathsMan.get()
                             if(removedCurrent) {
-                                storagePathSelectedIndex.intValue = 0
-                                storagePathSelectedPath.value = storagePathList.value[storagePathSelectedIndex.intValue]
+                                val newCurrentIndex = 0
+                                storagePathSelectedIndex.intValue = newCurrentIndex
+                                val newCurrent = storagePathList.value[newCurrentIndex]
+                                storagePathSelectedPath.value = newCurrent
+                                spForSave.storagePathLastSelected = newCurrent
                             }
 
-                            SettingsUtil.update {
-                                if(removedCurrent) {
-                                    it.storagePathLastSelected = storagePathSelectedPath.value
-                                }
-
-                                it.storagePaths.clear()
-                                val list = storagePathList.value
-                                val size = list.size
-                                if(size>1) {
-                                    //index start from 1 for exclude internal storage
-                                    it.storagePaths.addAll(list.subList(1, size))
-                                }
+                            spForSave.storagePaths.clear()
+                            val list = storagePathList.value
+                            val size = list.size
+                            if(size>1) {
+                                //index start from 1 for exclude internal storage
+                                spForSave.storagePaths.addAll(list.subList(1, size))
                             }
+
+                            StoragePathsMan.save(spForSave)
+//                            }
                         }
                     }
                 )

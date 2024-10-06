@@ -47,8 +47,10 @@ data class AppSettings(
     // var settings ? Settings页面的设置？叫这个名字好像不太好，再考虑下吧
 
     // storagePaths for clone
+    @Deprecated("instead by StoragePaths")
     val storagePaths:MutableList<String> = mutableListOf(),
     // last selected of storage paths
+    @Deprecated("instead by StoragePaths")
     var storagePathLastSelected:String="",
 
     /**
