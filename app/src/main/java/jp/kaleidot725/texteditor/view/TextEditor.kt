@@ -63,9 +63,9 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
+import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.replaceStringResList
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import jp.kaleidot725.texteditor.controller.EditorController
 import jp.kaleidot725.texteditor.state.TextEditorState
@@ -392,7 +392,8 @@ fun TextEditor(
             requireShowTextCompose = true,
             textCompose = {
                 Column(
-                    modifier=Modifier.fillMaxWidth()
+                    modifier= Modifier
+                        .fillMaxWidth()
                         .verticalScroll(rememberScrollState())
                     ,
                 ) {
@@ -423,7 +424,8 @@ fun TextEditor(
                     )
 
                     Column(
-                        modifier=Modifier.fillMaxWidth()
+                        modifier= Modifier
+                            .fillMaxWidth()
                             .padding(end = 10.dp)
                         ,
                         horizontalAlignment = Alignment.End
@@ -613,7 +615,7 @@ fun TextEditor(
                 //更新配置文件记录的滚动位置（当前屏幕可见第一行）和最后编辑行
                 //如果当前索引不是上次定位的索引，更新页面状态变量和配置文件中记录的最后编辑行索引，不管是否需要滚动，反正先记上
                 //先比较一下，Settings对象从内存取不用读文件，很快，如果没变化，就不用更新配置文件了，省了磁盘IO，所以有必要检查下
-                val oldLinePos = SettingsUtil.getSettingsSnapshot().editor.filesLastEditPosition[fileFullPath]
+                val oldLinePos = FileOpenHistoryMan.get(fileFullPath)
                 val needUpdateLastEditedLineIndex = oldLinePos?.lineIndex != lastEditedLineIndexState.intValue
                 val currentFirstVisibleIndex = lazyColumnState.firstVisibleItemIndex
                 val needUpdateFirstVisibleLineIndex = oldLinePos?.firstVisibleLineIndex != currentFirstVisibleIndex
@@ -624,26 +626,27 @@ fun TextEditor(
                 val needUpdateLastEditedColumnIndex = oldLinePos?.columnIndex != editedColumnIndex
 
                 if((needUpdateLastEditedLineIndex || needUpdateFirstVisibleLineIndex || needUpdateLastEditedColumnIndex)) {
-                    SettingsUtil.update {
-                        var pos = it.editor.filesLastEditPosition[fileFullPath]
-                        if(pos==null) {
-                            pos = FileEditedPos()
-                        }
-                        if(needUpdateLastEditedLineIndex) {
-                            pos.lineIndex = lastEditedLineIndexState.intValue
-                        }
-                        if(needUpdateFirstVisibleLineIndex) {
-                            pos.firstVisibleLineIndex = currentFirstVisibleIndex
-                        }
-                        if(needUpdateLastEditedColumnIndex) {
-                            pos.columnIndex = editedColumnIndex
-                        }
+//                    println("will save possssssssssssssssssssss")
+//                    SettingsUtil.update {
+                    val pos = oldLinePos
+//                        if(pos==null) {
+//                            pos = FileEditedPos()
+//                        }
+                    if(needUpdateLastEditedLineIndex) {
+                        pos.lineIndex = lastEditedLineIndexState.intValue
+                    }
+                    if(needUpdateFirstVisibleLineIndex) {
+                        pos.firstVisibleLineIndex = currentFirstVisibleIndex
+                    }
+                    if(needUpdateLastEditedColumnIndex) {
+                        pos.columnIndex = editedColumnIndex
+                    }
 //                if(debugModeOn) {
 //                    println("editorPos will save: "+pos)
 //                }
 //                        println(pos) //test2024081116726433
-                        it.editor.filesLastEditPosition[fileFullPath] = pos
-                    }
+                    FileOpenHistoryMan.set(fileFullPath, pos)
+//                    }
                 }
             }catch (e:Exception) {
                 MyLog.e(TAG, "#TextEditorOnDispose@ , err: "+e.stackTraceToString())

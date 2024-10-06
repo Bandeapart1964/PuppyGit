@@ -54,6 +54,7 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
+import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.getShortUUID
@@ -827,14 +828,14 @@ fun EditorInnerPage(
     // file loaded (load file successfully)
     if(!editorPageShowingFileHasErr.value && editorPageShowingFileIsReady.value && editorPageShowingFilePath.value.isNotBlank()){
         val fileFullPath = editorPageShowingFilePath.value
-        val settingsSnapshot = SettingsUtil.getSettingsSnapshot()
-        val fileEditedPos = settingsSnapshot.editor.filesLastEditPosition[fileFullPath] ?: FileEditedPos()
+//        val settingsSnapshot = SettingsUtil.getSettingsSnapshot()
+        val fileEditedPos = FileOpenHistoryMan.get(fileFullPath)
         //每次打开文件，更新最后使用文件定位信息的时间，日后可实现删除超过指定期限没使用过的文件定位信息
-        fileEditedPos.lastUsedTime= getSecFromTime()
+//        fileEditedPos.lastUsedTime= getSecFromTime()
         //更新配置文件
-        SettingsUtil.update {
-            it.editor.filesLastEditPosition[fileFullPath] = fileEditedPos
-        }
+//        SettingsUtil.update {
+//            it.editor.filesLastEditPosition[fileFullPath] = fileEditedPos
+//        }
         FileEditor(
             requestFromParent,
             fileFullPath,

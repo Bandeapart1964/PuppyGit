@@ -26,6 +26,7 @@ import com.catpuppyapp.puppygit.play.pro.BuildConfig
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.utils.app.upgrade.migrator.AppVersionMan
 import com.catpuppyapp.puppygit.utils.cert.CertMan
+import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
 import com.github.git24j.core.Libgit2
 import kotlinx.coroutines.CoroutineScope
@@ -253,6 +254,14 @@ class AppModel {
                 )
             }catch (e:Exception) {
                 MyLog.e(TAG, "#$funName init SnapshotUtil err:"+e.stackTraceToString())
+            }
+
+            try {
+                val limit = settings.editor.fileOpenHistoryLimit
+                val requireClearSettingsEditedHistory = settings.editor.filesLastEditPosition.isNotEmpty()
+                FileOpenHistoryMan.init(limit, requireClearSettingsEditedHistory)
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#$funName init FileOpenHistory err:"+e.stackTraceToString())
             }
 
             //初始化与谷歌play的连接，查询支付信息之类的

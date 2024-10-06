@@ -10,7 +10,12 @@ data class Editor (
 
     // 文件最后编辑位置，注：key为文件完整路径
     //TODO 在设置页面加个选项，可清除此map，否则此map只有在文件不存在时(打开时检查)，才清除打开位置，或者实现一个定期未打开就清除其记录的机制，我已经在FileEditedPos里记录在最后使用条目的时间，可用来实现定期不用删除机制
+    @Deprecated("after app 1.0.5v26, use `FileOpenHistory.history` instead")
     val filesLastEditPosition:MutableMap<String,FileEditedPos> = mutableMapOf(),
+
+    // how much file opened history and last edit position will remembered
+    // if set this value, require restart app for affect
+    val fileOpenHistoryLimit:Int = 50,
 
     //打开文件时是否定位到上次编辑列（或者说恢复光标位置到上次编辑的列）
     //注意：如果有删除文本但没保存，这个定位会不准，但经我测试，没遇到会导致app崩溃的情况，所以问题不大
