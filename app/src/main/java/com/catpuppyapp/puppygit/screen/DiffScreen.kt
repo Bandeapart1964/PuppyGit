@@ -24,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.CopyableDialog
-import com.catpuppyapp.puppygit.compose.DiffContent
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
@@ -33,6 +32,7 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.screen.content.DiffContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.DiffPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.DiffScreenTitle
 import com.catpuppyapp.puppygit.style.MyStyleKt
@@ -41,9 +41,8 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
-import com.catpuppyapp.puppygit.utils.getParentPathEndsWithSeparator
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
-import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.getParentPathEndsWithSeparator
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import java.io.File
 
