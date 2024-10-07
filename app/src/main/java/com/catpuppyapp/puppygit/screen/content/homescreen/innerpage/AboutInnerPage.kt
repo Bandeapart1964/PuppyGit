@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,27 +25,31 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.compose.PaddingRow
-import com.catpuppyapp.puppygit.play.pro.BuildConfig
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.ActivityUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.ComposeHelper
 import com.catpuppyapp.puppygit.utils.Msg
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 
+const val authorMail = "luckyclover33xx@gmail.com"
+const val authorMailLink = "mailto:$authorMail"
 
-val authorMail = "luckyclover33xx@gmail.com"
-val authorMailLink = "mailto:$authorMail"
-val privacyPolicyLink = "https://github.com/Bandeapart1964/PuppyGitPro/blob/main/PrivacyPolicy.md"
-val discussionLink = "https://github.com/Bandeapart1964/PuppyGitPro/discussions"
-val reportBugsLink = "https://github.com/Bandeapart1964/PuppyGitPro/issues/new"
-val sourceCodeLink = "https://github.com/Bandeapart1964/PuppyGitPro"
+const val madeBy = "Made by Bandeapart1964 of catpuppyapp"
+const val madeByLink = "https://github.com/Bandeapart1964"
+
+const val sourceCodeLink = "https://github.com/Bandeapart1964/PuppyGitPro"
+const val privacyPolicyLink = "$sourceCodeLink/blob/main/PrivacyPolicy.md"
+const val discussionLink = "$sourceCodeLink/discussions"
+const val reportBugsLink = "$sourceCodeLink/issues/new"
+const val donateLink = "$sourceCodeLink/blob/main/donate.md"
+
 
 var versionCode: Int = AppModel.getAppVersionCode()
 var versionName: String = AppModel.getAppVersionName()
@@ -113,6 +118,41 @@ fun AboutInnerPage(contentPadding: PaddingValues,
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            TextButton(
+                onClick = {
+                    ActivityUtil.openUrl(appContext, madeByLink)
+                }
+            ) {
+                Text(
+                    text = madeBy,
+                    fontStyle = FontStyle.Italic,
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+//
+//        Row(
+//            horizontalArrangement = Arrangement.Center,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            TextButton(
+//                onClick = {
+//                    ActivityUtil.openUrl(appContext, donateLink)
+//                }
+//            ) {
+//                Text(
+//                    text = stringResource(R.string.donate),
+//                    fontStyle = FontStyle.Italic,
+//                )
+//            }
+//        }
+
+//        Spacer(Modifier.height(20.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = stringResource(R.string.source_code),
                 style = MyStyleKt.ClickableText.style,
@@ -174,7 +214,26 @@ fun AboutInnerPage(contentPadding: PaddingValues,
                     ActivityUtil.openUrl(appContext, authorMailLink)
                 },
 
-                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+//            Text(text = stringResource(R.string.contact_author)+":")
+            Text(
+                text = stringResource(R.string.donate),
+                style = MyStyleKt.ClickableText.style,
+                color = MyStyleKt.ClickableText.color,
+                modifier = MyStyleKt.ClickableText.modifierNoPadding.clickable {
+//                    copy(authorMail)
+                    ActivityUtil.openUrl(appContext, donateLink)
+                },
+
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -205,6 +264,7 @@ fun AboutInnerPage(contentPadding: PaddingValues,
             ){
                 Text(
                     text = it.projectName,
+//                    fontSize = 14.sp,
                     style = MyStyleKt.ClickableText.style,
                     color = MyStyleKt.ClickableText.color,
                     modifier = MyStyleKt.ClickableText.modifierNoPadding.clickable {
@@ -212,9 +272,10 @@ fun AboutInnerPage(contentPadding: PaddingValues,
                         ActivityUtil.openUrl(appContext, it.projectLink)
                     },
                 )
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = "("+stringResource(R.string.license)+")",
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     style = MyStyleKt.ClickableText.style,
                     color = MyStyleKt.ClickableText.color,
                     modifier = MyStyleKt.ClickableText.modifierNoPadding.clickable {
@@ -222,6 +283,8 @@ fun AboutInnerPage(contentPadding: PaddingValues,
                         ActivityUtil.openUrl(appContext, it.licenseLink)
                     },
                 )
+
+                Spacer(Modifier.height(10.dp))
 
             }
         }
