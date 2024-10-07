@@ -103,6 +103,11 @@ fun updateRemoteDto(repo: Repository, remoteDto: RemoteDto) {
     remoteDto.remoteUrl = remote.url().toString()
     remoteDto.pushUrl = remote.pushurl()?.toString()?:""
 
+    // if push url not set, use same as fetch url(remoteUrl)
+    if(remoteDto.pushUrl.isBlank()) {
+        remoteDto.pushUrl = remoteDto.remoteUrl
+    }
+
     //更新branchMode
     val (isAll, branchNameList) = Libgit2Helper.getRemoteFetchBranchList(remote)
     if(isAll) {
