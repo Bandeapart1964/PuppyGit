@@ -38,9 +38,8 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 - reflog
 - tags manage
 - stash manage
+- submodules manage
 
-## under working
-I am focus implement submodules for now
 
 ## TODO (welcome pr)
 - implement a settings page
@@ -49,7 +48,6 @@ I am focus implement submodules for now
 - add colors and accept buttons for accept ours/theirs in Editor when merge mode on
 - highlighting keyword when finding in Editor
 - support more encoding for Editor(now only supported utf8)
-- support submodules
 - view commit history as a interactable tree
 - view history of file(plan: add menu item in Files page single item menu, and Editor page top bar menu. if file is not in a git repo, show a toast)
 
