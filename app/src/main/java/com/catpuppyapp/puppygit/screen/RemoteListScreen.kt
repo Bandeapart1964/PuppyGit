@@ -883,7 +883,11 @@ fun RemoteListScreen(
                     sb.append(appContext.getString(R.string.url)+": "+it.remoteUrl)
                     sb.appendLine()
                     sb.appendLine()
-                    sb.append(appContext.getString(R.string.push_url)+": "+(it.pushUrl.ifEmpty { it.remoteUrl }))
+
+//                    sb.append(appContext.getString(R.string.push_url)+": "+(it.pushUrl.ifEmpty { it.remoteUrl }))  // no more check pushUrl empty need after 20241007
+                    // after 20241007, if need, pushUrl will replaced to fetch url when querying, so reached here, directly show pushUrl is ok
+                    sb.append(appContext.getString(R.string.push_url)+": "+it.pushUrl)
+
                     sb.appendLine()
                     sb.appendLine()
                     sb.append(appContext.getString(R.string.fetch_credential)+": "+(if(it.credentialId== SpecialCredential.MatchByDomain.credentialId) SpecialCredential.MatchByDomain.name else (it.credentialName?:"")))
