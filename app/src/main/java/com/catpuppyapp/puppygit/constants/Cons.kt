@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.constants
 
-import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.github.git24j.core.Oid
 import kotlinx.coroutines.sync.Mutex
 import java.time.ZoneOffset
@@ -21,7 +20,7 @@ class Cons {
         const val defaultFileSnapshotDirName = "FileSnapshot"
         const val defaultEditCacheDirName = "EditCache"  //编辑缓存目录，存储编辑文件时的content缓存文件的目录，用于在app突然崩溃，或者手机突然没电，但没保存手动保存文件时恢复内容，实现机制就是某行内容一update就自动保存
         const val defaultLogDirName = "Log"
-        const val defaultSmGit = "SmGit"  // backup submodule's git file, Sm=Submodule Git=git file
+        const val defaultSubmoduleDotGitFileBakDirName = "SmGitBak"  // backup submodule's .git file, Sm=Submodule Git=git file
         const val defaultPatchDirName = "Patch"
         const val defaultSettingsDirName = "Settings"
 

@@ -125,7 +125,7 @@ class AppModel {
 
             // log dir，必须在初始化log前初始化这个变量
             appModel.logDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultLogDirName)
-            appModel.submoduleDotGitBackupDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultSmGit)
+            appModel.submoduleDotGitBackupDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultSubmoduleDotGitFileBakDirName)
 
             //设置文件快照目录
 //            AppModel.singleInstanceHolder.fileSnapshotDir = createFileSnapshotDirIfNonexists(AppModel.singleInstanceHolder.allRepoParentDir, Cons.defaultFileSnapshotDirName)

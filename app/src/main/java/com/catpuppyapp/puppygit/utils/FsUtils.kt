@@ -745,17 +745,19 @@ object FsUtils {
     }
 
     /**
+     * default disable edit files under these folders, because app may change it when running
      * 判断路径是否处于app内置的禁止编辑的文件夹中
-     * TODO 要不要在设置页面添加一个开关允许编辑这些路径下的文件？必要性不大，如果非编辑，可通过外部编辑器编辑，用内部编辑器编辑有可能和app隐式更新这些文件发生冲突导致文件被错误覆盖。
+     * 考虑：要不要在设置页面添加一个开关允许编辑这些路径下的文件？必要性不大，如果非编辑，可在内置editor手动关闭read-only或通过外部编辑器编辑，不过需要注意：如果用内部编辑器编辑有可能和app隐式更新这些文件发生冲突导致文件被错误覆盖。
      */
     fun isReadOnlyDir(path: String): Boolean {
         return try {
-            //app内置某些文件不允许编辑，因为app会在运行时编辑这些文件，有可能冲突或覆盖app自动生成的内容
+            //app内置某些文件默认不允许编辑，因为app会在运行时编辑这些文件，有可能冲突或覆盖app自动生成的内容
             path.startsWith(AppModel.singleInstanceHolder.getOrCreateFileSnapshotDir().canonicalPath)
                     || path.startsWith(AppModel.singleInstanceHolder.getOrCreateEditCacheDir().canonicalPath)
                     || path.startsWith(AppModel.singleInstanceHolder.getOrCreateLogDir().canonicalPath)
-                    || path.startsWith(AppModel.singleInstanceHolder.certBundleDir.canonicalPath
-                    )
+                    || path.startsWith(AppModel.singleInstanceHolder.certBundleDir.canonicalPath)
+                    || path.startsWith(AppModel.singleInstanceHolder.getOrCreateSettingsDir().canonicalPath)
+                    || path.startsWith(AppModel.singleInstanceHolder.getOrCreateSubmoduleDotGitBackupDir().canonicalPath)
         }catch (e:Exception) {
             MyLog.e(TAG, "#isReadOnlyDir err:${e.stackTraceToString()}")
             false
