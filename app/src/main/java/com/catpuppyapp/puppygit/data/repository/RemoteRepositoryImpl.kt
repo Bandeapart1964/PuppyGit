@@ -155,6 +155,11 @@ class RemoteRepositoryImpl(private val dao: RemoteDao) : RemoteRepository {
             //查RemoteEntity一般都是为了凭据，需要更新的字段其实很少
             remoteFromDb.remoteUrl = remoteFromGit.url().toString()
             remoteFromDb.pushUrl = remoteFromGit.pushurl()?.toString()?:""
+
+            // if push url invalid, actually will use fetch url(remoteUrl), so set it to fetch url
+            if(remoteFromDb.pushUrl.isBlank()) {
+                remoteFromDb.pushUrl = remoteFromDb.remoteUrl
+            }
         }
     }
 
