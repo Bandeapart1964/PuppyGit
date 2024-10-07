@@ -1,8 +1,10 @@
 1.0.5v26 - 20241005:
 - support submodules
 - settings file move to user-visible PuppyGit-Data folder
-  - * note:if upgrade app from old version, Editor Page's "font size/show or hide line number/files last edited positions" will lost, but you can re-set them, will save to new settings
-- minor bugs fixed
+    * NOTICE: if you upgrade app from old version, below settings will lost, you can set it again, will save to new settings:
+        * Editor Page: font size/show or hide line number/files last edited positions
+        * Global Git username and email
+- dozen bugs fixed
 
 
 1.0.4v25:
