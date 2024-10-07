@@ -1276,7 +1276,8 @@ class Libgit2Helper {
                               diffOptionsFlags:EnumSet<Diff.Options.FlagT> = getDefaultDiffOptionsFlags(),
                               onlyCheckFileSize:Boolean = false,
                               reverse: Boolean=false,
-                              treeToWorkTree: Boolean = false
+                              treeToWorkTree: Boolean = false,
+                              maxSizeLimit:Long = SettingsUtil.getSettingsSnapshot().diff.diffContentSizeMaxLimit
                              )
         :DiffItemSaver{
             val funName = "getSingleDiffItem"
@@ -1407,7 +1408,7 @@ class Libgit2Helper {
                     contentLenSum+=pLine.contentLen
 
                     //如果content累积的大小超过限制，直接返回，不要再获取了
-                    if(isDiffContentSizeOverLimit(contentLenSum)) {
+                    if(isDiffContentSizeOverLimit(contentLenSum, limit = maxSizeLimit)) {
                         diffItem.isContentSizeOverLimit = true
                         return diffItem
                     }

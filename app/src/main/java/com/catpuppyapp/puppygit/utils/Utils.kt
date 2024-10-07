@@ -8,6 +8,7 @@ import com.catpuppyapp.puppygit.data.entity.ErrorEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -263,12 +264,12 @@ fun deleteIfFileOrDirExist(f: File):Boolean {
     return true;
 }
 
-fun isFileSizeOverLimit(size:Long) :Boolean {
-    return size > Cons.editorFileSizeMaxLimit
+fun isFileSizeOverLimit(size:Long, limit:Long=SettingsUtil.getSettingsSnapshot().editor.maxFileSizeLimit) :Boolean {
+    return size > limit
 }
 
-fun isDiffContentSizeOverLimit(size:Long) :Boolean {
-    return size > Cons.diffContentSizeMaxLimit
+fun isDiffContentSizeOverLimit(size:Long, limit:Long=SettingsUtil.getSettingsSnapshot().diff.diffContentSizeMaxLimit) :Boolean {
+    return size > limit
 }
 
 //例如：输入 abc 或 /path/to/abc 或 /path/to/abc/，返回 abc

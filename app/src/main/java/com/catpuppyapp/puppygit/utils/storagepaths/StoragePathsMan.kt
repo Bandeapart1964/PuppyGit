@@ -1,7 +1,6 @@
 package com.catpuppyapp.puppygit.utils.storagepaths
 
 import com.catpuppyapp.puppygit.settings.SettingsUtil
-import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.JsonUtil
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
@@ -18,7 +17,8 @@ object StoragePathsMan {
 //    private var _limit = 100000  // no limit yet, manage by user, user can delete unwanted items
     private val fileName = "storage_paths.json"
 
-    private lateinit var file: File
+    private lateinit var _file: File
+    private lateinit var _saveDir: File
 
     private lateinit var paths: StoragePaths
     private val lock = Mutex()
@@ -30,8 +30,10 @@ object StoragePathsMan {
      * @param oldSettingsStoragePaths if not null, will copy items into new place
      * @param oldSettingsLastSelectedPath if not null, will copy items into new place
      */
-    fun init(oldSettingsStoragePaths:List<String>?, oldSettingsLastSelectedPath:String?) {
-        file = File(AppModel.singleInstanceHolder.getOrCreatePuppyGitDataUnderAllReposDir().canonicalPath, fileName)
+    fun init(saveDir:File, oldSettingsStoragePaths:List<String>?, oldSettingsLastSelectedPath:String?) {
+        val saveDirPath = saveDir.canonicalPath
+        _saveDir = File(saveDirPath)
+        _file = File(saveDirPath, fileName)
 
         readFromFile()
 
@@ -41,11 +43,15 @@ object StoragePathsMan {
     }
 
     private fun getFile():File {
-        if(file.exists().not()) {
-            file.createNewFile()
+        if(_saveDir.exists().not()) {
+            _saveDir.mkdirs()
         }
 
-        return file
+        if(_file.exists().not()) {
+            _file.createNewFile()
+        }
+
+        return _file
     }
 
     private fun readFromFile() {

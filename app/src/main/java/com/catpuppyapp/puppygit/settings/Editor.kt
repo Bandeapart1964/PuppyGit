@@ -36,4 +36,7 @@ data class Editor (
 
     var enableFileSnapshot:Boolean = false,  //是否允许创建文件快照，重启app生效
     var enableContentSnapshot:Boolean = false,  //是否允许创建内容快照，重启app生效。（ps 内容就是编辑文件时在内存中但还未写入到硬盘的内容）
+
+    // over this limit, can't open by internal editor
+    var maxFileSizeLimit:Long = 2000000L,  // default 2MB, Unit Byte
 )

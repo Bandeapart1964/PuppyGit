@@ -45,6 +45,7 @@ import com.catpuppyapp.puppygit.utils.compare.SimilarCompare
 import com.catpuppyapp.puppygit.utils.compare.param.StringCompareParam
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
+import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Diff
@@ -135,7 +136,7 @@ fun DiffContent(
                 }else if(diffItem.value.flags.contains(Diff.FlagT.BINARY)) {
                     Text(stringResource(R.string.doesnt_support_view_binary_file))
                 }else if(diffItem.value.isContentSizeOverLimit) {
-                    Text(text = stringResource(R.string.content_size_over_limit)+"("+Cons.diffContentSizeMaxLimitForHumanReadable+")")
+                    Text(text = stringResource(R.string.content_size_over_limit)+"("+ getHumanReadableSizeStr(settings.diff.diffContentSizeMaxLimit) +")")
                 }else if(!diffItem.value.isFileModified) {
                     if(isSubmodule && submoduleIsDirty.value) {  // submodule no diff for shown, give user a hint
                         Text(stringResource(R.string.submodule_is_dirty_note))
@@ -174,7 +175,7 @@ fun DiffContent(
                 diffItem.value.hunks.forEachIndexed { index, hunkAndLines: PuppyHunkAndLines ->
 
                     if(fileChangeTypeIsModified && proFeatureEnabled(detailsDiffTestPassed)) {  //增量diff
-                        if(!settings.groupDiffContentByLineNum || FlagFileName.flagFileExist(FlagFileName.disableGroupDiffContentByLineNum)) {
+                        if(!settings.diff.groupDiffContentByLineNum || FlagFileName.flagFileExist(FlagFileName.disableGroupDiffContentByLineNum)) {
                             //this method need use some caches, clear them before iterate lines
                             //这种方式需要使用缓存，每次遍历lines前都需要先清下缓存，否则可能多显示或少显示某些行
                             hunkAndLines.clearCachesForShown()
@@ -406,16 +407,16 @@ fun DiffContent(
                                     val reverse = Libgit2Helper.CommitUtil.isLocalCommitHash(treeOid1Str)
 //                                    println("1:$treeOid1Str, 2:$treeOid2Str, reverse=$reverse")
                                     val tree1 = Libgit2Helper.resolveTree(repo, if(reverse) treeOid2Str else treeOid1Str)
-                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, null, reverse=reverse, treeToWorkTree = true)
+                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, null, reverse=reverse, treeToWorkTree = true, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
                                 }else { // tree to tree, no local(worktree)
                                     val tree1 = Libgit2Helper.resolveTree(repo, treeOid1Str)
                                     val tree2 = Libgit2Helper.resolveTree(repo, treeOid2Str)
-                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, tree2)
+                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, tree2, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
                                 }
 
                                 diffItem.value = diffItemSaver
                             }else {  //indexToWorktree or headToIndex
-                                val diffItemSaver = Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo)
+                                val diffItemSaver = Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
                                 diffItem.value = diffItemSaver
                             }
 

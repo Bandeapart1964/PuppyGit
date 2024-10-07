@@ -2,7 +2,6 @@ package com.catpuppyapp.puppygit.utils.fileopenhistory
 
 import com.catpuppyapp.puppygit.settings.FileEditedPos
 import com.catpuppyapp.puppygit.settings.SettingsUtil
-import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.JsonUtil
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
@@ -20,7 +19,8 @@ object FileOpenHistoryMan {
     private var _limit = 50  // will update by settings value
     private val fileName = "file_open_history.json"
 
-    private lateinit var file: File
+    private lateinit var _file: File
+    private lateinit var _saveDir: File
 
     private lateinit var curHistory: FileOpenHistory
     private val lock = Mutex()
@@ -31,10 +31,12 @@ object FileOpenHistoryMan {
      * @param limit how many history will remembered
      * @param requireClearOldSettingsEditedHistory if true, will clear settings remembered file edited position, caller should check before pass this value to avoid unnecessary clear
      */
-    fun init(limit:Int, requireClearOldSettingsEditedHistory:Boolean) {
+    fun init(saveDir:File, limit:Int, requireClearOldSettingsEditedHistory:Boolean) {
         _limit = limit
 
-        file = File(AppModel.singleInstanceHolder.getOrCreatePuppyGitDataUnderAllReposDir().canonicalPath, fileName)
+        val saveDirPath = saveDir.canonicalPath
+        _saveDir = File(saveDirPath)
+        _file = File(saveDirPath, fileName)
 
         readHistoryFromFile()
 
@@ -44,11 +46,15 @@ object FileOpenHistoryMan {
     }
 
     private fun getFile():File {
-        if(file.exists().not()) {
-            file.createNewFile()
+        if(_saveDir.exists().not()) {
+            _saveDir.mkdirs()
         }
 
-        return file
+        if(_file.exists().not()) {
+            _file.createNewFile()
+        }
+
+        return _file
     }
 
     private fun readHistoryFromFile() {

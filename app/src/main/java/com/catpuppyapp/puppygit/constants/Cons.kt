@@ -23,6 +23,7 @@ class Cons {
         const val defaultLogDirName = "Log"
         const val defaultSmGit = "SmGit"  // backup submodule's git file, Sm=Submodule Git=git file
         const val defaultPatchDirName = "Patch"
+        const val defaultSettingsDirName = "Settings"
 
 
             //废弃，直接由 /storage/emulated/0/Android/data/app包名/files目录作为内部存储，那样兼容旧版，更方便
@@ -270,13 +271,13 @@ class Cons {
         val isReadyDoSyncCheckResult_ReadyDoSync = 2  //上游分支已经存在于本地
         val isReadyDoSyncCheckResult_ReadyDoPushAndRemoteRefSpecNonExists = 3  // pc git 需要带 -u 选项的情况，远程仓库不存在本地分支关联的上游分支
 
-        //TODO 最大支持的大小需要测试下
-        val editorFileSizeMaxLimit = 2000000L  // 2MB，在20240421之前是1mb，后来优化了保存机制，改成2mb了
-        val editorFileSizeMaxLimitForHumanReadable = "2MB"  // 文件大小限制人类可读的描述方式
+        //最大支持的大小需要测试下
+//        val editorFileSizeMaxLimit = 2000000L  // 2MB，在20240421之前是1mb，后来优化了保存机制，改成2mb了, instead by settings
+//        val editorFileSizeMaxLimitForHumanReadable = "2MB"  // 文件大小限制人类可读的描述方式
 
         // diffItem 的所有line.content总和，如果超过这个大小，就不显示了，有时候存在一个文件大小很大，但其diffcontent很少的情况，这时候其实获取diff内容并不慢，所以单独限制一个diff content大小
-        val diffContentSizeMaxLimit = 1000000L  // 1MB
-        val diffContentSizeMaxLimitForHumanReadable = "1MB"  // 文件大小限制人类可读的描述方式
+//        val diffContentSizeMaxLimit = 1000000L  // 1MB  // instead by settings
+//        val diffContentSizeMaxLimitForHumanReadable = "1MB"  // 文件大小限制人类可读的描述方式
 
 
         val sizeTB = 1000000000000

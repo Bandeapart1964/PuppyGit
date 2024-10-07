@@ -120,6 +120,9 @@ class AppModel {
             //创建git pathch 导出目录
             appModel.patchDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultPatchDirName)
 
+            //create settings folder
+            appModel.settingsDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultSettingsDirName)
+
             // log dir，必须在初始化log前初始化这个变量
             appModel.logDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultLogDirName)
             appModel.submoduleDotGitBackupDir = createDirIfNonexists(appModel.appDataUnderAllReposDir, Cons.defaultSmGit)
@@ -192,7 +195,8 @@ class AppModel {
                 MyLog.w(TAG, "#$funName migrate password err, user's password may will be invalid :(")
             }
 
-            val settingsSaveDir = appModel.innerDataDir
+//            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
+            val settingsSaveDir = appModel.getOrCreateSettingsDir()
             //初始化设置项
             try {
                 //初始化设置，原始设置文件
@@ -258,17 +262,33 @@ class AppModel {
             }
 
             try {
-                val limit = settings.editor.fileOpenHistoryLimit
-                val requireClearSettingsEditedHistory = settings.editor.filesLastEditPosition.isNotEmpty()
-                FileOpenHistoryMan.init(limit, requireClearSettingsEditedHistory)
+                //clear old settings
+//                val limit = settings.editor.fileOpenHistoryLimit
+//                val requireClearSettingsEditedHistory = settings.editor.filesLastEditPosition.isNotEmpty()
+//                FileOpenHistoryMan.init(limit, requireClearSettingsEditedHistory)
+
+                // no migrate, because settings will move to user-visible puppygit-data dir
+                FileOpenHistoryMan.init(
+                    saveDir = settingsSaveDir,
+                    limit = settings.editor.fileOpenHistoryLimit,
+                    requireClearOldSettingsEditedHistory = false
+                )
             }catch (e:Exception) {
                 MyLog.e(TAG, "#$funName init FileOpenHistoryMan err:"+e.stackTraceToString())
             }
 
             try {
-                val oldPaths = settings.storagePaths.ifEmpty { null }
-                val oldSelectedPath = settings.storagePathLastSelected.ifBlank { null }
-                StoragePathsMan.init(oldPaths, oldSelectedPath)
+                //migrate old settings
+//                val oldPaths = settings.storagePaths.ifEmpty { null }
+//                val oldSelectedPath = settings.storagePathLastSelected.ifBlank { null }
+//                StoragePathsMan.init(oldPaths, oldSelectedPath)
+
+                // no migrate, because setting moved
+                StoragePathsMan.init(
+                    saveDir = settingsSaveDir,
+                    oldSettingsStoragePaths = null,
+                    oldSettingsLastSelectedPath = null
+                )
             }catch (e:Exception) {
                 MyLog.e(TAG, "#$funName init StoragePathsMan err:"+e.stackTraceToString())
             }
@@ -407,6 +427,7 @@ class AppModel {
     private lateinit var fileSnapshotDir: File  //改用：AppModel.getFileSnapshotDir()
     private lateinit var editCacheDir: File
     private lateinit var patchDir: File
+    private lateinit var settingsDir: File
 
     //20240505:这个变量实际上，半废弃了，只在初始化的时候用一下，然后把路径传给MyLog之后，MyLog就自己维护自己的logDir对象了，就不再使用这个变量了
     private lateinit var logDir: File
@@ -456,6 +477,13 @@ class AppModel {
             patchDir.mkdirs()
         }
         return patchDir
+    }
+
+    fun getOrCreateSettingsDir():File{
+        if(!settingsDir.exists()) {
+            settingsDir.mkdirs()
+        }
+        return settingsDir
     }
 
     // allRepoDir/PuppyGit-Data/Log

@@ -44,7 +44,6 @@ import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dto.FileSimpleDto
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.settings.FileEditedPos
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -56,6 +55,7 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
+import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.getShortUUID
 import com.catpuppyapp.puppygit.utils.isFileSizeOverLimit
@@ -63,7 +63,6 @@ import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.snapshot.SnapshotFileFlag
 import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.withMainContext
 import jp.kaleidot725.sample.ui.composable.FileEditor
 import jp.kaleidot725.sample.ui.extension.createCancelledState
@@ -1063,9 +1062,11 @@ private fun loadFile(
 
             //检查文件大小，太大了打开会有问题，要么崩溃，要么无法保存
             //如果文件大小超出app支持的最大限制，提示错误
-            if (isFileSizeOverLimit(file.length())) {
+            val settings = SettingsUtil.getSettingsSnapshot()
+            val maxSizeLimit = settings.editor.maxFileSizeLimit
+            if (isFileSizeOverLimit(file.length(), limit = maxSizeLimit)) {
 //                    editorPageSetShowingFileErrWhenLoading("Err: Doesn't support open file over "+Cons.editorFileSizeMaxLimitForHumanReadable)
-                throw RuntimeException(AppModel.singleInstanceHolder.appContext.getString(R.string.err_doesnt_support_open_file_over_limit) + "(" + Cons.editorFileSizeMaxLimitForHumanReadable + ")")
+                throw RuntimeException(AppModel.singleInstanceHolder.appContext.getString(R.string.err_doesnt_support_open_file_over_limit) + "(" + getHumanReadableSizeStr(maxSizeLimit) + ")")
             }
 
 

@@ -53,21 +53,9 @@ data class AppSettings(
     @Deprecated("instead by StoragePaths")
     var storagePathLastSelected:String="",
 
-    /**
-        if ture, will show delLine and addLine closer, else, maybe will split
-     * e.g.
-         * if true, show:
-         * -1 abc1
-         * +1 abc2
-         * -2 def3
-         * +2 def4
-         *
-         * if false, show:
-         * -1 abc1
-         * -2 def3
-         * +1 abc2
-         * +2 def4
-     */
-    var groupDiffContentByLineNum:Boolean = true
+    @Deprecated("instead by `DiffSettings` same name field")
+    var groupDiffContentByLineNum:Boolean = true,
+
+    var diff:DiffSettings = DiffSettings(),
 
 )

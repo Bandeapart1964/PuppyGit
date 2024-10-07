@@ -30,6 +30,7 @@ object SettingsUtil {
     private lateinit var appSettings:AppSettings
     private lateinit var settingsFile:File
     private lateinit var settingsBakFile:File
+    private lateinit var saveDir:File
 
 //    fun getSettingsFile():File {
 //        return
@@ -39,9 +40,12 @@ object SettingsUtil {
      * this method may do over once,so need a machine to promise only start 1 save job
      */
     suspend fun init(settingsSaveDir:File, useBak:Boolean=false) {  //入参是保存settings的目录
+        // settings files save dir
+        val saveDirPath = settingsSaveDir.canonicalPath
+        saveDir = File(saveDirPath)
         //settings文件
-        settingsFile = File(settingsSaveDir.canonicalPath, settingsFileName)
-        settingsBakFile = File(settingsSaveDir.canonicalPath, settingsBakFileName)
+        settingsFile = File(saveDirPath, settingsFileName)
+        settingsBakFile = File(saveDirPath, settingsBakFileName)
 
         //如果文件不存在则创建
         createFileIfNonExists()
@@ -104,6 +108,10 @@ object SettingsUtil {
 
     private suspend fun createFileIfNonExists() {
         createFileLock.withLock {
+            if(saveDir.exists().not()) {
+                saveDir.mkdirs()
+            }
+
             if (!settingsFile.exists()) {
                 settingsFile.createNewFile()
             }
@@ -114,7 +122,9 @@ object SettingsUtil {
         }
     }
 
-    private fun readSettingsFromFile(useBak: Boolean) {
+    private suspend fun readSettingsFromFile(useBak: Boolean) {
+        createFileIfNonExists()
+
         val settingsStr = if(useBak) settingsBakFile.readText() else settingsFile.readText();
         if(settingsStr.isBlank()) {  //文件内容为空，可能刚新建的，往里面存入内容
             //新建对象，然后写入文件
@@ -226,7 +236,10 @@ object SettingsUtil {
     /**
      * 不要直接调用此方法，应该通过writeChannel来更新配置文件
      */
-    private fun saveSettings(newSettings: AppSettings) {
+    private suspend fun saveSettings(newSettings: AppSettings) {
+        // avoid dir deleted by user
+        createFileIfNonExists()
+
         //不知道kotlin怎么以覆盖模式打开文件，索性每次写入删除一下，outputStream写入的时候会新建
         //经过我观察，不用删除，默认就是覆盖
 //        if(settingsFile.exists()) {
@@ -255,6 +268,7 @@ object SettingsUtil {
     }
 
     fun delSettingsFile(settingsSaveDir:File, delOrigin:Boolean=true, delBak:Boolean=true) {
+        //btw: delete non-exist file no exception will throw, so need not try catch
         if(delOrigin) {
             File(settingsSaveDir.canonicalPath, settingsFileName).delete()
         }
