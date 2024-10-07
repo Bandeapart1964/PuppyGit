@@ -385,7 +385,7 @@ fun RemoteListScreen(
                     )
 
                     if(isPushUrl.value) {
-                        Text(text = stringResource(R.string.leave_it_empty_will_use_url))
+                        Text(text = stringResource(R.string.leave_it_empty_will_use_url), color=MyStyleKt.TextColor.highlighting_green)
                     }
                 }
             },
@@ -808,7 +808,7 @@ fun RemoteListScreen(
                     BottomSheetItem(sheetState=sheetState, showBottomSheet=showBottomSheet, text=stringResource(R.string.set_push_url)){
                         //设置pushurl
                         //设置回显上次的url
-                        val oldUrl = curObjInState.value.pushUrl
+                        val oldUrl = if(curObjInState.value.pushUrlTrackFetchUrl) "" else curObjInState.value.pushUrl
                         urlTextForSetUrlDialog.value = oldUrl  //用来存储用户输入的url的状态变量
                         oldUrlTextForSetUrlDialog.value = oldUrl //保存旧值，在这设置后就不会更新了，这个变量用来在保存前检查新旧url是否相同，若相同就不更新了
                         isPushUrl.value = true

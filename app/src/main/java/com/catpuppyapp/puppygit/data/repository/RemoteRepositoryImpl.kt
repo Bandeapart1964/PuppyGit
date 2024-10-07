@@ -159,6 +159,7 @@ class RemoteRepositoryImpl(private val dao: RemoteDao) : RemoteRepository {
             // if push url invalid, actually will use fetch url(remoteUrl), so set it to fetch url
             if(remoteFromDb.pushUrl.isBlank()) {
                 remoteFromDb.pushUrl = remoteFromDb.remoteUrl
+                remoteFromDb.pushUrlTrackFetchUrl = true
             }
         }
     }

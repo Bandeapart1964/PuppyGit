@@ -100,7 +100,7 @@ fun RemoteItem(
 
         ){
             Text(text = stringResource(R.string.push_url) +": ")
-            Text(text = curObj.pushUrl.ifBlank { stringResource(id = R.string.use_url) },
+            Text(text = if(curObj.pushUrlTrackFetchUrl) stringResource(R.string.use_url) else curObj.pushUrl,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Light

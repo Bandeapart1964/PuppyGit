@@ -27,4 +27,10 @@ class RemoteDto {
     @Ignore
     var branchListForFetch:List<String> = listOf()
 
+
+    /**
+     * when push url empty, will use fetch url, that case should set this value to true*
+     */
+    @Ignore
+    var pushUrlTrackFetchUrl:Boolean = false
 }

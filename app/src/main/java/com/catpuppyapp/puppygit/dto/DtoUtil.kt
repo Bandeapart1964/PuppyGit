@@ -106,6 +106,7 @@ fun updateRemoteDto(repo: Repository, remoteDto: RemoteDto) {
     // if push url not set, use same as fetch url(remoteUrl)
     if(remoteDto.pushUrl.isBlank()) {
         remoteDto.pushUrl = remoteDto.remoteUrl
+        remoteDto.pushUrlTrackFetchUrl = true
     }
 
     //更新branchMode
