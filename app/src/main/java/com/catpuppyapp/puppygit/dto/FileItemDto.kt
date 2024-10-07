@@ -32,6 +32,10 @@ class FileItemDto {
         return File(fullPath)
     }
 
+    fun equalsForSelected(other:FileItemDto):Boolean {
+        return fullPath == other.fullPath
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

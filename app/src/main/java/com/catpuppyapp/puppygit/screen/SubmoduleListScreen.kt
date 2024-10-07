@@ -1046,10 +1046,8 @@ fun SubmoduleListScreen(
         selectAll@{
             //impl select all
             val list = if(enableFilterState.value) filterList.value else list.value
-
-            list.forEach {
-                UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value, contains = containsForSelectedItems)
-            }
+            selectedItemList.value.clear()
+            selectedItemList.value.addAll(list)
         },
     )
 

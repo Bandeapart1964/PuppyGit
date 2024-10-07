@@ -202,6 +202,10 @@ fun FilesInnerPage(
 //    val currentPathBreadCrumbList2 = remember{ mutableStateListOf<FileItemDto>() }  // key 2
 
 
+    val containsForSelected = { srcList:List<FileItemDto>, item:FileItemDto ->
+        srcList.indexOfFirst { it.equalsForSelected(item) } != -1
+    }
+
     val filesPageQuitSelectionMode = {
         selectedItems.value.clear()  //清空选中文件列表
 //        selectedItems.requireRefreshView()
@@ -211,12 +215,12 @@ fun FilesInnerPage(
 
     val switchItemSelected = { item: FileItemDto ->
         isFileSelectionMode.value = true
-        UIHelper.selectIfNotInSelectedListElseRemove(item, selectedItems.value)
+        UIHelper.selectIfNotInSelectedListElseRemove(item, selectedItems.value, contains = containsForSelected)
     }
 
     val selecteItem = {item:FileItemDto ->
         isFileSelectionMode.value = true
-        UIHelper.selectIfNotInSelectedListElseNoop(item, selectedItems.value)
+        UIHelper.selectIfNotInSelectedListElseNoop(item, selectedItems.value, contains = containsForSelected)
     }
 
     val getSelectedFilesCount = {
@@ -224,7 +228,8 @@ fun FilesInnerPage(
     }
 
     val isItemInSelected = { f:FileItemDto->
-        selectedItems.value.contains(f)
+//        selectedItems.value.contains(f)
+        selectedItems.value.indexOfFirst { it.equalsForSelected(f) } != -1
     }
 
 
@@ -1080,9 +1085,9 @@ fun FilesInnerPage(
                 selectedItems.value.toList().forEach {
                     val file = File(it.fullPath)
                     // 如果要删除的路径包含.git，加个警告，但不阻止，用户非要删，我不管
-                    if(file.canonicalPath.contains(".git")) {
-                        MyLog.w(TAG, "#DelFileDialog: may delete file under '.git' folder, fullPath will del is: '${file.canonicalPath}'")
-                    }
+//                    if(file.canonicalPath.contains(".git")) {
+//                        MyLog.w(TAG, "#DelFileDialog: may delete file under '.git' folder, fullPath will del is: '${file.canonicalPath}'")
+//                    }
 
                     //不管是目录还是文件，直接梭哈
                     file.deleteRecursively()
@@ -1393,7 +1398,7 @@ fun FilesInnerPage(
             stringResource(R.string.copy),
             stringResource(R.string.select_all),
         )
-        val selectionModeIconOnClickList = listOf(
+        val selectionModeIconOnClickList = listOf<()->Unit>(
             delete@{
                 showDelFileDialog.value = true
             },
@@ -1406,9 +1411,8 @@ fun FilesInnerPage(
             selectAll@{
                 val list = if(enableFilterState.value) filterList.value else currentPathFileList.value
 
-                list.forEach {
-                    UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItems.value)
-                }
+                selectedItems.value.clear()
+                selectedItems.value.addAll(list)
             }
         )
         val selectionModeIconEnableList = listOf(
