@@ -1048,6 +1048,7 @@ fun SubmoduleListScreen(
             val list = if(enableFilterState.value) filterList.value else list.value
             selectedItemList.value.clear()
             selectedItemList.value.addAll(list)
+            Unit
         },
     )
 

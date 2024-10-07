@@ -1413,6 +1413,7 @@ fun FilesInnerPage(
 
                 selectedItems.value.clear()
                 selectedItems.value.addAll(list)
+                Unit
             }
         )
         val selectionModeIconEnableList = listOf(

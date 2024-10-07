@@ -494,10 +494,12 @@ fun TagListScreen(
         selectAll@{
             //impl select all
             val list = if(enableFilterState.value) filterList.value else list.value
-
-            list.forEach {
-                UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value)
-            }
+            selectedItemList.value.clear()
+            selectedItemList.value.addAll(list)
+            Unit
+//            list.forEach {
+//                UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value)
+//            }
         },
     )
 

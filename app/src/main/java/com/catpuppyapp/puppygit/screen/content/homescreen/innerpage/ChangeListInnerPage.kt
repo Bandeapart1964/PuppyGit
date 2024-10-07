@@ -2224,10 +2224,12 @@ fun ChangeListInnerPage(
 
     val selectAll = {
         val list = if(enableFilterState.value) filterList.value else itemList.value
-
-        list.forEach {
-            UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value)
-        }
+        selectedItemList.value.clear()
+        selectedItemList.value.addAll(list)
+        Unit
+//        list.forEach {
+//            UIHelper.selectIfNotInSelectedListElseNoop(it, selectedItemList.value)
+//        }
     }
 
     //BottomBar选项
