@@ -265,11 +265,23 @@ fun deleteIfFileOrDirExist(f: File):Boolean {
 }
 
 fun isFileSizeOverLimit(size:Long, limit:Long=SettingsUtil.getSettingsSnapshot().editor.maxFileSizeLimit) :Boolean {
-    return size > limit
+    return isSizeOverLimit(size = size, limitMax = limit)
 }
 
 fun isDiffContentSizeOverLimit(size:Long, limit:Long=SettingsUtil.getSettingsSnapshot().diff.diffContentSizeMaxLimit) :Boolean {
-    return size > limit
+    return isSizeOverLimit(size = size, limitMax = limit)
+}
+
+/**
+ * @return if limitMax is 0, meant no limit, return false; else return (size > limitMax) 's result
+ */
+fun isSizeOverLimit(size:Long, limitMax:Long):Boolean {
+    // 0 = no limit
+    if(limitMax == 0L) {
+        return false
+    }
+
+    return size > limitMax
 }
 
 //例如：输入 abc 或 /path/to/abc 或 /path/to/abc/，返回 abc
