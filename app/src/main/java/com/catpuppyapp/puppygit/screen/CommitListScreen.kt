@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -1567,19 +1569,41 @@ fun CommitListScreen(
 
         // filter mode 有可能查无条目，但是可继续加载更多，这时也应显示加载更多按钮
         if(filterModeOn.value && list.isEmpty()) {
-            LoadMore(
-                modifier = Modifier.padding(top = 30.dp),
-                paddingValues = contentPadding,
-                pageSize=pageSize,
-                rememberPageSize=rememberPageSize,
-                showSetPageSizeDialog=showSetPageSizeDialog,
-                pageSizeForDialog=pageSizeForDialog,
-                text = loadMoreText.value,
-                enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
-                loadToEndOnClick = {
+            Column(
+                modifier = Modifier
+                    .padding(contentPadding)
+                    .verticalScroll(rememberScrollState())
+                ,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Spacer(Modifier.height(50.dp))
+                Text(stringResource(R.string.no_matched_item), fontWeight = FontWeight.Light)
+
+                LoadMore(
+                    modifier = Modifier.padding(top = 30.dp),
+                    pageSize=pageSize,
+                    rememberPageSize=rememberPageSize,
+                    showSetPageSizeDialog=showSetPageSizeDialog,
+                    pageSizeForDialog=pageSizeForDialog,
+                    text = loadMoreText.value,
+                    enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
+                    loadToEndOnClick = {
+                        val firstLoad = false
+                        val forceReload = false
+                        val loadToEnd = true
+                        doLoadMore(
+                            curRepo.value.fullSavePath,
+                            nextCommitOid.value,
+                            firstLoad,
+                            forceReload,
+                            loadToEnd
+                        )
+                    }
+                ) {
                     val firstLoad = false
                     val forceReload = false
-                    val loadToEnd = true
+                    val loadToEnd = false
                     doLoadMore(
                         curRepo.value.fullSavePath,
                         nextCommitOid.value,
@@ -1587,19 +1611,8 @@ fun CommitListScreen(
                         forceReload,
                         loadToEnd
                     )
-                }
-            ) {
-                val firstLoad = false
-                val forceReload = false
-                val loadToEnd = false
-                doLoadMore(
-                    curRepo.value.fullSavePath,
-                    nextCommitOid.value,
-                    firstLoad,
-                    forceReload,
-                    loadToEnd
-                )
 
+                }
             }
         }
     }

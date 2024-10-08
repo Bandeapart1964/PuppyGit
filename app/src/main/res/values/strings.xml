@@ -920,5 +920,6 @@
     <string name="page_size">Page Size</string>
     <string name="invalid_number">invalid number</string>
     <string name="remember">Remember</string>
+    <string name="no_matched_item">No matched item</string>
 
 </resources>

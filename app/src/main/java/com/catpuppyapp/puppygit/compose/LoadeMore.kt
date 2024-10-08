@@ -58,13 +58,14 @@ fun LoadMore(
 
     val cardColor = UIHelper.defaultCardColor()
 
-
+    val buttonHeight = 50
 
 
 
     Column(modifier= Modifier
         .fillMaxWidth()
         .padding(paddingValues)
+        .padding(start = 10.dp, end = 10.dp)
         .then(modifier)
     ) {
         Row (
@@ -88,10 +89,8 @@ fun LoadMore(
             ) {
                 Row(
                     modifier = Modifier
-                        // at here, padding must before height and width, else, style bad, no space to screen border
-                        .padding(start = 30.dp, end = 30.dp)
-                        .height(50.dp)
                         .fillMaxWidth(.85f)
+                        .height(buttonHeight.dp)
                     ,
 
                     horizontalArrangement = Arrangement.Center,
@@ -138,9 +137,8 @@ fun LoadMore(
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(start = 30.dp, end = 30.dp)
-                        .height(50.dp)
                         .fillMaxWidth()
+                        .height(buttonHeight.dp)
                     ,
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
