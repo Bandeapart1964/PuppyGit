@@ -169,10 +169,10 @@ object MyLog {
                     Log.e(tag, msg)
                 }else if(level == 'w') {
                     Log.w(tag, msg)
-                }else if(level == 'd') {
-                    Log.d(tag, msg)
                 }else if(level == 'i') {
                     Log.i(tag, msg)
+                }else if(level == 'd') {
+                    Log.d(tag, msg)
                 }else if(level == 'v') {
                     Log.v(tag, msg)
                 }else {  // should not in here if everything ok
@@ -192,15 +192,15 @@ object MyLog {
                     } else {
                         Log.e(tag, msg)
                     }
-                } else if ('d' == myLogLevel && ('w' == level || 'e' == level || 'd' == level)) {
+                } else if ('i' == myLogLevel && ('w' == level || 'e' == level || 'i' == level)) {
                     if ('w' == level) {
                         Log.w(tag, msg)
                     } else if ('e' == level) {
                         Log.e(tag, msg)
-                    } else {
-                        Log.d(tag, msg)
+                    }else {
+                        Log.i(tag, msg)
                     }
-                } else if ('i' == myLogLevel && ('w' == level || 'e' == level || 'd' == level || 'i' == level)) {
+                } else if ('d' == myLogLevel && ('w' == level || 'e' == level || 'd' == level || 'i' == level)) {
                     if ('w' == level) {
                         Log.w(tag, msg)
                     } else if ('e' == level) {
@@ -379,8 +379,8 @@ object MyLog {
     //        now.set(Calendar.DATE, now.get(Calendar.DATE) - LOG_FILE_SAVE_DAYS);
     //        return now.getTime();
     //    }
-    //TODO
-    fun zipLogDirAndSendToEmail() {
-        throw RuntimeException("Not implemented yet")
-    }
+
+//    fun zipLogDirAndSendToEmail() {
+//        throw RuntimeException("Not implemented yet")
+//    }
 }
