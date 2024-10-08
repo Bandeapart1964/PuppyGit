@@ -640,7 +640,7 @@ fun EditorInnerPage(
     // open file err or no file opened or loading file
     if(
         ((editorOpenFileErr.value) // open file err
-                || (notOpenFile)  // no open any file
+                || (notOpenFile)  // no opened any file
                 || (loadingFile))  // loading file
         && somethingWrong  // load file err or file not ready or file path is blank
     ){
@@ -648,6 +648,7 @@ fun EditorInnerPage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .padding(10.dp)
                 .verticalScroll(rememberScrollState())
             ,
             verticalArrangement = Arrangement.Center,

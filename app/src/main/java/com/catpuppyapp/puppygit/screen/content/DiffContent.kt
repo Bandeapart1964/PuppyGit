@@ -123,12 +123,13 @@ fun DiffContent(
                 //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
                 .fillMaxSize()
                 .padding(contentPadding)
+                .padding(10.dp)
                 .verticalScroll(rememberScrollState())
             ,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(modifier = Modifier.padding(10.dp)) {
+            Row {
                 if(!isSupportedChangeType){
                     Text(text = stringResource(R.string.error_unknown_change_type))
                 }else if(loading.value) {
