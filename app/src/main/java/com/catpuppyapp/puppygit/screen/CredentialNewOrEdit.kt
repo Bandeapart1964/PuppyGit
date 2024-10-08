@@ -28,7 +28,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,14 +54,13 @@ import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
-import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private val stateKeyTag = "CredentialNewOrEdit"
+private val TAG = "CredentialNewOrEdit"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,10 +68,6 @@ fun CredentialNewOrEdit(
     credentialId: String?,  //编辑已存在条目的时候，用得着这个
     naviUp: () -> Unit,
 ) {
-    SideEffect {
-        Msg.msgNotifyHost()
-    }
-    val TAG = "CredentialNewOrEdit"
 
     val appContext = LocalContext.current
 

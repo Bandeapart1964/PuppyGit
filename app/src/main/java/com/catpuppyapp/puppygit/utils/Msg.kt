@@ -43,6 +43,7 @@ class Msg {
 
         }
 
+        @Deprecated("no more need this")
         val msgNotifyHost = {
             MsgQueue.showAndClearAllMsg()
         }

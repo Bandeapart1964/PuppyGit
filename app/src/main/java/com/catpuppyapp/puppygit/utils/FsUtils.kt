@@ -282,25 +282,37 @@ object FsUtils {
             return Ret.createError(null, "target is a file but expect dir!", Ret.ErrCode.targetIsFileButExpectDir)
         }
 
+        var neverShowErr = true
         //开始执行 拷贝 or 移动 or 导出
         srcList.forEach {
-
             val src = it
+            var target:File? = null
 
-            //1 源不能不存在(例如，我在选择模式下对某个复制到“剪贴板”的文件执行了重命名，粘贴时就会出现源不存在的情况(这种情况实际已经解决，现在20240601选中文件后重命名会把已选中列表对应条目也更新))
-            //2 源和目标不能相同(否则会无限递归复制)
-            //3 源不能是目标文件夹的父目录(否则会无限递归复制)
-            if((!src.exists()) || (src.isDirectory && destDir.canonicalPath.startsWith(src.canonicalPath))) {
-                return@forEach  //不会终止循环而是会进入下次迭代，相当于continue
+            try {
+                //1 源不能不存在(例如，我在选择模式下对某个复制到“剪贴板”的文件执行了重命名，粘贴时就会出现源不存在的情况(这种情况实际已经解决，现在20240601选中文件后重命名会把已选中列表对应条目也更新))
+                //2 源和目标不能相同(否则会无限递归复制)
+                //3 源不能是目标文件夹的父目录(否则会无限递归复制)
+                if((!src.exists()) || (src.isDirectory && destDir.canonicalPath.startsWith(src.canonicalPath))) {
+                    return@forEach  //不会终止循环而是会进入下次迭代，相当于continue
+                }
+
+                target = getANonExistsTarget(File(destDir, src.name))
+
+                src.copyRecursively(target, false)  //false，禁用覆盖，不过，只有文件存在时才需要覆盖，而上面其实已经判断过了，所以执行到这，target肯定不存在，也用不着覆盖，但以防万一，这个值传false，避免错误覆盖文件
+
+                if(requireDeleteSrc) {  //如果是“移动(又名“剪切”)“，则删除源
+                    src.deleteRecursively()
+                }
+
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#copyOrMoveOrExportFile err: src=${src.canonicalPath}, target=${target?.canonicalPath}, err=${e.localizedMessage}")
+
+                // avoid copy many files get many toasts
+                if(neverShowErr) {
+                    neverShowErr=false
+                    Msg.requireShowLongDuration("err:${e.localizedMessage}")
+                }
             }
-
-            val target = getANonExistsTarget(File(destDir, src.name))
-
-            src.copyRecursively(target, false)  //false，禁用覆盖，不过，只有文件存在时才需要覆盖，而上面其实已经判断过了，所以执行到这，target肯定不存在，也用不着覆盖，但以防万一，这个值传false，避免错误覆盖文件
-            if(requireDeleteSrc) {  //如果是“移动(又名“剪切”)“，则删除源
-                src.deleteRecursively()
-            }
-
         }
 
         //如果待覆盖的文件列表为空，则全部复制或移动完成，提示成功，否则弹窗询问是否覆盖

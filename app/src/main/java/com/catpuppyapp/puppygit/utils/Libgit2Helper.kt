@@ -2415,13 +2415,27 @@ class Libgit2Helper {
         //添加worktree新和修改的文件到index，从index移除已删除的worktree文件
         fun stageStatusEntryAndWriteToDisk(repo: Repository, list: List<StatusTypeEntrySaver>) {
             val index = repo.index()
+            var neverShowErr = true
+
             list.forEach {
-                if(it.changeType == Cons.gitStatusDeleted) {  //changeType is "Deleted"
-                    index.removeByPath(it.relativePathUnderRepo)
-                }else{  // changeType is "Modified" or "New" or "Conflict"
-                    index.add(it.relativePathUnderRepo)
+                try {
+                    if(it.changeType == Cons.gitStatusDeleted) {  //changeType is "Deleted"
+                        index.removeByPath(it.relativePathUnderRepo)
+                    }else{  // changeType is "Modified" or "New" or "Conflict"
+                        index.add(it.relativePathUnderRepo)
+                    }
+                }catch (e:Exception) {
+                    val fileName = getFileNameFromCanonicalPath(it.relativePathUnderRepo)
+                    MyLog.e(TAG, "#stageStatusEntryAndWriteToDisk err: fileName=$fileName, pathUnderRepo=${it.relativePathUnderRepo}, err=${e.localizedMessage}")
+
+                    // only show err once, avoid toast hell
+                    if(neverShowErr) {
+                        neverShowErr = false
+                        Msg.requireShowLongDuration("stage '$fileName' err:${e.localizedMessage}")
+                    }
                 }
             }
+
             //写入硬盘
             index.write()
         }

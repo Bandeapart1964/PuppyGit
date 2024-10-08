@@ -284,21 +284,29 @@ fun isSizeOverLimit(size:Long, limitMax:Long):Boolean {
     return size > limitMax
 }
 
-//例如：输入 abc 或 /path/to/abc 或 /path/to/abc/，返回 abc
-//例如：输入 abc// 或 其他无法解析出文件夹或目录名的字符串，则返回原字符串
-fun getFileNameFromCanonicalPath(path:String):String {
-    val pathRemovedSuffix = path.removeSuffix(File.separator)  //为目录移除末尾的/，如果有的话
+/**
+ * @return e.g.: input "abc" or "/path/to/abc" or "/path/to/abc/" or "path/to/abc"，return "abc";
+ *          input "abc//" or other bad path, return origin path;
+ *          if err, return origin path
+ */
+fun getFileNameFromCanonicalPath(path:String, separator:String=File.separator):String {
+    try {
+        val pathRemovedSuffix = path.removeSuffix(separator)  //为目录移除末尾的/，如果有的话
 
-    val lastSeparatorIndex = pathRemovedSuffix.lastIndexOf(File.separator)  //找出最后一个/的位置
+        val lastSeparatorIndex = pathRemovedSuffix.lastIndexOf(separator)  //找出最后一个/的位置
 
-    //无法取出文件名则返回原字符串
-    //没找到/ 或 无效路径格式(上面去了个/，末尾还有个/，说明原字符串末尾至少两个/，所以是无效路径)
-    if(lastSeparatorIndex == -1 || lastSeparatorIndex == pathRemovedSuffix.length-1) {
+        //无法取出文件名则返回原字符串
+        //没找到/ 或 无效路径格式(上面去了个/，末尾还有个/，说明原字符串末尾至少两个/，所以是无效路径)
+        if(lastSeparatorIndex == -1 || lastSeparatorIndex == pathRemovedSuffix.length-1) {
+            return path
+        }
+
+        //有效路径，返回目录或文件名
+        return pathRemovedSuffix.substring(lastSeparatorIndex+1, pathRemovedSuffix.length)
+    }catch (e:Exception) {
+        MyLog.e(TAG, "#getFileNameFromCanonicalPath err: path=$path, separator=$separator, err=${e.localizedMessage}")
         return path
     }
-
-    //有效路径，返回目录或文件名
-    return pathRemovedSuffix.substring(lastSeparatorIndex+1, pathRemovedSuffix.length)
 }
 
 //输入 eg: /sdcard/Android/data/com.pack/files/allRepoDir/Repo/dir/etc
