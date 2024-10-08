@@ -294,8 +294,8 @@ fun CommitListScreen(
                     list.value.clear()
                 }
 
-                loadMoreLoading.value = true
                 loadMoreText.value = appContext.getString(R.string.loading)
+                loadMoreLoading.value = true
 
                 //开始查找
                 val (nextOid, commitList) = Libgit2Helper.getCommitList(
