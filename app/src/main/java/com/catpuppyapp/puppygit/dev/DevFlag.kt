@@ -41,9 +41,9 @@ fun featureEnabled(featureFlag: Boolean):Boolean {
  * untested features or tested but not enough tested
  */
 //TODO 测试功能完毕后设为true
-val submoduleTestPassed = false
-val ignoreWorktreeFilesTestPassed = false
-val initRepoFromFilesPageTestPassed = false
+val submoduleTestPassed = true
+val ignoreWorktreeFilesTestPassed = true
+val initRepoFromFilesPageTestPassed = true
 
 
 val shallowAndSingleBranchTestPassed = true  //代表shallow clone和single branch功能是否测试通过
