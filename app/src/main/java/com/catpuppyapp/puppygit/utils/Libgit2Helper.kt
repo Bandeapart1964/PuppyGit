@@ -66,8 +66,6 @@ import com.github.git24j.core.Submodule
 import com.github.git24j.core.Tag
 import com.github.git24j.core.Tree
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.FileWriter
 import java.net.URI
@@ -738,9 +736,9 @@ class Libgit2Helper {
 
                         // only check file size, most time very fast, no need set channel, the channel only require when loading a huge content
                         loadChannel = null,
-                        checkChannelFrequency = -1,
+                        checkChannelLinesLimit = -1,
                         checkChannelSizeLimit = -1L,
-                        loadChannelLock = null,
+//                        loadChannelLock = null,
                     )
                     statusTypeSaver.fileSizeInBytes = diffItem.getEfficientFileSize()
                 }
@@ -1294,9 +1292,9 @@ class Libgit2Helper {
                             // because is fast, that case can pass null, but if try get diff conent,
                             // I suggessted pass a channel and send abort signal when page destoryed
                               loadChannel: Channel<Int>?,
-                              checkChannelFrequency:Int,  // only work when `loadChannel` is not null
+                              checkChannelLinesLimit:Int,  // only work when `loadChannel` is not null
                               checkChannelSizeLimit:Long,  // only work when `loadChannel` is not null
-                              loadChannelLock:Mutex?,
+//                              loadChannelLock:Mutex?,
                              )
         :DiffItemSaver{
             val funName = "getSingleDiffItem"
@@ -1404,8 +1402,8 @@ class Libgit2Helper {
             //用来存储puppyLine和rawLine对，这样可以实现先统计大小，若没超，则取line content，否则不取的逻辑
             val puppyAndRawLineList = mutableListOf<Pair<PuppyLine, Diff.Line>>()
 
-            var checkChannelCount = 0
-            var checkChannelLen = 0L
+            var checkChannelLinesCount = 0
+            var checkChannelContentSizeCount = 0L
 
             for(i in 0 until numHunks) {
                 val hunkInfo = patch.getHunk(i) ?:continue
@@ -1423,26 +1421,18 @@ class Libgit2Helper {
                 diffItem.hunks.add(hunkAndLines)
                 val lines = hunkAndLines.lines
                 for(j in 0 until lineCnt) {
-                    if(loadChannel!=null && loadChannelLock!=null) {
-                        loadChannelLock.withLock {
-
-//                        println("checkChannelCount:$checkChannelCount")
-                            if(++checkChannelCount > checkChannelFrequency || checkChannelLen>checkChannelSizeLimit) {
-                                val recv = loadChannel.tryReceive()
-                                println("recv.toString(): ${recv.toString()}")
-                                println("recv.isClosed=${recv.isClosed}")
-                                if(!recv.isFailure){  // not failure meant success or closed
-//                            println("进来了！")
-                                    if(!recv.isClosed) {
-                                        loadChannel.close()
-//                                println("close成功了")
-                                    }
-                                    MyLog.d(TAG, "#$funName: abort by terminate signal")
-                                    break
-                                }else {
-                                    checkChannelCount = 0
-                                    checkChannelLen = 0
+                    if(loadChannel!=null) {
+                        if(++checkChannelLinesCount > checkChannelLinesLimit || checkChannelContentSizeCount>checkChannelSizeLimit) {
+                            val recv = loadChannel.tryReceive()
+                            if(recv.isSuccess || recv.isClosed){  // not failure meant success or closed
+                                if(!recv.isClosed) {
+                                    loadChannel.close()
                                 }
+                                MyLog.d(TAG, "#$funName: abort by terminate signal")
+                                break
+                            }else {
+                                checkChannelLinesCount = 0
+                                checkChannelContentSizeCount = 0
                             }
                         }
                     }
@@ -1457,7 +1447,7 @@ class Libgit2Helper {
                     contentLenSum+=pLine.contentLen
 
                     // for check  abort signal
-                    checkChannelLen+=pLine.contentLen
+                    checkChannelContentSizeCount+=pLine.contentLen
 
                     //如果content累积的大小超过限制，直接返回，不要再获取了
                     if(isDiffContentSizeOverLimit(contentLenSum, limit = maxSizeLimit)) {

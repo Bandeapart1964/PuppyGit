@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,11 +51,7 @@ import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Diff
 import com.github.git24j.core.Repository
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 private val TAG = "DiffContent"
 private val stateKeyTag = "DiffContent"
@@ -86,11 +80,11 @@ fun DiffContent(
     //废弃，改用获取diffItem时动态计算实际需要显示的contentLen总和了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
 
-    val scope = rememberCoroutineScope()
+//    val scope = rememberCoroutineScope()
     val settings=SettingsUtil.getSettingsSnapshot()
 
     val loadChannel = Channel<Int>()
-    val loadChannelLock = Mutex()
+//    val loadChannelLock = Mutex()
 
 
     val appContext = AppModel.singleInstanceHolder.appContext
@@ -114,8 +108,8 @@ fun DiffContent(
 
     val fileChangeTypeIsModified = changeType == Cons.gitStatusModified
 
-    @SuppressLint("UnrememberedMutableState")
-    val job = mutableStateOf<Job?>(null)
+//    @SuppressLint("UnrememberedMutableState")
+//    val job = mutableStateOf<Job?>(null)
 
     //点击屏幕开启精细diff相关变量，开始
 //    val switchDiffMethodWhenCountToThisValue = 3  //需要连续点击屏幕这个次数才能切换精细diff开关
@@ -443,9 +437,9 @@ fun DiffContent(
                                         treeToWorkTree = true,
                                         maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
                                         loadChannel = loadChannel,
-                                        checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                        checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                         checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-                                        loadChannelLock = loadChannelLock
+//                                        loadChannelLock = loadChannelLock
                                     )
                                 }else { // tree to tree, no local(worktree)
                                     val tree1 = Libgit2Helper.resolveTree(repo, treeOid1Str)
@@ -458,9 +452,9 @@ fun DiffContent(
                                         tree2,
                                         maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
                                         loadChannel = loadChannel,
-                                        checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                        checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                         checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-                                        loadChannelLock = loadChannelLock
+//                                        loadChannelLock = loadChannelLock
                                     )
                                 }
 
@@ -472,9 +466,9 @@ fun DiffContent(
                                     fromTo,
                                     maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
                                     loadChannel = loadChannel,
-                                    checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                    checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                     checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-                                    loadChannelLock = loadChannelLock
+//                                    loadChannelLock = loadChannelLock
                                     )
                                 diffItem.value = diffItemSaver
                             }
@@ -508,18 +502,8 @@ fun DiffContent(
 
     DisposableEffect(Unit) {
         onDispose {
-            println("disposeddddddddddddddddddddddddddddddddd")
             doJobThenOffLoading {
-                loadChannelLock.withLock {
-                    println("before send 1 to loadChannel")
-
-                    loadChannel.send(1)
-                    println("sent 1 to loadChannel")
-                    loadChannel.close()
-                    println("closed loadChannel")
-
-                }
-
+                loadChannel.close()
             }
         }
     }

@@ -26,10 +26,10 @@ data class DiffSettings (
     /**
      * load how many lines check once abort signal
      */
-    var loadDiffContentCheckAbortSignalFrequency:Int=500,
+    var loadDiffContentCheckAbortSignalLines:Int=1000,
     /**
      * load how much size will check once abort signal, when this or `loadDiffContentCheckAbortSignalFrequency` reached will check abort signal
      */
-    var loadDiffContentCheckAbortSignalSize:Long=1000000,
+    var loadDiffContentCheckAbortSignalSize:Long=1000000L,  // unit byte, default 1MB
 
 )
