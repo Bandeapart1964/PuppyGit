@@ -65,6 +65,9 @@ import com.github.git24j.core.Status.StatusList
 import com.github.git24j.core.Submodule
 import com.github.git24j.core.Tag
 import com.github.git24j.core.Tree
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.FileWriter
 import java.net.URI
@@ -731,7 +734,13 @@ class Libgit2Helper {
                         repo,
                         statusTypeSaver.relativePathUnderRepo,
                         fromTo,
-                        onlyCheckFileSize = true
+                        onlyCheckFileSize = true,
+
+                        // only check file size, most time very fast, no need set channel, the channel only require when loading a huge content
+                        loadChannel = null,
+                        checkChannelFrequency = -1,
+                        checkChannelSizeLimit = -1L,
+                        loadChannelLock = null,
                     )
                     statusTypeSaver.fileSizeInBytes = diffItem.getEfficientFileSize()
                 }
@@ -1277,7 +1286,17 @@ class Libgit2Helper {
                               onlyCheckFileSize:Boolean = false,
                               reverse: Boolean=false,
                               treeToWorkTree: Boolean = false,
-                              maxSizeLimit:Long = SettingsUtil.getSettingsSnapshot().diff.diffContentSizeMaxLimit
+                              maxSizeLimit:Long = SettingsUtil.getSettingsSnapshot().diff.diffContentSizeMaxLimit,
+
+                            // for abort loading,
+                            // if need not check abort signal, pass null to this param,
+                            // e.g. most time only check file size no need check abort,
+                            // because is fast, that case can pass null, but if try get diff conent,
+                            // I suggessted pass a channel and send abort signal when page destoryed
+                              loadChannel: Channel<Int>?,
+                              checkChannelFrequency:Int,  // only work when `loadChannel` is not null
+                              checkChannelSizeLimit:Long,  // only work when `loadChannel` is not null
+                              loadChannelLock:Mutex?,
                              )
         :DiffItemSaver{
             val funName = "getSingleDiffItem"
@@ -1384,6 +1403,10 @@ class Libgit2Helper {
             var contentLenSum =0L
             //用来存储puppyLine和rawLine对，这样可以实现先统计大小，若没超，则取line content，否则不取的逻辑
             val puppyAndRawLineList = mutableListOf<Pair<PuppyLine, Diff.Line>>()
+
+            var checkChannelCount = 0
+            var checkChannelLen = 0L
+
             for(i in 0 until numHunks) {
                 val hunkInfo = patch.getHunk(i) ?:continue
                 val hunk = hunkInfo.hunk
@@ -1400,12 +1423,41 @@ class Libgit2Helper {
                 diffItem.hunks.add(hunkAndLines)
                 val lines = hunkAndLines.lines
                 for(j in 0 until lineCnt) {
+                    if(loadChannel!=null && loadChannelLock!=null) {
+                        loadChannelLock.withLock {
+
+//                        println("checkChannelCount:$checkChannelCount")
+                            if(++checkChannelCount > checkChannelFrequency || checkChannelLen>checkChannelSizeLimit) {
+                                val recv = loadChannel.tryReceive()
+                                println("recv.toString(): ${recv.toString()}")
+                                println("recv.isClosed=${recv.isClosed}")
+                                if(!recv.isFailure){  // not failure meant success or closed
+//                            println("进来了！")
+                                    if(!recv.isClosed) {
+                                        loadChannel.close()
+//                                println("close成功了")
+                                    }
+                                    MyLog.d(TAG, "#$funName: abort by terminate signal")
+                                    break
+                                }else {
+                                    checkChannelCount = 0
+                                    checkChannelLen = 0
+                                }
+                            }
+                        }
+                    }
+
+
+
                     val line = patch.getLineInHunk(i, j)?:continue
 
                     val pLine = PuppyLine()
                     //先检查文件大小是否超了
                     pLine.contentLen = line.contentLen
                     contentLenSum+=pLine.contentLen
+
+                    // for check  abort signal
+                    checkChannelLen+=pLine.contentLen
 
                     //如果content累积的大小超过限制，直接返回，不要再获取了
                     if(isDiffContentSizeOverLimit(contentLenSum, limit = maxSizeLimit)) {
@@ -3637,7 +3689,18 @@ class Libgit2Helper {
         }
 
         //返回值 (nextOid, CommitDtoList)，nextOid就是CommitDtoList列表里最后一个元素之后的Oid，用来实现加载更多，如果不存在下一个元素，则是null，意味着已经遍历到提交树的最初提交了
-        fun getCommitList(repo: Repository, repoId: String, startOid:Oid, pageSize:Int, sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(), retList: MutableList<CommitDto>):Pair<Oid?, List<CommitDto>> {
+        fun getCommitList(
+            repo: Repository,
+            repoId: String,
+            startOid:Oid,
+            pageSize:Int,
+            sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(),
+            retList: MutableList<CommitDto>,
+            loadChannel:Channel<Int>,
+
+            // load to this count, check once channel
+            checkChannelFrequency:Int,
+        ):Pair<Oid?, List<CommitDto>> {
 //            if(debugModeOn) {
 //                MyLog.d(TAG, "#getCommitList: startOid="+startOid.toString())
 //            }
@@ -3658,9 +3721,38 @@ class Libgit2Helper {
 
             val allTagList = getAllTags(repo)
 
+            var checkChannelCount = 0
+
             var next = revwalk.next()
             while (next!=null) {
                 try {
+//                    try {
+                    //check channel, may received terminal signal
+                    if(++checkChannelCount > checkChannelFrequency) {
+                        val recv = loadChannel.tryReceive()
+//                        println("recv.toString(): ${recv.toString()}")
+                        if(recv.isSuccess || recv.isClosed){  // not failure meant success or closed
+//                            println("进来了！")
+                            if(!recv.isClosed) {
+                                loadChannel.close()
+//                                println("close成功了")
+                            }
+                            MyLog.d(TAG, "#getCommitList: abort by terminate signal")
+                            break
+                        }else {
+                            checkChannelCount = 0
+                        }
+                    }
+
+                    //test abort signal， passed
+//                    continue
+                    //test
+
+//                    }catch (cherr:Exception) {
+//                        MyLog.e(TAG, "#getCommitList: get channel result err: ${cherr.localizedMessage}")
+//                        break
+//                    }
+
                     if(count++ >= pageSize) {
                         break
                     }

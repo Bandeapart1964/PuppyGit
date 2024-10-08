@@ -1645,6 +1645,8 @@ fun FilesInnerPage(
                     changeStateTriggerRefreshPage(needRefreshFilesPage)
 
                 }
+
+                Unit
             },
         )
         val selectionModeIconEnableList = listOf(
@@ -1754,6 +1756,7 @@ fun FilesInnerPage(
         val iconOnClickList = listOf(
             paste@{
                 copyOrMoveOrExportFile(selectedItems.value, currentPath.value, pasteMode.intValue == pasteMode_Move)  //最后一个参数代表是否删除源，如果是move，则删除
+                Unit
             },
         )
 

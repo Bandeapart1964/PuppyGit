@@ -48,76 +48,18 @@ fun LoadMore(
     loadToEndOnClick:()->Unit={},
     pageSize:MutableState<Int>,
     rememberPageSize:MutableState<Boolean>,
+    showSetPageSizeDialog:MutableState<Boolean>,
+    pageSizeForDialog:MutableState<String>,
     onClick:()->Unit
 ) {
     val inDarkTheme = Theme.inDarkTheme
 
-    val appContext = AppModel.singleInstanceHolder.appContext
+//    val appContext = AppModel.singleInstanceHolder.appContext
 
     val cardColor = UIHelper.defaultCardColor()
 
-    val invalidPageSize = -1
-    val minPageSize = 1  // make sure it bigger than `invalidPageSize`
 
-    val isInvalidPageSize = { ps:Int ->
-        ps < minPageSize
-    }
 
-    val showSetPageSizeDialog = rememberSaveable { mutableStateOf(false) }
-    val pageSizeForDialog = rememberSaveable { mutableStateOf(""+pageSize.value) }
-    if(showSetPageSizeDialog.value) {
-        ConfirmDialog2(
-            title = stringResource(R.string.page_size),
-            requireShowTextCompose = true,
-            textCompose = {
-                ScrollableColumn {
-                    TextField(
-                        modifier = Modifier.fillMaxWidth(),
-
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-
-                        value = pageSizeForDialog.value,
-                        singleLine = true,
-                        onValueChange = {
-                            pageSizeForDialog.value = it
-                        },
-                        label = {
-                            Text(stringResource(R.string.page_size))
-                        },
-                    )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    MyCheckBox(text= stringResource(R.string.remember), rememberPageSize)
-                }
-            },
-            onCancel = {showSetPageSizeDialog.value=false}
-        ) {
-            showSetPageSizeDialog.value=false
-
-            try {
-                val newPageSize = try {
-                    pageSizeForDialog.value.toInt()
-                }catch (_:Exception) {
-                    Msg.requireShow(appContext.getString(R.string.invalid_number))
-                    invalidPageSize
-                }
-
-                if(!isInvalidPageSize(newPageSize)) {
-                    pageSize.value = newPageSize
-
-                    if(rememberPageSize.value) {
-                        SettingsUtil.update {
-                            it.commitHistoryPageSize = newPageSize
-                        }
-                    }
-                }
-
-            }catch (e:Exception) {
-                MyLog.e(TAG, "#SetPageSizeDialog err: ${e.localizedMessage}")
-            }
-        }
-    }
 
 
     Column(modifier= Modifier

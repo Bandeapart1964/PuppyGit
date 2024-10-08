@@ -62,5 +62,12 @@ data class AppSettings(
      * commit history page, tap load more, load how many items
      */
     var commitHistoryPageSize:Int = 50,
+    /**
+     * when loading more at commit history page, load how many items check once terminal signal
+     *
+     * this settings for avoid quit commit history page, background task still loading history,
+     * don't set it too big, it make non-sense, and don't set it to small, it waste cpu
+     */
+    var commitHistoryLoadMoreCheckAbortSignalFrequency:Int= 1000,
 
-)
+    )

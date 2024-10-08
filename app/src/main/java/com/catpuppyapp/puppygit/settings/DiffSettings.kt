@@ -22,4 +22,14 @@ data class DiffSettings (
     var groupDiffContentByLineNum:Boolean = true,
 
     var diffContentSizeMaxLimit:Long = 0L,  // 0=no limit, unit is Byte, e.g. 1MB should set to 1000000L,
+
+    /**
+     * load how many lines check once abort signal
+     */
+    var loadDiffContentCheckAbortSignalFrequency:Int=500,
+    /**
+     * load how much size will check once abort signal, when this or `loadDiffContentCheckAbortSignalFrequency` reached will check abort signal
+     */
+    var loadDiffContentCheckAbortSignalSize:Long=1000000,
+
 )

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,10 +31,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -51,6 +54,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -61,6 +65,7 @@ import com.catpuppyapp.puppygit.compose.CheckoutDialog
 import com.catpuppyapp.puppygit.compose.CheckoutDialogFrom
 import com.catpuppyapp.puppygit.compose.CommitItem
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.CreateTagDialog
 import com.catpuppyapp.puppygit.compose.DiffCommitsDialog
@@ -71,6 +76,7 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ResetDialog
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
@@ -111,7 +117,7 @@ import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Oid
 import com.github.git24j.core.Repository
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.Channel
 
 private val TAG = "CommitListScreen"
 private val stateKeyTag = "CommitListScreen"
@@ -163,6 +169,7 @@ fun CommitListScreen(
 //    println("branchShortNameOrShortHashByFullOid: "+branchShortNameOrShortHashByFullOid.value)
 //    assert(fullOid.value.isNotBlank())
 
+    val loadChannel = Channel<Int>()
 
 //    val sumPage = MockData.getCommitSum(repoId,branch)
     //获取假数据
@@ -281,7 +288,7 @@ fun CommitListScreen(
 
         //加载更多
         //这个用scope，似乎会随页面释放而取消任务？不知道是否需要我检查CancelException？
-        scope.launch {
+        doJobThenOffLoading {
             Repository.open(repoFullPath).use { repo ->
                 if (firstLoad) {  //如果是第一次加载或刷新页面（重新初始化页面），清下列表
                     list.value.clear()
@@ -296,7 +303,9 @@ fun CommitListScreen(
                     repoId,
                     oid,
                     if(loadToEnd) Int.MAX_VALUE else pageSize.value,
-                    retList = list.value  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
+                    retList = list.value,  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
+                    loadChannel = loadChannel,
+                    checkChannelFrequency = settings.commitHistoryLoadMoreCheckAbortSignalFrequency
                 )
 
                 //更新变量
@@ -996,12 +1005,74 @@ fun CommitListScreen(
     }
 
 
+
+    val invalidPageSize = -1
+    val minPageSize = 1  // make sure it bigger than `invalidPageSize`
+
+    val isInvalidPageSize = { ps:Int ->
+        ps < minPageSize
+    }
+
+    val showSetPageSizeDialog = rememberSaveable { mutableStateOf(false) }
+    val pageSizeForDialog = rememberSaveable { mutableStateOf(""+pageSize.value) }
+
+    if(showSetPageSizeDialog.value) {
+        ConfirmDialog2(
+            title = stringResource(R.string.page_size),
+            requireShowTextCompose = true,
+            textCompose = {
+                ScrollableColumn {
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+
+                        value = pageSizeForDialog.value,
+                        singleLine = true,
+                        onValueChange = {
+                            pageSizeForDialog.value = it
+                        },
+                        label = {
+                            Text(stringResource(R.string.page_size))
+                        },
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    MyCheckBox(text= stringResource(R.string.remember), rememberPageSize)
+                }
+            },
+            onCancel = {showSetPageSizeDialog.value=false}
+        ) {
+            showSetPageSizeDialog.value=false
+
+            try {
+                val newPageSize = try {
+                    pageSizeForDialog.value.toInt()
+                }catch (_:Exception) {
+                    Msg.requireShow(appContext.getString(R.string.invalid_number))
+                    invalidPageSize
+                }
+
+                if(!isInvalidPageSize(newPageSize)) {
+                    pageSize.value = newPageSize
+
+                    if(rememberPageSize.value) {
+                        SettingsUtil.update {
+                            it.commitHistoryPageSize = newPageSize
+                        }
+                    }
+                }
+
+            }catch (e:Exception) {
+                MyLog.e(TAG, "#SetPageSizeDialog err: ${e.localizedMessage}")
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            //TODO 这个东西也要根据选择哪个抽屉菜单条目而变化
-            //TODO 要能在向上滚动时，隐藏这个topbar，向下滚动时，显示出来
-            //TODO Editor时，在右隐藏侧栏显示文件名怎么样？
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -1023,7 +1094,9 @@ fun CommitListScreen(
                                 onLongClick = {
                                     //长按显示仓库和分支信息
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    Msg.requireShow(repoAndBranchText)
+//                                    Msg.requireShow(repoAndBranchText)
+                                    // show loaded how many items
+                                    Msg.requireShow("loaded: ${list.value.size}")
                                 }
                             ) { // onClick
 
@@ -1160,6 +1233,17 @@ fun CommitListScreen(
                                             }
                                         )
                                     }
+
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.page_size)) },
+                                        onClick = {
+                                            pageSizeForDialog.value = ""+pageSize.value
+                                            showSetPageSizeDialog.value = true
+
+                                            //关闭顶栏菜单
+                                            showTopBarMenu.value = false
+                                        }
+                                    )
                                 }
 
 
@@ -1426,6 +1510,8 @@ fun CommitListScreen(
                 LoadMore(
                     pageSize=pageSize,
                     rememberPageSize=rememberPageSize,
+                    showSetPageSizeDialog=showSetPageSizeDialog,
+                    pageSizeForDialog=pageSizeForDialog,
                     text = loadMoreText.value,
                     enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
                     loadToEndOnClick = {
@@ -1486,6 +1572,8 @@ fun CommitListScreen(
                 paddingValues = contentPadding,
                 pageSize=pageSize,
                 rememberPageSize=rememberPageSize,
+                showSetPageSizeDialog=showSetPageSizeDialog,
+                pageSizeForDialog=pageSizeForDialog,
                 text = loadMoreText.value,
                 enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
                 loadToEndOnClick = {
@@ -1587,16 +1675,21 @@ fun CommitListScreen(
             }
         }
     }
+
     //compose被销毁时执行的副作用(SideEffect)
-//    DisposableEffect(Unit) {  //参数改变或者组件销毁时执行onDispose？参数改变是否会执行onDispose我不确定，不过组件销毁一定会执行。
-//        //组件创建时执行这个代码块
-//        onDispose {
-////            if (debugModeOn) {
-////                println("CommitListScreen销毁了！")
-////            }
-//            //组件销毁时执行这个代码块
-//        }
-//    }
+    DisposableEffect(Unit) {  //参数改变或者组件销毁时执行onDispose？参数改变是否会执行onDispose我不确定，不过组件销毁一定会执行。
+        //组件创建时执行这个代码块
+        onDispose {
+            doJobThenOffLoading {
+//                loadChannel.send(1)
+                loadChannel.close()
+            }
+//            if (debugModeOn) {
+//                println("CommitListScreen销毁了！")
+//            }
+            //组件销毁时执行这个代码块
+        }
+    }
 
 }
 

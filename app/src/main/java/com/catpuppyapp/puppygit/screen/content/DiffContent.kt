@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.screen.content
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,9 +14,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +53,11 @@ import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Diff
 import com.github.git24j.core.Repository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private val TAG = "DiffContent"
 private val stateKeyTag = "DiffContent"
@@ -78,7 +86,12 @@ fun DiffContent(
     //废弃，改用获取diffItem时动态计算实际需要显示的contentLen总和了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
 
+    val scope = rememberCoroutineScope()
     val settings=SettingsUtil.getSettingsSnapshot()
+
+    val loadChannel = Channel<Int>()
+    val loadChannelLock = Mutex()
+
 
     val appContext = AppModel.singleInstanceHolder.appContext
     val inDarkTheme = Theme.inDarkTheme
@@ -101,6 +114,8 @@ fun DiffContent(
 
     val fileChangeTypeIsModified = changeType == Cons.gitStatusModified
 
+    @SuppressLint("UnrememberedMutableState")
+    val job = mutableStateOf<Job?>(null)
 
     //点击屏幕开启精细diff相关变量，开始
 //    val switchDiffMethodWhenCountToThisValue = 3  //需要连续点击屏幕这个次数才能切换精细diff开关
@@ -387,6 +402,16 @@ fun DiffContent(
     LaunchedEffect(needRefresh.value) {
 //        if(!fileSizeOverLimit) {  //这里其实没必要，上级页面已经判断了，但我还是不放心，所以在这里再加个判断以防文件过大时误加载这个代码块导致app卡死
             if (repoId.isNotBlank() && relativePathUnderRepoDecoded.isNotBlank()) {
+//                MyLog.d(TAG, "#LauncedEffect: job==null: ${job.value == null}")
+//                if(job.value!=null) {
+//                    MyLog.d(TAG, "#LauncedEffect: job is not null, will cancel it")
+//                    try {
+//                        job.value?.cancel()
+//                    }catch (e:Exception) {
+//                        MyLog.e(TAG, "#LauncedEffect: cancel job err: ${e.localizedMessage}")
+//                    }
+//                }
+
                 //      设置页面loading为true
                 //      从数据库异步查询repo数据，调用diff方法获得diff内容，然后使用diff内容更新页面state
                 //      最后设置页面loading 为false
@@ -408,16 +433,49 @@ fun DiffContent(
                                     val reverse = Libgit2Helper.CommitUtil.isLocalCommitHash(treeOid1Str)
 //                                    println("1:$treeOid1Str, 2:$treeOid2Str, reverse=$reverse")
                                     val tree1 = Libgit2Helper.resolveTree(repo, if(reverse) treeOid2Str else treeOid1Str)
-                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, null, reverse=reverse, treeToWorkTree = true, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
+                                    Libgit2Helper.getSingleDiffItem(
+                                        repo,
+                                        relativePathUnderRepoDecoded,
+                                        fromTo,
+                                        tree1,
+                                        null,
+                                        reverse=reverse,
+                                        treeToWorkTree = true,
+                                        maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
+                                        loadChannel = loadChannel,
+                                        checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                        checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
+                                        loadChannelLock = loadChannelLock
+                                    )
                                 }else { // tree to tree, no local(worktree)
                                     val tree1 = Libgit2Helper.resolveTree(repo, treeOid1Str)
                                     val tree2 = Libgit2Helper.resolveTree(repo, treeOid2Str)
-                                    Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, tree1, tree2, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
+                                    Libgit2Helper.getSingleDiffItem(
+                                        repo,
+                                        relativePathUnderRepoDecoded,
+                                        fromTo,
+                                        tree1,
+                                        tree2,
+                                        maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
+                                        loadChannel = loadChannel,
+                                        checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                        checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
+                                        loadChannelLock = loadChannelLock
+                                    )
                                 }
 
                                 diffItem.value = diffItemSaver
                             }else {  //indexToWorktree or headToIndex
-                                val diffItemSaver = Libgit2Helper.getSingleDiffItem(repo, relativePathUnderRepoDecoded, fromTo, maxSizeLimit = settings.diff.diffContentSizeMaxLimit)
+                                val diffItemSaver = Libgit2Helper.getSingleDiffItem(
+                                    repo,
+                                    relativePathUnderRepoDecoded,
+                                    fromTo,
+                                    maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
+                                    loadChannel = loadChannel,
+                                    checkChannelFrequency = settings.diff.loadDiffContentCheckAbortSignalFrequency,
+                                    checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
+                                    loadChannelLock = loadChannelLock
+                                    )
                                 diffItem.value = diffItemSaver
                             }
 
@@ -445,5 +503,24 @@ fun DiffContent(
 //        }
 
 
+    }
+
+
+    DisposableEffect(Unit) {
+        onDispose {
+            println("disposeddddddddddddddddddddddddddddddddd")
+            doJobThenOffLoading {
+                loadChannelLock.withLock {
+                    println("before send 1 to loadChannel")
+
+                    loadChannel.send(1)
+                    println("sent 1 to loadChannel")
+                    loadChannel.close()
+                    println("closed loadChannel")
+
+                }
+
+            }
+        }
     }
 }
