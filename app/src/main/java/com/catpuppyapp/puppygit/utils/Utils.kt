@@ -410,21 +410,30 @@ fun getFilePathStrBasedRepoDir(path:String, returnResultStartsWithSeparator:Bool
 
 //input就是git status输出的那种仓库内相对路径+文件名，例如 dir1/dir2/file.txt ，输出则返回 dir1/dir2/；如果输入是file.txt，则返回 /
 //第2个参数传true适用于解析仓库相对路径的场景，因为仓库相对路径下仓库根目录下的文件没有/但其归属于/，这里的/代表仓库根目录；为false则会在查找不到路径分隔符时返回原path（入参1），这种情况暂无应用场景
-fun getParentPathEndsWithSeparator(path:String, trueWhenNoSeparatorReturnSeparatorFalseReturnPath:Boolean=true):String {
+/**
+ * @param path src path, will try get parent path for it
+ * @param trueWhenNoParentReturnSeparatorFalseReturnPath true, when parent path is empty will return separator like "/" ; else return `path`. will ignore this param if `trueWhenNoParentReturnEmpty` is true
+ * @param trueWhenNoParentReturnEmpty when parent path is empty return empty, if false, return what depend by `trueWhenNoParentReturnSeparatorFalseReturnPath`
+ */
+fun getParentPathEndsWithSeparator(path:String, trueWhenNoParentReturnSeparatorFalseReturnPath:Boolean=true, trueWhenNoParentReturnEmpty:Boolean=false):String {
     try {
         val separator = File.separator
         val lastIndexOfSeparator = path.lastIndexOf(separator)
-        if(lastIndexOfSeparator != -1) {  // found /
+        if(lastIndexOfSeparator != -1) {  // found "/", has a parent path
             return path.substring(0, lastIndexOfSeparator+1)  // +1把/本身包含上
-        }else {  // not found /
+        }else {  // not found "/", no parent path yet
             //没/，可能是根目录？话说我当初为什么没找到让它返回/？
             // 啊，对了，因为是根据仓库根目录设置的，如果有个文件在仓库根目录，
             // 其仓库相对路径就是 filename，这时如果找不到/，说明是根目录
-            return if(trueWhenNoSeparatorReturnSeparatorFalseReturnPath) separator else path
+            if(trueWhenNoParentReturnEmpty) {
+                return ""
+            }
+
+            return if(trueWhenNoParentReturnSeparatorFalseReturnPath) separator else path
         }
 
     }catch (e:Exception) {
-        MyLog.e(TAG, "#getParentPathEndsWithSeparator err: path=$path, trueWhenNoSeparatorReturnSeparatorFalseReturnPath=$trueWhenNoSeparatorReturnSeparatorFalseReturnPath, err=${e.localizedMessage}")
+        MyLog.e(TAG, "#getParentPathEndsWithSeparator err: path=$path, trueWhenNoParentReturnSeparatorFalseReturnPath=$trueWhenNoParentReturnSeparatorFalseReturnPath, trueWhenNoParentReturnEmpty=$trueWhenNoParentReturnEmpty, err=${e.localizedMessage}")
         //发生异常一律return path合适吗？，没什么不合适的，虽然可能会有些奇怪，但在界面能看出问题 且 用户也感觉没太大异常，嗯，就这样吧
         //发生异常return 原path
         return path

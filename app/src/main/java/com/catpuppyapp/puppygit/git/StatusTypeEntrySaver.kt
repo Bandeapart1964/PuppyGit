@@ -45,7 +45,7 @@ class StatusTypeEntrySaver {
      * note: path ends with separator /
      */
     fun getParentDirStr():String{
-        return getParentPathEndsWithSeparator(relativePathUnderRepo)
+        return getParentPathEndsWithSeparator(relativePathUnderRepo, trueWhenNoParentReturnEmpty = true)
     }
 
 

@@ -142,8 +142,12 @@ fun ChangeListItem(
                 Row {
                     Text(text = item.getSizeStr(),fontSize = fontSize, )
                 }
-                Row{
-                    Text(text = item.getParentDirStr() ,fontSize = fontSize)
+
+                val parentPath = item.getParentDirStr()
+                if(parentPath.isNotEmpty()) {
+                    Row{
+                        Text(text = parentPath,fontSize = fontSize)
+                    }
                 }
             }
 
