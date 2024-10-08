@@ -3637,7 +3637,7 @@ class Libgit2Helper {
         }
 
         //返回值 (nextOid, CommitDtoList)，nextOid就是CommitDtoList列表里最后一个元素之后的Oid，用来实现加载更多，如果不存在下一个元素，则是null，意味着已经遍历到提交树的最初提交了
-        fun getCommitList(repo: Repository, repoId: String, startOid:Oid, stopCount:Int=Cons.defaultPageCount, sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(), retList: MutableList<CommitDto>):Pair<Oid?, List<CommitDto>> {
+        fun getCommitList(repo: Repository, repoId: String, startOid:Oid, pageSize:Int, sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(), retList: MutableList<CommitDto>):Pair<Oid?, List<CommitDto>> {
 //            if(debugModeOn) {
 //                MyLog.d(TAG, "#getCommitList: startOid="+startOid.toString())
 //            }
@@ -3661,7 +3661,7 @@ class Libgit2Helper {
             var next = revwalk.next()
             while (next!=null) {
                 try {
-                    if(count++ >= stopCount) {
+                    if(count++ >= pageSize) {
                         break
                     }
                     val commit = resolveCommitByHash(repo, next.toString())?:continue

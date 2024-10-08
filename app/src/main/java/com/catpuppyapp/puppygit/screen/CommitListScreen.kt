@@ -87,6 +87,7 @@ import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.CommitDto
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -105,7 +106,6 @@ import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getRequestDataByState
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
 import com.catpuppyapp.puppygit.utils.replaceStringResList
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
@@ -178,7 +178,11 @@ fun CommitListScreen(
 //    ) {
 //        mutableStateOf(getHolder(stateKeyTag, "list",  mutableListOf<CommitDto>()))
 //    }
-    val pageCount = Cons.defaultPageCount;  //一页多少个条目
+    val settings = SettingsUtil.getSettingsSnapshot()
+    //page size for load more
+    val pageSize = rememberSaveable{ mutableStateOf(settings.commitHistoryPageSize) }
+    val rememberPageSize = rememberSaveable { mutableStateOf(false) }
+
     val nextCommitOid = mutableCustomStateOf<Oid>(
         keyTag = stateKeyTag,
         keyName = "nextCommitOid",
@@ -291,7 +295,7 @@ fun CommitListScreen(
                     repo,
                     repoId,
                     oid,
-                    if(loadToEnd) Int.MAX_VALUE else pageCount,
+                    if(loadToEnd) Int.MAX_VALUE else pageSize.value,
                     retList = list.value  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
                 )
 
@@ -1420,6 +1424,8 @@ fun CommitListScreen(
             requireCustomBottom = true,
             customBottom = {
                 LoadMore(
+                    pageSize=pageSize,
+                    rememberPageSize=rememberPageSize,
                     text = loadMoreText.value,
                     enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
                     loadToEndOnClick = {
@@ -1478,6 +1484,8 @@ fun CommitListScreen(
             LoadMore(
                 modifier = Modifier.padding(top = 30.dp),
                 paddingValues = contentPadding,
+                pageSize=pageSize,
+                rememberPageSize=rememberPageSize,
                 text = loadMoreText.value,
                 enableLoadMore = !loadMoreLoading.value && hasMore.value, enableAndShowLoadToEnd = !loadMoreLoading.value && hasMore.value,
                 loadToEndOnClick = {

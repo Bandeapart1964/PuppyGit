@@ -58,4 +58,9 @@ data class AppSettings(
 
     var diff:DiffSettings = DiffSettings(),
 
+    /**
+     * commit history page, tap load more, load how many items
+     */
+    var commitHistoryPageSize:Int = 50,
+
 )

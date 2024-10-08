@@ -916,5 +916,9 @@
     <string name="no_submodule_selected">No submodule selected</string>
     <string name="will_try_import_selected_dirs_as_repos">Will try import selected dir(s) as repo(s)</string>
     <string name="donate">Donate</string>
+    <string name="set_page_size">Set Page Size</string>
+    <string name="page_size">Page Size</string>
+    <string name="invalid_number">invalid number</string>
+    <string name="remember">Remember</string>
 
 </resources>

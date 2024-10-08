@@ -43,7 +43,7 @@ class Cons {
 
         val gitDotModules = ".gitmodules"
 
-        const val defaultPageCount=50  //默认每页条目数
+//        const val defaultPageCount=50  //默认每页条目数
 
         //const的作用是定义编译时常量，可能会内联优化之类的
         const val selectedItem_Never = -1 //这个变量永远不会是这个值，这个值只是为了在页面里配合关联的状态变量实现永真判断的，目前20240411用在切换页面更新配置文件中记住的页面值上
