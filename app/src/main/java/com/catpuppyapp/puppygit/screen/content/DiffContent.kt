@@ -17,6 +17,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,19 +84,21 @@ fun DiffContent(
 //    val scope = rememberCoroutineScope()
     val settings=SettingsUtil.getSettingsSnapshot()
 
-    val loadChannel = Channel<Int>()
+    // remember for make sure only have one instance bundle with a composable function's one life time
+    //用remember是为了确保组件生命周期内只创建一个channel实例
+    val loadChannel = remember { Channel<Int>() }
 //    val loadChannelLock = Mutex()
 
 
-    val appContext = AppModel.singleInstanceHolder.appContext
-    val inDarkTheme = Theme.inDarkTheme
+//    val appContext = AppModel.singleInstanceHolder.appContext
+//    val inDarkTheme = Theme.inDarkTheme
 
     val diffItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "diffItem", initValue = DiffItemSaver())
 
     val submoduleIsDirty = rememberSaveable { mutableStateOf(false)}
 
-    val oldLineAt = stringResource(R.string.old_line_at)
-    val newLineAt = stringResource(R.string.new_line_at)
+//    val oldLineAt = stringResource(R.string.old_line_at)
+//    val newLineAt = stringResource(R.string.new_line_at)
     val errOpenFileFailed = stringResource(R.string.open_file_failed)
 
     //判断是否是支持预览的修改类型

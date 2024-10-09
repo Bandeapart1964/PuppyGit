@@ -171,7 +171,7 @@ fun CommitListScreen(
 //    println("branchShortNameOrShortHashByFullOid: "+branchShortNameOrShortHashByFullOid.value)
 //    assert(fullOid.value.isNotBlank())
 
-    val loadChannel = Channel<Int>()
+    val loadChannel = remember { Channel<Int>() }
 
 //    val sumPage = MockData.getCommitSum(repoId,branch)
     //获取假数据
@@ -1690,17 +1690,11 @@ fun CommitListScreen(
     }
 
     //compose被销毁时执行的副作用(SideEffect)
-    DisposableEffect(Unit) {  //参数改变或者组件销毁时执行onDispose？参数改变是否会执行onDispose我不确定，不过组件销毁一定会执行。
-        //组件创建时执行这个代码块
+    DisposableEffect(Unit) {  // param changed or DisposableEffect destroying will run onDispose
         onDispose {
             doJobThenOffLoading {
-//                loadChannel.send(1)
                 loadChannel.close()
             }
-//            if (debugModeOn) {
-//                println("CommitListScreen销毁了！")
-//            }
-            //组件销毁时执行这个代码块
         }
     }
 
