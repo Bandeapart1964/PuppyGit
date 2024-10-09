@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
@@ -58,6 +59,7 @@ fun RepoCard(
     repoDtoIndex:Int,
     goToFilesPage:(path:String) -> Unit,
     requireBlinkIdx:MutableIntState,
+    pageRequest:MutableState<String>,
     workStatusOnclick:(clickedRepo:RepoEntity, status:Int)->Unit
 ) {
     val navController = AppModel.singleInstanceHolder.navController
@@ -108,6 +110,14 @@ fun RepoCard(
         }
     }
 
+    val setCurRepo = {
+        //设置当前仓库（如果不将repo先设置为无效值，可能会导致页面获取旧值，显示过时信息）
+        curRepo.value = RepoEntity()  // change state to a new value, if delete this line, may cause page not refresh after changed repo
+        curRepo.value = repoDto  // update state to target value
+
+        curRepoIndex.intValue = repoDtoIndex
+    }
+
     Column (modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
@@ -128,11 +138,8 @@ fun RepoCard(
                         //震动反馈
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
-                        //设置当前仓库（如果不将repo先设置为无效值，可能会导致页面获取旧值，显示过时信息）
-                        curRepo.value = RepoEntity()  // change state to a new value, if delete this line, may cause page not refresh after changed repo
-                        curRepo.value = repoDto  // update state to target value
+                        setCurRepo()
 
-                        curRepoIndex.intValue = repoDtoIndex
                         //显示底部菜单
                         showBottomSheet.value = true
                     },
@@ -535,6 +542,31 @@ fun RepoCard(
                         )
                     }
                 }
+
+
+
+                if(repoDto.parentRepoName.isNotBlank()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = stringResource(R.string.parent) + ":")
+                        Text(
+                            text = repoDto.parentRepoName,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MyStyleKt.ClickableText.style,
+                            color = MyStyleKt.ClickableText.color,
+                            modifier = MyStyleKt.ClickableText.modifier.clickable {  // on click
+                                setCurRepo()
+                                pageRequest.value = PageRequest.goParent
+                            },
+                            fontWeight = FontWeight.Light
+
+                        )
+                    }
+                }
+
+
             }
         }
 

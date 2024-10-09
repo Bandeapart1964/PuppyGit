@@ -60,6 +60,7 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.RepoCard
 import com.catpuppyapp.puppygit.compose.SystemFolderChooser
 import com.catpuppyapp.puppygit.constants.Cons
+import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
@@ -96,7 +97,6 @@ import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.strHasIllegalChars
@@ -199,6 +199,9 @@ fun RepoInnerPage(
     val setGlobalGitUsernameAndEmailStrRes = stringResource(R.string.set_global_username_and_email)
     val globalUsername = rememberSaveable { mutableStateOf("")}
     val globalEmail = rememberSaveable { mutableStateOf("")}
+
+
+    val pageRequest = rememberSaveable { mutableStateOf("")}
 
     // global username and email dialog
     if(showSetGlobalGitUsernameAndEmailDialog.value) {
@@ -1326,7 +1329,8 @@ fun RepoInnerPage(
                     repoDto = element,
                     repoDtoIndex = idx,
                     goToFilesPage = goToFilesPage,
-                    requireBlinkIdx = requireBlinkIdx
+                    requireBlinkIdx = requireBlinkIdx,
+                    pageRequest = pageRequest,
                 ) workStatusOnclick@{ clickedRepo, status ->  //这个是点击status的callback，这个status其实可以不传，因为这里的lambda能捕获到数组的元素，就是当前仓库
 
                     //把点击状态的仓库存下来
@@ -1368,6 +1372,14 @@ fun RepoInnerPage(
 
 
     }
+
+
+    if(pageRequest.value == PageRequest.goParent) {
+        PageRequest.clearStateThenDoAct(pageRequest) {
+            goToThisRepoAndHighlightingIt(curRepo.value.parentRepoId)
+        }
+    }
+
     //没换页面，但需要刷新页面，这时LaunchedEffect不会执行，就靠这个变量控制刷新页面了
 //    if(needRefreshRepoPage.value) {
 //        initRepoPage()

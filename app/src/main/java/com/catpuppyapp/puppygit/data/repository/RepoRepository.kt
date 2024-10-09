@@ -57,6 +57,8 @@ interface RepoRepository {
 
     suspend fun getById(id:String): RepoEntity?
 
+    suspend fun getByIdNoSyncWithGit(id:String): RepoEntity?
+
     suspend fun getAll(updateRepoInfo:Boolean = true): List<RepoEntity>
 
     suspend fun cloneDoneUpdateRepoAndCreateRemote(item: RepoEntity)

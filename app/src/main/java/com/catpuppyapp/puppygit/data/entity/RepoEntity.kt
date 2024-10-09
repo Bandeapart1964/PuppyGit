@@ -91,4 +91,7 @@ data class RepoEntity(
     //忽略的字段应放构造器外面
     @Ignore
     var gitRepoState:Repository.StateT? = null
+
+    @Ignore
+    var parentRepoName:String=""
 }

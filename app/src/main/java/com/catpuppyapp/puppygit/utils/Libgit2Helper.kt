@@ -3965,13 +3965,21 @@ class Libgit2Helper {
         }
 
         //更新从数据库中查出的仓库信息，每次从数据库get仓库时，都应调用此方法
-        fun updateRepoInfo(repoFromDb: RepoEntity) {
+        // parentRepo for set parent repo name  if need, if you are sure repoFromDb no parent, pass null is ok
+        fun updateRepoInfo(repoFromDb: RepoEntity, parentRepo:RepoEntity?) {
             val funName = "updateRepoInfo"
 
             try {
                 //未就绪或出错的仓库没啥好更新的，直接返回即可
                 if(isRepoStatusNotReadyOrErr(repoFromDb)) {
                     return;
+                }
+
+
+                // must before Repository.open() else, if repo path invalid, will not set parent repo name
+                // set parent repo name if need
+                if(parentRepo!=null && repoFromDb.parentRepoId.isNotBlank() && repoFromDb.parentRepoId == parentRepo.id) {
+                    repoFromDb.parentRepoName = parentRepo.repoName
                 }
 
                 Repository.open(repoFromDb.fullSavePath).use { repo ->
@@ -4039,10 +4047,11 @@ class Libgit2Helper {
 
                     }
 
-                    //检查是否有临时状态，syncing之类的，如果有存上，临时状态的设置和清除都由操作执行者承担，比如syncing状态，谁doSync谁设这个状态和清这个状态
-                    repoFromDb.tmpStatus = RepoStatusUtil.getRepoStatus(repoFromDb.id)
 
                 }
+                //检查是否有临时状态，syncing之类的，如果有存上，临时状态的设置和清除都由操作执行者承担，比如syncing状态，谁doSync谁设这个状态和清这个状态
+                repoFromDb.tmpStatus = RepoStatusUtil.getRepoStatus(repoFromDb.id)
+
             }catch (e:Exception) {
                 //TODO 这里可设个特殊的仓库状态，卡片显示查询仓库信息出错，可选操作为 刷新、删除，和克隆错误的区别在于无法编辑仓库信息，或者也可支持重新编辑克隆信息并克隆（需要提醒用户会删除之前克隆时创建的本地仓库目录）
                 //这里不插入了，因为这个函数经常调用的关系，如果仓库一更新错且没及时处理，会生成很多调错误记录
