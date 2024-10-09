@@ -1424,10 +1424,10 @@ class Libgit2Helper {
                     if(loadChannel!=null) {
                         if(++checkChannelLinesCount > checkChannelLinesLimit || checkChannelContentSizeCount>checkChannelSizeLimit) {
                             val recv = loadChannel.tryReceive()
-                            if(recv.isSuccess || recv.isClosed){  // not failure meant success or closed
-                                if(!recv.isClosed) {
-                                    loadChannel.close()
-                                }
+                            if(recv.isClosed){  // not failure meant success or closed
+//                                if(!recv.isClosed) {
+//                                    loadChannel.close()
+//                                }
                                 MyLog.d(TAG, "#$funName: abort by terminate signal")
                                 break
                             }else {
@@ -3721,12 +3721,12 @@ class Libgit2Helper {
                     if(++checkChannelCount > checkChannelFrequency) {
                         val recv = loadChannel.tryReceive()
 //                        println("recv.toString(): ${recv.toString()}")
-                        if(recv.isSuccess || recv.isClosed){  // not failure meant success or closed
+                        if(recv.isClosed){  // not failure meant success or closed
 //                            println("进来了！")
-                            if(!recv.isClosed) {
-                                loadChannel.close()
-//                                println("close成功了")
-                            }
+//                            if(!recv.isClosed) {
+//                                loadChannel.close()
+////                                println("close成功了")
+//                            }
                             MyLog.d(TAG, "#getCommitList: abort by terminate signal")
                             break
                         }else {
