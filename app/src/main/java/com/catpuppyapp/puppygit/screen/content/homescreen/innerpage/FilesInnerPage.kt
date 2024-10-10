@@ -1955,6 +1955,9 @@ private fun doInit(
         //先清下列表，感觉在开头清比较好，如果加载慢，先白屏，然后出东西；放后面清的话，如果加载慢，会依然显示旧条目列表，感觉没变化，像卡了一样，用户可能重复点击
         currentPathFileList.value.clear()
 
+        // make path canonical first, elst dir/ will return once dir, that make must press 2 times back for back to parent dir
+        currentPath.value = File(currentPath.value).canonicalPath
+
         //更新当前目录的文件列表
         var currentDir = File(currentPath.value)
         val repoBaseDirPath = AppModel.singleInstanceHolder.allRepoParentDir.canonicalPath
