@@ -3965,8 +3965,13 @@ class Libgit2Helper {
         }
 
         //更新从数据库中查出的仓库信息，每次从数据库get仓库时，都应调用此方法
-        // parentRepo for set parent repo name  if need, if you are sure repoFromDb no parent, pass null is ok
-        fun updateRepoInfo(repoFromDb: RepoEntity, parentRepo:RepoEntity?) {
+        /**
+         * @param requireQueryParentInfo query parent Info by parentRepoId,
+         *   used for set parent repo info, e.g. parentRepoName,
+         *   if pass false to this value, all repo's parentXXXX filed will not update, that means they maybe invalid, except parentRepoId
+         *   如果不传此值，将不会查询parent repo，也不会更新当前仓库的parent相关字段(例如parentRepoName)，这时，除了parentRepoId以外的其他parent相关字段都可能不准确
+        */
+        suspend fun updateRepoInfo(repoFromDb: RepoEntity, requireQueryParentInfo:Boolean=true) {
             val funName = "updateRepoInfo"
 
             try {
@@ -3978,9 +3983,18 @@ class Libgit2Helper {
 
                 // must before Repository.open() else, if repo path invalid, will not set parent repo name
                 // set parent repo name if need
-                if(parentRepo!=null && repoFromDb.parentRepoId.isNotBlank() && repoFromDb.parentRepoId == parentRepo.id) {
-                    repoFromDb.parentRepoName = parentRepo.repoName
+                if(requireQueryParentInfo && repoFromDb.parentRepoId.isNotBlank()) {
+                    val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+                    val parentRepo = repoDb.getByIdNoSyncWithGit(repoFromDb.parentRepoId)
+
+                    // update parent repo info here
+                    if(parentRepo!=null) {
+                        repoFromDb.parentRepoValid = true
+
+                        repoFromDb.parentRepoName = parentRepo.repoName
+                    }
                 }
+
 
                 Repository.open(repoFromDb.fullSavePath).use { repo ->
                     //算了，不捕获了，查状态出错后面应该也没法正常进行，直接走正常流程抛异常记log即可

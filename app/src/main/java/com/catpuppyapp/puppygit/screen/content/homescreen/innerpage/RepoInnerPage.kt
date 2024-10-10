@@ -887,13 +887,13 @@ fun RepoInnerPage(
             },
             okBtnText = stringResource(R.string.ok),
             cancelBtnText = stringResource(R.string.cancel),
-            okBtnEnabled = repoNameForRenameDialog.value != curRepo.repoName,
+            okBtnEnabled = repoNameForRenameDialog.value.isNotBlank() && errMsgForRenameDialog.value.isEmpty() && repoNameForRenameDialog.value != curRepo.repoName,
             onCancel = {showRenameDialog.value = false}
         ) {
             val newName = repoNameForRenameDialog.value
             val repoId = curRepo.id
 
-            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.renaming)) {
+            doJobThenOffLoading {
                 try {
                     val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
                     if(strHasIllegalChars(newName)) {
@@ -911,11 +911,13 @@ fun RepoInnerPage(
                     repoDb.updateRepoName(repoId, newName)
 
                     Msg.requireShow(appContext.getString(R.string.success))
+
+                    changeStateTriggerRefreshPage(needRefreshRepoPage)
                 }catch (e:Exception) {
                     val errmsg = e.localizedMessage ?: "rename repo err"
                     Msg.requireShowLongDuration(errmsg)
                     createAndInsertError(curRepo.id, "err: rename repo '${curRepo.repoName}' to ${repoNameForRenameDialog.value} failed, err is $errmsg")
-                }finally {
+
                     changeStateTriggerRefreshPage(needRefreshRepoPage)
                 }
             }

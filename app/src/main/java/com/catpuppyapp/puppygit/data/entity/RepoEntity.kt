@@ -19,6 +19,10 @@ data class RepoEntity(
 //    var testMigra:String="",
 
     // repo push or pull etc time
+    /**
+     * usually repo name is not blank, but maybe is blank, no enforce check, e.g. if you import a empty name folder as repo, then will create
+     *  a RepoEntity with blank name
+     */
     var repoName: String = "",  //repo name and repo dir name，字段需唯一
     var fullSavePath:String="",  //repo full save path, include all repo save path and repo name, such as, allRepoSaveLocation/thisRepoName
 
@@ -94,4 +98,13 @@ data class RepoEntity(
 
     @Ignore
     var parentRepoName:String=""
+
+    /**
+     * indicate parentRepoId related Repo is valid or is not
+     *
+     * this field only correct after you updated parent repo info for a repo entity
+     * 这个字段仅在更新了父仓库信息后才有效，如果只查当前仓库信息，但没检查parentRepoId是否关联有效仓库，此值可能不准确
+     */
+    @Ignore
+    var parentRepoValid:Boolean=false
 }

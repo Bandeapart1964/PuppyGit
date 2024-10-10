@@ -129,11 +129,9 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         dao.update(item)
         item.tmpStatus = tmpStatus
 
-        val parent:RepoEntity? = getParentByParentId(item.parentRepoId)
-
         //重新查询仓库信息
         if(requeryAfterUpdate){
-            Libgit2Helper.updateRepoInfo(item, parent)
+            Libgit2Helper.updateRepoInfo(item)
         }
 
     }
@@ -145,9 +143,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
     override suspend fun getById(id: String): RepoEntity? {
         val repoFromDb = dao.getById(id)?:return null
 
-        val parent:RepoEntity? = getParentByParentId(repoFromDb.parentRepoId)
-
-        Libgit2Helper.updateRepoInfo(repoFromDb, parent)
+        Libgit2Helper.updateRepoInfo(repoFromDb)
         return repoFromDb
     }
 
@@ -160,9 +156,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
         if(updateRepoInfo) {
             list.forEach {
-                val parent:RepoEntity? = getParentByParentId(it.parentRepoId)
-
-                Libgit2Helper.updateRepoInfo(it, parent)
+                Libgit2Helper.updateRepoInfo(it)
             }
         }
 
@@ -210,9 +204,7 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         }
         for(r in repos) {
             if (isRepoReadyAndPathExist(r)){
-                val parent:RepoEntity? = getParentByParentId(r.parentRepoId)
-
-                Libgit2Helper.updateRepoInfo(r, parent)
+                Libgit2Helper.updateRepoInfo(r)
 
                 return r
             }
@@ -227,18 +219,12 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
         for(r in repos) {
             if (isRepoReadyAndPathExist(r)){
-                val parent:RepoEntity? = getParentByParentId(r.parentRepoId)
-
-                Libgit2Helper.updateRepoInfo(r, parent)
+                Libgit2Helper.updateRepoInfo(r)
                 repoList.add(r)
             }
         }
 
         return repoList;
-    }
-
-    private suspend fun getParentByParentId(parentRepoId: String):RepoEntity? {
-         return if(parentRepoId.isBlank()) null else getByIdNoSyncWithGit(parentRepoId)
     }
 
     override suspend fun updateCredentialIdByCredentialId(

@@ -545,7 +545,7 @@ fun RepoCard(
 
 
 
-                if(repoDto.parentRepoName.isNotBlank()) {
+                if(repoDto.parentRepoValid) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
