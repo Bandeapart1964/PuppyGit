@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +61,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.catpuppyapp.puppygit.compose.ApplyPatchDialog
@@ -113,7 +116,6 @@ import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import java.io.File
@@ -777,6 +779,32 @@ fun FilesInnerPage(
     // 向下滚动监听，结束
 
 
+    // import as repo variables block start
+    val showImportAsRepoDialog = rememberSaveable { mutableStateOf(false)}
+    val importAsRepoList = mutableCustomStateListOf(stateKeyTag, "importAsRepoList", listOf<String>())
+    val isReposParentFolderForImport = rememberSaveable { mutableStateOf(false)}
+    val initImportAsRepoDialog = { fullPathList:List<String> ->
+        importAsRepoList.value.clear()
+        importAsRepoList.value.addAll(fullPathList)
+        isReposParentFolderForImport.value = false
+        showImportAsRepoDialog.value = true
+    }
+    // import as repo variables block end
+
+
+    // init repo dialog variables block start
+    val showInitRepoDialog = rememberSaveable { mutableStateOf(false)}
+    val initRepoList = mutableCustomStateListOf(stateKeyTag, "initRepoList", listOf<String>())
+    val initInitRepoDialog = {pathList:List<String> ->
+        initRepoList.value.clear()
+        initRepoList.value.addAll(pathList)
+        showInitRepoDialog.value = true
+    }
+    // init repo dialog variables block end
+
+
+
+
     if(isLoading.value) {
 //        LoadingDialog(loadingText.value)        //这个页面不适合用Dialog，页面会闪。
 
@@ -809,15 +837,20 @@ fun FilesInnerPage(
                     val lastIndex = breadList.size - 1
                     breadList.forEachIndexed { idx, it ->
                         item {
+                            val breadCrumbDropDownMenuExpendState = rememberSaveable { mutableStateOf(false)}
+
                             //如果是所有仓库的根目录，返回 "/"，否则返回 "路径+/"
                             Text(text = File.separator)
                             Text(text =it.name,
                                 fontWeight = if(idx==lastIndex) FontWeight.Bold else FontWeight.Normal,
                                 modifier = Modifier.combinedClickable (
-                                    onLongClick = {  //long press will copy path
+                                    onLongClick = {  //long press will show menu for pressed path
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        clipboardManager.setText(AnnotatedString(it.fullPath))
-                                        Msg.requireShow(appContext.getString(R.string.path_copied))
+                                        breadCrumbDropDownMenuExpendState.value = true
+
+//                                        // copy full path
+//                                        clipboardManager.setText(AnnotatedString(it.fullPath))
+//                                        Msg.requireShow(appContext.getString(R.string.path_copied))
                                     }
                                 ){ //onClick
 
@@ -840,6 +873,45 @@ fun FilesInnerPage(
                                     changeStateTriggerRefreshPage(needRefreshFilesPage)
 
                                 })
+
+
+                            if(breadCrumbDropDownMenuExpendState.value){
+                                Column {
+                                    val enableMenuItem = true
+                                    //菜单列表
+                                    DropdownMenu(
+                                        offset = DpOffset(x=0.dp, y=20.dp),
+                                        expanded = breadCrumbDropDownMenuExpendState.value,
+                                        onDismissRequest = { breadCrumbDropDownMenuExpendState.value = false }
+                                    ) {
+
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.copy_real_path)) },
+                                            onClick = {
+                                                copyRealPath(it.fullPath)
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.import_as_repo)) },
+                                            onClick = {
+                                                initImportAsRepoDialog(listOf(it.fullPath))
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.init_repo)) },
+                                            onClick = {
+                                                initInitRepoDialog(listOf(it.fullPath))
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
 
                         }
                     }
@@ -1182,9 +1254,8 @@ fun FilesInnerPage(
         }
     }
 
-    val showInitRepoDialog = rememberSaveable { mutableStateOf(false)}
     if(showInitRepoDialog.value) {
-        val selctedDirs = selectedItems.value.filter { it.isDir }
+        val selctedDirs = initRepoList.value
 
         if(selctedDirs.isEmpty()) {
             showInitRepoDialog.value = false
@@ -1200,15 +1271,13 @@ fun FilesInnerPage(
                 doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.loading)) {
                     try {
                         var successCnt = 0
-                        selctedDirs.forEach {
+                        selctedDirs.forEach { dirPath ->
                             try {
-                                if(it.isDir) {
-                                    Libgit2Helper.initGitRepo(it.fullPath)
-                                    successCnt++
-                                }
+                                Libgit2Helper.initGitRepo(dirPath)
+                                successCnt++
                             }catch (e:Exception) {
 //                            Msg.requireShowLongDuration(e.localizedMessage ?: "err")
-                                MyLog.e(TAG, "init repo in FilesPage err: path=${it.fullPath}, err=${e.localizedMessage}")
+                                MyLog.e(TAG, "init repo in FilesPage err: path=${dirPath}, err=${e.localizedMessage}")
                             }
                         }
 
@@ -1222,10 +1291,9 @@ fun FilesInnerPage(
 
     }
 
-    val showImportAsRepoDialog = rememberSaveable { mutableStateOf(false)}
-    val isReposParentFolderForImport = rememberSaveable { mutableStateOf(false)}
+
     if(showImportAsRepoDialog.value) {
-        val selctedDirs = selectedItems.value.filter { it.isDir }
+        val selctedDirs = importAsRepoList.value
 
         if(selctedDirs.isEmpty()) {
             showImportAsRepoDialog.value = false
@@ -1278,8 +1346,8 @@ fun FilesInnerPage(
                 doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.importing)) {
                     val importRepoResult = ImportRepoResult()
                     try {
-                        selctedDirs.forEach {
-                            val result = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=it.fullPath, isReposParent=isReposParentFolderForImport.value)
+                        selctedDirs.forEach { dirPath ->
+                            val result = AppModel.singleInstanceHolder.dbContainer.repoRepository.importRepos(dir=dirPath, isReposParent=isReposParentFolderForImport.value)
                             importRepoResult.all += result.all
                             importRepoResult.success += result.success
                             importRepoResult.failed += result.failed
@@ -1469,11 +1537,10 @@ fun FilesInnerPage(
             },
 
             importAsRepo@{
-                isReposParentFolderForImport.value = false
-                showImportAsRepoDialog.value = true
+                initImportAsRepoDialog(selectedItems.value.filter { it.isDir }.map { it.fullPath })
             },
             initRepo@{
-                showInitRepoDialog.value = true
+                initInitRepoDialog(selectedItems.value.filter { it.isDir }.map { it.fullPath })
             }
         )
         val selectionModeMoreItemEnableList = listOf(

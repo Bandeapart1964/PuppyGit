@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -60,9 +61,11 @@ fun ChangeListItem(
     onLongClick:(StatusTypeEntrySaver)->Unit,
     onClick:(StatusTypeEntrySaver) -> Unit
 ){
-    val navController = AppModel.singleInstanceHolder.navController
-    val appContext = AppModel.singleInstanceHolder.appContext
-    val haptic = AppModel.singleInstanceHolder.haptic
+//    val navController = AppModel.singleInstanceHolder.navController
+//    val appContext = AppModel.singleInstanceHolder.appContext
+//    val haptic = AppModel.singleInstanceHolder.haptic
+
+    val itemIsDir = item.itemType == Cons.gitItemTypeDir || item.itemType == Cons.gitItemTypeSubmodule
 
 
     Row(
@@ -119,11 +122,12 @@ fun ChangeListItem(
 
                     switchItemSelected(item)
 
-                }) {
+                }
+            ) {
                 Icon(
 //                    imageVector = Icons.Outlined.InsertDriveFile,
-                    imageVector = item.getMime().iconRes,
-                    contentDescription = stringResource(R.string.files_icon)
+                    imageVector = if(itemIsDir) Icons.Filled.Folder else item.getMime().iconRes,
+                    contentDescription = if(itemIsDir) stringResource(R.string.folder_icon) else stringResource(R.string.file_icon)
                 )
             }
             Spacer(modifier = Modifier.padding(10.dp))

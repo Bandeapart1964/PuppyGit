@@ -27,6 +27,9 @@ class StatusTypeEntrySaver {
 
 //    var subs:MutableList<StatusTypeEntrySaver> = ArrayList();
 
+//    fun isDir():Boolean {
+//        return toFile().isDirectory
+//    }
 
     fun getMime():MimeType {
         if(mime==null) {

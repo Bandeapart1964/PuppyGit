@@ -1298,6 +1298,7 @@ fun RepoInnerPage(
                         || it.upstreamBranch.lowercase().contains(k)
                         || it.createErrMsg.lowercase().contains(k)
                         || it.fullSavePath.lowercase().contains(k)
+                        || it.parentRepoName.lowercase().contains(k)
             }
             filterList.value.clear()
             filterList.value.addAll(tmpList)

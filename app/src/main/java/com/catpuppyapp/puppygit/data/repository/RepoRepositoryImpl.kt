@@ -52,6 +52,9 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
 
         }
 
+        // make sure saved is canonical path
+        item.fullSavePath = File(item.fullSavePath).canonicalPath
+
         item.createErrMsg = addTimeStampIfErrMsgIsNotBlank(item.createErrMsg)
         item.latestUncheckedErrMsg = addTimeStampIfErrMsgIsNotBlank(item.latestUncheckedErrMsg)
 
@@ -117,6 +120,8 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
             throw RuntimeException("#$funName err: repoName already exists")
 
         }
+
+        item.fullSavePath = File(item.fullSavePath).canonicalPath
 
         //粗略判断，如果错误信息不为空且没追加时间戳（以英文半角括号结尾）则追加时间戳
         item.createErrMsg = addTimeStampIfErrMsgIsNotBlank(item.createErrMsg)

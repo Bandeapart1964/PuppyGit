@@ -436,7 +436,7 @@ class Libgit2Helper {
                 statusOpts.flags = flags;  // e.g. EnumSet.of(Status.OptT.OPT_INCLUDE_UNTRACKED, Status.OptT.OPT_RENAMES_HEAD_TO_INDEX, Status.OptT.OPT_SORT_CASE_INSENSITIVELY)
 
                 if (repo.isBare) {
-                    throw RuntimeException("Cannot report status on bare repository: " + repo.workdir())
+                    throw RuntimeException("Cannot report status on bare repository: " + getRepoWorkdirNoEndsWithSlash(repo))
                 }
 
                 return StatusList.listNew(repo, statusOpts)
@@ -537,7 +537,8 @@ class Libgit2Helper {
         }
 
         fun getRepoCanonicalPath(repo: Repository, itemUnderRepoRelativePath: String): String {
-            return repo.workdir().pathString.removeSuffix(File.separator) + File.separator + itemUnderRepoRelativePath.removePrefix(File.separator)
+            val slash = File.separator
+            return getRepoWorkdirNoEndsWithSlash(repo) + slash + (itemUnderRepoRelativePath.removePrefix(slash).removeSuffix(slash))
         }
 
         fun getRepoPathSpecType(path: String): Int {
@@ -640,7 +641,7 @@ class Libgit2Helper {
                 if(status.contains(Status.StatusT.CONFLICTED)) {  //index或worktree都会包含冲突条目
                     val mustPath = newFile?.path?:oldFile?.path?:""
                     if(mustPath.isNotEmpty()) {
-                        val f = File(repo.workdir().pathString, mustPath)
+                        val f = File(getRepoWorkdirNoEndsWithSlash(repo), mustPath)
                         if(!f.exists() && removeNonExistsConflictItems){
                             MyLog.w(TAG, "#statusListToStatusMap: removed a Non-exists conflict item from git, file '$mustPath' may delete after it become conflict item")
 
@@ -859,7 +860,8 @@ class Libgit2Helper {
                     // hm, if a folder was submodule dir, but users remove it, then create a same name file, the file type will become "type changed", and actually the file is not submodule anymore
                     //   so, here check the path is dir or not, if not, dont set type to submodule, but this check may will create many File objects, wasted memory......
 //                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo) && File(stes.canonicalPath).isDirectory) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
-                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo)) Cons.gitItemTypeSubmodule else Cons.gitItemTypeFile
+                    val fileType = getRepoPathSpecType(stes.relativePathUnderRepo)
+                    stes.itemType= if(submodulePathList.contains(stes.relativePathUnderRepo)) Cons.gitItemTypeSubmodule else fileType
 
                     if(stes.itemType == Cons.gitItemTypeSubmodule) {
                         stes.dirty = submoduleIsDirty(repo, stes.relativePathUnderRepo)

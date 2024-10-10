@@ -2505,7 +2505,7 @@ fun ChangeListInnerPage(
     val initImportAsRepo = {
         val tmplist = selectedItemList.value.filter { it.toFile().isDirectory }
         if(tmplist.isEmpty()) {
-            Msg.requireShow(appContext.getString(R.string.no_submodule_selected))
+            Msg.requireShow(appContext.getString(R.string.no_dir_selected))
         }else {
             importList.value.clear()
             importList.value.addAll(tmplist)
@@ -2604,7 +2604,7 @@ fun ChangeListInnerPage(
 
 
     val goToSub = { item:StatusTypeEntrySaver ->
-        val target = changeListRepoList?.value?.find { item.canonicalPath == it.fullSavePath }
+        val target = changeListRepoList?.value?.find { item.toFile().canonicalPath == it.fullSavePath }
         if(target==null) {
             Msg.requireShow(appContext.getString(R.string.dir_not_imported))
         }else {

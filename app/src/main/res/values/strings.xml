@@ -354,7 +354,6 @@
     <string name="linked_credential">Linked credential</string>
     <string name="open_last">Open Last</string>
     <string name="are_you_sure_to_delete">Are you sure to delete</string>
-    <string name="files_icon">Files Icon</string>
     <string name="remove_from_git">Remove from git</string>
     <string name="will_remove_selected_items_from_git_are_u_sure">Will remove selected items from git, are you sure?</string>
     <string name="will_delete_selected_items_are_u_sure">Will delete selected items, are you sure?</string>
@@ -921,5 +920,7 @@
     <string name="invalid_number">invalid number</string>
     <string name="remember">Remember</string>
     <string name="no_matched_item">No matched item</string>
+    <string name="folder_icon">Folder icon</string>
+    <string name="file_icon">File icon</string>
 
 </resources>
