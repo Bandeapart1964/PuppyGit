@@ -2482,7 +2482,7 @@ fun ChangeListInnerPage(
                     MyLog.e(TAG, "import repo(s) from ChangeList err: importRepoResult=$importRepoResult, err="+e.stackTraceToString())
                 }finally {
                     //require refresh repo list for go to submodule after import
-                    // since only worktree(ChangeList) can go to sub, so only need trans this param at ChangeList page, index and treeToTree page no need yet
+                    // since only worktree(ChangeList) can go to sub, so only need pass this param to ChangeList page, index and treeToTree page no need yet
                     if(needReQueryRepoList != null) {
                         changeStateTriggerRefreshPage(needReQueryRepoList)
                     }

@@ -427,6 +427,7 @@ fun getFilePathStrBasedRepoDir(path:String, returnResultStartsWithSeparator:Bool
 fun getParentPathEndsWithSeparator(path:String, trueWhenNoParentReturnSeparatorFalseReturnPath:Boolean=true, trueWhenNoParentReturnEmpty:Boolean=false):String {
     try {
         val separator = File.separator
+        val path = path.removeSuffix(separator)  // this is necessary, e.g. "def/abc/" same means with "def/abc", the parent should is "def/" for both
         val lastIndexOfSeparator = path.lastIndexOf(separator)
         if(lastIndexOfSeparator != -1) {  // found "/", has a parent path
             return path.substring(0, lastIndexOfSeparator+1)  // +1把/本身包含上
