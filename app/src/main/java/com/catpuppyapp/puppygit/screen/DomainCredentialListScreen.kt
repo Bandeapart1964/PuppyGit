@@ -32,7 +32,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -50,24 +49,19 @@ import com.catpuppyapp.puppygit.compose.BottomSheet
 import com.catpuppyapp.puppygit.compose.BottomSheetItem
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.ConfirmDialog2
-import com.catpuppyapp.puppygit.compose.CredentialItem
 import com.catpuppyapp.puppygit.compose.CredentialSelector
 import com.catpuppyapp.puppygit.compose.DomainCredItem
 import com.catpuppyapp.puppygit.compose.FilterTextField
-import com.catpuppyapp.puppygit.compose.LinkOrUnLinkCredentialAndRemoteDialog
 import com.catpuppyapp.puppygit.compose.LoadingDialog
-import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
-import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.DomainCredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RemoteEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dto.DomainCredentialDto
-import com.catpuppyapp.puppygit.dto.RemoteDtoForCredential
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -75,9 +69,7 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
-import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
@@ -210,10 +202,10 @@ fun DomainCredentialListScreen(
             okBtnEnabled = curDomainName.value.isNotBlank() && curDomainNameErr.value.isEmpty(),
             onCancel = { showCreateOrEditDialog.value = false }
         ) {
-            doJobThenOffLoading(loadingOn, loadingOff, appContext.getString(R.string.saving)) {
-                val newDomain = curDomainName.value
-                val newCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
+            doJobThenOffLoading {
                 try {
+                    val newDomain = curDomainName.value
+                    val newCredentialId = credentialList.value[selectedCredentialIdx.intValue].id
                     val dcDb = AppModel.singleInstanceHolder.dbContainer.domainCredentialRepository
                     if(isCreate.value) {
                         dcDb.insert(
