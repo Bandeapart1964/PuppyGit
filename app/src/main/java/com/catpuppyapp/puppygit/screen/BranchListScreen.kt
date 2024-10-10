@@ -1135,14 +1135,15 @@ fun BranchListScreen(
                     }else {
                         val repoAndBranch = Libgit2Helper.getRepoOnBranchOrOnDetachedHash(curRepo.value)
                         Column (modifier = Modifier.combinedClickable (
-                            onDoubleClick = {UIHelper.scrollToItem(scope, listState,0)},  // go to top
-                            onLongClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                Msg.requireShow(repoAndBranch)
-                            }
-                        ){  //onClick
+                                    onDoubleClick = {UIHelper.scrollToItem(scope, listState,0)},  // go to top
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        Msg.requireShow(repoAndBranch)
+                                    }
+                                ){  //onClick
     //                        Msg.requireShow(repoAndBranch)
-                        }){
+                                }
+                        ){
                             Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= stringResource(R.string.branches),

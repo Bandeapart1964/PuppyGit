@@ -4,9 +4,12 @@ import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -50,6 +53,7 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.ErrorEntity
+import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -84,6 +88,7 @@ fun ErrorListScreen(
     //获取假数据
 //    val list = MockData.getErrorList(repoId,1,100);
     val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<ErrorEntity>())
+    val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))
 //    val sumPage = MockData.getErrorSum(repoId)
 
     val requireShowToast:(String)->Unit = Msg.requireShow
@@ -165,13 +170,25 @@ fun ErrorListScreen(
                             filterKeyword,
                         )
                     }else {
-                        Row (modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, lazyListState, 0) }) {}){
-                            Text(
-                                text= stringResource(R.string.error),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                        Column {
 
+                            Row (modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, lazyListState, 0) }) {}){
+                                Text(
+                                    text= stringResource(R.string.error),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                            }
+
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                                Text(
+                                    text= "[${curRepo.value.repoName}]",
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = MyStyleKt.Title.secondLineFontSize
+                                )
+                            }
                         }
                     }
                 },
@@ -224,7 +241,7 @@ fun ErrorListScreen(
                             iconContentDesc = stringResource(R.string.clear_all),
 
                         ) {
-                            //TODO 点击垃圾箱按钮，显示清空所有对话框，若确认，删除所有错误，然后继续停留在当前页面，但错误列表被清空
+                            //点击垃圾箱按钮，显示清空所有对话框，若确认，删除所有错误，然后继续停留在当前页面，但错误列表被清空
                             showClearAllConfirmDialog.value = true
                         }
                     }
@@ -263,7 +280,7 @@ fun ErrorListScreen(
         }
 
         if(showBottomSheet.value) {
-            BottomSheet(showBottomSheet, sheetState, stringResource(R.string.error)+":"+curObjInState.value.id) {
+            BottomSheet(showBottomSheet, sheetState, stringResource(R.string.id)+":"+curObjInState.value.id) {
 //                BottomSheetItem(sheetState=sheetState, showBottomSheet=showBottomSheet, text=stringResource(R.string.view_msg)){
 //                    //弹窗显示错误信息，可复制
 //                }
@@ -327,7 +344,12 @@ fun ErrorListScreen(
         ) { idx, it ->
             //在这个组件里更新了 state curObj，所以长按后直接用curObj就能获取到当前对象了
             ErrorItem(showBottomSheet,curObjInState,idx,it) {
-                viewDialogText.value = it.msg
+                val sb = StringBuilder()
+                sb.append(appContext.getString(R.string.id)).append(": ").appendLine(it.id).appendLine()
+                    .append(appContext.getString(R.string.date)).append(": ").appendLine(it.date).appendLine()
+                    .append(appContext.getString(R.string.msg)).append(": ").appendLine(it.msg)
+
+                viewDialogText.value = sb.toString()
                 showViewDialog.value = true
             }
             HorizontalDivider()
@@ -350,6 +372,10 @@ fun ErrorListScreen(
                 doJobThenOffLoading {
                     //先清下列表
                     list.value.clear()
+
+                    // here only need repo name, no need sync repo info with under git, and if query failed, return a repo with empty id and empty name, but it shouldn't happen though
+                    curRepo.value = AppModel.singleInstanceHolder.dbContainer.repoRepository.getByIdNoSyncWithGit(repoId) ?: RepoEntity(id="")
+
                     //查询错误列表
                     val errDb = AppModel.singleInstanceHolder.dbContainer.errorRepository
                     val errList = errDb.getListByRepoId(repoId)
