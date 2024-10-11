@@ -14,6 +14,7 @@
     * NOTICE: if you upgrade app from old version, below settings will lost, you can set it again, will save to new settings:
         * Editor Page: font size/show or hide line number/files last edited positions
         * Global Git username and email
+        * Storage Paths
 - dozen bugs fixed
 
 
