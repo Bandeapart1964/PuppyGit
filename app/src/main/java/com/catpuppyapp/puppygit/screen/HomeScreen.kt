@@ -137,7 +137,7 @@ fun HomeScreen(
 
     //替换成我的cusntomstateSaver，然后把所有实现parcellzier的类都取消实现parcellzier，改成用我的saver
 //    val curRepo = rememberSaveable{ mutableStateOf(RepoEntity()) }
-    val repoPageCurRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
+    val repoPageCurRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "repoPageCurRepo", initValue = RepoEntity(id=""))  //id=空，表示无效仓库
     //使用前检查，大于等于0才是有效索引
     val repoPageCurRepoIndex = remember { mutableIntStateOf(-1)}
 
@@ -312,7 +312,7 @@ fun HomeScreen(
     val filesPageCurrentPathFileList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "filesPageCurrentPathFileList", initValue = listOf<FileItemDto>()) //路径字符串，用路径分隔符分隔后的list
     val filesPageRequestFromParent = rememberSaveable { mutableStateOf("")}
     val filesPageCheckOnly = rememberSaveable { mutableStateOf(false)}
-    val filesPageSelectedRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "selectedRepo",RepoEntity(id="") )
+    val filesPageSelectedRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filesPageSelectedRepo", RepoEntity(id="") )
 
     val initDone = rememberSaveable { mutableStateOf(false)}
     val editorPageShowCloseDialog = rememberSaveable { mutableStateOf(false)}

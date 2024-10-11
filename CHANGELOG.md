@@ -1,3 +1,8 @@
+1.0.5.2v28 - 20241011:
+- Files page support go to ChangeList or Repos
+- other minor bugs fixed
+
+
 1.0.5.1v27 - 20241008:
 - support submodules
 - support init dir as git repo at Files page
