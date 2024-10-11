@@ -46,7 +46,6 @@ import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.github.git24j.core.Repository
 import kotlinx.coroutines.CoroutineScope
 
@@ -216,7 +215,7 @@ fun ChangeListTitle(
         try {
             doJobThenOffLoading {
                 val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-                val readyRepoListFromDb = repoDb.getReadyRepoList()
+                val readyRepoListFromDb = repoDb.getReadyRepoList(requireSyncRepoInfoWithGit = false)
                 repoList.value.clear()
                 repoList.value.addAll(readyRepoListFromDb)
 //                repoList.requireRefreshView()

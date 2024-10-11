@@ -32,7 +32,8 @@ import kotlinx.coroutines.flow.Flow
 interface RepoDao {
 
     //Flow不需要suspend吗？也就是说flow不会阻塞，会立即返回吗？对这玩意不懂，先不用了
-    @Query("SELECT * from repo WHERE baseIsDel=0 ORDER BY baseCreateTime DESC")
+//    @Query("SELECT * from repo WHERE baseIsDel=0 ORDER BY baseCreateTime DESC")
+    @Query("SELECT * from repo ORDER BY baseCreateTime DESC")
     fun getAllStream(): Flow<List<RepoEntity?>>
 
     @Query("SELECT * from repo WHERE id = :id")
@@ -55,6 +56,7 @@ interface RepoDao {
 
     /**
      * 更新时用来检查仓库名是否冲突的，如果其他条目存在相同仓库名，就冲突，排除id是需要更新的仓库的id，修改仓库信息时，自己的名字可以和自己的名字一样，所以检查时需要排除自己的id
+     * for check repo name exists, excludeId used for exclude update item, because update a Repo to same name is ok, in that case, should exclude itself id when checking name exist
      */
     @Query("SELECT id from repo where id!=:excludeId and repoName=:repoName LIMIT 1")
     suspend fun getIdByRepoNameAndExcludeId(repoName:String, excludeId:String): String?
@@ -62,13 +64,18 @@ interface RepoDao {
     @Query("SELECT * from repo where id=:id")
     suspend fun getById(id:String): RepoEntity?
 
-    @Query("SELECT * from repo where baseIsDel=0 and storageDirId=:storageDirId ORDER BY baseCreateTime DESC")
+    @Query("SELECT * from repo where fullSavePath=:fullSavePath LIMIT 1")
+    suspend fun getByFullSavePath(fullSavePath:String): RepoEntity?
+
+//    @Query("SELECT * from repo where baseIsDel=0 and storageDirId=:storageDirId ORDER BY baseCreateTime DESC")
+    @Query("SELECT * from repo where storageDirId=:storageDirId ORDER BY baseCreateTime DESC")
     suspend fun getByStorageDirId(storageDirId:String): List<RepoEntity>
 
     @Query("delete from repo WHERE storageDirId = :storageDirId")
     suspend fun deleteByStorageDirId(storageDirId:String)
 
-    @Query("SELECT * from repo WHERE baseIsDel=0 ORDER BY baseCreateTime DESC")
+//    @Query("SELECT * from repo WHERE baseIsDel=0 ORDER BY baseCreateTime DESC")
+    @Query("SELECT * from repo ORDER BY baseCreateTime DESC")
     suspend fun getAll(): List<RepoEntity>
 
     @Query("update repo set credentialIdForClone = :newCredentialIdForClone where credentialIdForClone = :oldCredentialIdForClone")

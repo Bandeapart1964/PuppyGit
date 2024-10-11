@@ -57,6 +57,8 @@ interface RepoRepository {
 
     suspend fun getById(id:String): RepoEntity?
 
+    suspend fun getByFullSavePath(fullSavePath:String, onlyReturnReadyRepo:Boolean=false, requireSyncRepoInfoWithGit:Boolean=true): RepoEntity?
+
     suspend fun getByIdNoSyncWithGit(id:String): RepoEntity?
 
     suspend fun getAll(updateRepoInfo:Boolean = true): List<RepoEntity>
@@ -64,7 +66,7 @@ interface RepoRepository {
     suspend fun cloneDoneUpdateRepoAndCreateRemote(item: RepoEntity)
 
     suspend fun getAReadyRepo():RepoEntity?
-    suspend fun getReadyRepoList():List<RepoEntity>
+    suspend fun getReadyRepoList(requireSyncRepoInfoWithGit:Boolean=true):List<RepoEntity>
     suspend fun updateCredentialIdByCredentialId(oldCredentialIdForClone:String, newCredentialIdForClone:String)
     suspend fun unlinkCredentialIdByCredentialId(credentialIdForClone:String)
 

@@ -152,6 +152,23 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         return repoFromDb
     }
 
+    override suspend fun getByFullSavePath(fullSavePath: String, onlyReturnReadyRepo:Boolean, requireSyncRepoInfoWithGit:Boolean): RepoEntity? {
+        val repo = dao.getByFullSavePath(fullSavePath)
+        if(repo==null) {
+            return null
+        }
+
+        if(onlyReturnReadyRepo && !isRepoReadyAndPathExist(repo)) {
+            return null
+        }
+
+        if(requireSyncRepoInfoWithGit) {
+            Libgit2Helper.updateRepoInfo(repo)
+        }
+
+        return repo
+    }
+
     override suspend fun getByIdNoSyncWithGit(id: String): RepoEntity? {
         return dao.getById(id)
     }
@@ -217,14 +234,16 @@ class RepoRepositoryImpl(private val dao: RepoDao) : RepoRepository {
         return null;
     }
 
-    override suspend fun getReadyRepoList(): List<RepoEntity> {
+    override suspend fun getReadyRepoList(requireSyncRepoInfoWithGit:Boolean): List<RepoEntity> {
         val repoList = mutableListOf<RepoEntity>()
 
         val repos = getAll()
 
         for(r in repos) {
             if (isRepoReadyAndPathExist(r)){
-                Libgit2Helper.updateRepoInfo(r)
+                if(requireSyncRepoInfoWithGit) {
+                    Libgit2Helper.updateRepoInfo(r)
+                }
                 repoList.add(r)
             }
         }

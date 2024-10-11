@@ -118,7 +118,6 @@ import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
-import com.github.git24j.core.Repository
 import java.io.File
 
 private val TAG = "FilesInnerPage"
@@ -198,7 +197,7 @@ fun FilesInnerPage(
     val successStrRes = stringResource(R.string.success)
     val errorStrRes = stringResource(R.string.error)
 
-    val repoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "repoList", initValue = listOf<RepoEntity>())
+//    val repoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "repoList", initValue = listOf<RepoEntity>())
 
 
 //    val currentPathBreadCrumbList = remember{ mutableStateListOf<FileItemDto>() }
@@ -338,14 +337,36 @@ fun FilesInnerPage(
 
     val showApplyAsPatchDialog = rememberSaveable { mutableStateOf(false)}
     val fileFullPathForApplyAsPatch =  rememberSaveable { mutableStateOf("")}
+    val allRepoList = mutableCustomStateListOf(stateKeyTag, "allRepoList", listOf<RepoEntity>())
+    val initApplyAsPatchDialog = {patchFileFullPath:String ->
+        doJobThenOffLoading job@{
+            val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+            val listFromDb = repoDb.getReadyRepoList(requireSyncRepoInfoWithGit = false)
 
+            if(listFromDb.isEmpty()) {
+                Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
+                return@job
+            }
+
+            allRepoList.value.clear()
+            allRepoList.value.addAll(listFromDb)
+
+            // if selectedRepo not in list, select first
+            if(listFromDb.indexOfFirst { selectedRepo.value.id == it.id } == -1) {
+                selectedRepo.value = listFromDb[0]
+            }
+
+            fileFullPathForApplyAsPatch.value = patchFileFullPath
+            showApplyAsPatchDialog.value = true
+        }
+    }
     if(showApplyAsPatchDialog.value) {
         ApplyPatchDialog(
             showDialog = showApplyAsPatchDialog,
             checkOnly = checkOnly,
             selectedRepo=selectedRepo,
             patchFileFullPath = fileFullPathForApplyAsPatch.value,
-            repoList = repoList.value,
+            repoList = allRepoList.value,
             onCancel={showApplyAsPatchDialog.value=false},
             onErrCallback={ e, selectedRepoId->
                 val errMsgPrefix = "apply patch err: err="
@@ -430,7 +451,7 @@ fun FilesInnerPage(
 
         showRenameDialog.value = true  // 显示弹窗
     }
-    val fileMenuKeyActList = listOf(
+    val fileMenuKeyActList = listOf<(FileItemDto)->Unit>(
         open@{ item:FileItemDto ->
             val expectReadOnly = false
             requireInnerEditorOpenFile(item.fullPath, expectReadOnly)
@@ -462,19 +483,9 @@ fun FilesInnerPage(
 //            Unit
 //        },
         renameFile ,
-        applyAsPatch@{ item:FileItemDto ->
-            if(repoList.value.isEmpty()) {
-                Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
-                return@applyAsPatch
-            }
-
-            // if selectedRepo not in list, select first
-            if(repoList.value.indexOfFirst { selectedRepo.value.id == it.id } == -1) {
-                selectedRepo.value = repoList.value[0]
-            }
-
-            fileFullPathForApplyAsPatch.value = item.fullPath
-            showApplyAsPatchDialog.value = true
+        applyAsPatch@{item:FileItemDto ->
+            initApplyAsPatchDialog(item.fullPath)
+//            Unit  // for make return type is Unit, or specify type at declare statement
         },
 //        copyPath@{
 //            copyPath(it.fullPath)
@@ -867,17 +878,17 @@ fun FilesInnerPage(
     val findRepoThenGoToReposOrChangList = { fullPath:String, trueGoToReposFalseGoToChangeList:Boolean ->
         doJobThenOffLoading job@{
             try {
-                if(repoList.value.isEmpty()) {
-                    Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
-                    return@job
-                }
-
                 val repo = Libgit2Helper.findRepoByPath(fullPath)
                 if(repo==null) {
                     Msg.requireShow(appContext.getString(R.string.not_found))
                 }else{
                     val repoWorkDir = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
-                    val target = repoList.value.find { it.fullSavePath == repoWorkDir }
+                    val onlyReturnReadyRepo = !trueGoToReposFalseGoToChangeList  // if go to repos page, no need require repo ready; if go to changelist, require a ready repo
+                    val target = AppModel.singleInstanceHolder.dbContainer.repoRepository.getByFullSavePath(
+                        repoWorkDir,
+                        onlyReturnReadyRepo=onlyReturnReadyRepo,
+                        requireSyncRepoInfoWithGit = false
+                    )
                     if(target==null) {
                         Msg.requireShow(appContext.getString(R.string.not_found))
                     }else {
@@ -2076,7 +2087,7 @@ fun FilesInnerPage(
                 selecteItem=selecteItem,
                 filesPageRequestFromParent = filesPageRequestFromParent,
                 openDirErr=openDirErr,
-                repoList=repoList,
+//                repoList=repoList,
             )
 
 
@@ -2108,7 +2119,7 @@ private fun doInit(
     selecteItem:(FileItemDto) ->Unit,
     filesPageRequestFromParent:MutableState<String>,
     openDirErr:MutableState<String>,
-    repoList:CustomStateListSaveable<RepoEntity>,
+//    repoList:CustomStateListSaveable<RepoEntity>,
 //    currentPathBreadCrumbList: MutableIntState,
 //    currentPathBreadCrumbList1: SnapshotStateList<FileItemDto>,
 //    currentPathBreadCrumbList2: SnapshotStateList<FileItemDto>
@@ -2282,16 +2293,8 @@ private fun doInit(
 //    }
 
 
-
-        val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-        val listFromDb = repoDb.getReadyRepoList()
-
-        repoList.value.clear()
-        repoList.value.addAll(listFromDb)
-
-
-
-        //检查是否请求打开文件
+        // since require manage storage permission, no more need this, users can simple copy file at Files page between external and internal storage
+        //检查是否请求导入文件
         if(requireImportFile.value) {
             requireImportFile.value = false
             if(requireImportUriList.value.isEmpty()) {
