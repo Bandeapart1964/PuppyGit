@@ -1,6 +1,6 @@
 1.0.5.3v29 - 20241011:
 - fixed Files Page loading very slow
-- fixed Files Page open a unable dir when first launch app
+- fixed Files Page open a unreadable dir when first launch app
 
 
 1.0.5.2v28 - 20241011:
