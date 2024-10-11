@@ -79,4 +79,5 @@ this project has many chinese comments, and some comments are out-of-date or non
 
 
 ## Donate
-I expect some donations, because I am poor, I'll find some ways to accept donations, it may help I keep continuously maintenance this project.
+I expect some donations, it may help I keep continuously maintenance this project.<br>
+my bitcoin addr:bc1q0yzt0kxvj4f4qvamrx2q7mahr40leun57m7sfd
