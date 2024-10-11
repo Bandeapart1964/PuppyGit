@@ -118,6 +118,7 @@ import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
+import com.github.git24j.core.Repository
 import java.io.File
 
 private val TAG = "FilesInnerPage"
@@ -154,6 +155,9 @@ fun FilesInnerPage(
     selectedItems:CustomStateListSaveable<FileItemDto>,
     checkOnly:MutableState<Boolean>,
     selectedRepo:CustomStateSaveable<RepoEntity>,
+
+    goToRepoPage:(targetIdIfHave:String)->Unit,
+    goToChangeListPage:(repoWillShowInChangeListPage:RepoEntity)->Unit,
 ) {
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir;
 //    val appContext = AppModel.singleInstanceHolder.appContext;
@@ -193,6 +197,8 @@ fun FilesInnerPage(
     val fileAlreadyExistStrRes = stringResource(R.string.file_already_exists)
     val successStrRes = stringResource(R.string.success)
     val errorStrRes = stringResource(R.string.error)
+
+    val repoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "repoList", initValue = listOf<RepoEntity>())
 
 
 //    val currentPathBreadCrumbList = remember{ mutableStateListOf<FileItemDto>() }
@@ -339,6 +345,7 @@ fun FilesInnerPage(
             checkOnly = checkOnly,
             selectedRepo=selectedRepo,
             patchFileFullPath = fileFullPathForApplyAsPatch.value,
+            repoList = repoList.value,
             onCancel={showApplyAsPatchDialog.value=false},
             onErrCallback={ e, selectedRepoId->
                 val errMsgPrefix = "apply patch err: err="
@@ -456,6 +463,16 @@ fun FilesInnerPage(
 //        },
         renameFile ,
         applyAsPatch@{ item:FileItemDto ->
+            if(repoList.value.isEmpty()) {
+                Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
+                return@applyAsPatch
+            }
+
+            // if selectedRepo not in list, select first
+            if(repoList.value.indexOfFirst { selectedRepo.value.id == it.id } == -1) {
+                selectedRepo.value = repoList.value[0]
+            }
+
             fileFullPathForApplyAsPatch.value = item.fullPath
             showApplyAsPatchDialog.value = true
         },
@@ -803,6 +820,90 @@ fun FilesInnerPage(
     // init repo dialog variables block end
 
 
+    // details variables block start
+    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
+    val details_ItemsSize = rememberSaveable { mutableLongStateOf(0L) }  // this is not items count, is file size. this size is a recursive count
+    val details_AllCount = rememberSaveable{mutableIntStateOf(0)}  // selected items count(folder + files). note: this is not a recursive count
+    val details_FilesCount = rememberSaveable{mutableIntStateOf(0)}  // files count in selected items. not recursive count
+    val details_FoldersCount = rememberSaveable{mutableIntStateOf(0)}  // folders count in selected items. not recursive count
+    val details_CountingItemsSize = rememberSaveable { mutableStateOf(false)}  // indicate is calculating file size or finished
+    val details_itemList = mutableCustomStateListOf(stateKeyTag, "details_itemList", listOf<FileItemDto>())
+
+    val initDetailsDialog = {list:List<FileItemDto> ->
+        details_FoldersCount.intValue = list.count { it.isDir }
+        details_FilesCount.intValue = list.size - details_FoldersCount.intValue
+        details_AllCount.intValue = list.size
+
+        //count files/folders size
+        doJobThenOffLoading {
+            //prepare
+            details_CountingItemsSize.value = true
+            details_ItemsSize.longValue = 0
+
+            //count
+            list.forEach {
+                //ps: 因为已经在函数中追加了size，所以if(it.isDir)的代码块返回0即可
+                if(it.isDir) {
+                    FsUtils.calculateFolderSize(it.toFile(), details_ItemsSize)
+                } else {
+                    details_ItemsSize.longValue += it.sizeInBytes
+                }
+            }
+
+            //done
+            details_CountingItemsSize.value = false
+        }
+
+
+        details_itemList.value.clear()
+        details_itemList.value.addAll(list)
+
+        showDetailsDialog.value=true
+    }
+
+    // details variables block end
+
+
+    val findRepoThenGoToReposOrChangList = { fullPath:String, trueGoToReposFalseGoToChangeList:Boolean ->
+        doJobThenOffLoading job@{
+            try {
+                if(repoList.value.isEmpty()) {
+                    Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
+                    return@job
+                }
+
+                val repo = Libgit2Helper.findRepoByPath(fullPath)
+                if(repo==null) {
+                    Msg.requireShow(appContext.getString(R.string.not_found))
+                }else{
+                    val repoWorkDir = Libgit2Helper.getRepoWorkdirNoEndsWithSlash(repo)
+                    val target = repoList.value.find { it.fullSavePath == repoWorkDir }
+                    if(target==null) {
+                        Msg.requireShow(appContext.getString(R.string.not_found))
+                    }else {
+                        if(trueGoToReposFalseGoToChangeList) {
+                            goToRepoPage(target.id)
+                        }else {
+                            goToChangeListPage(target)
+                        }
+                    }
+                }
+
+            }catch (e:Exception) {
+                Msg.requireShowLongDuration(e.localizedMessage ?:"err")
+                MyLog.e(TAG, "#findRepoThenGoToReposOrChangList err: fullPath=$fullPath, trueGoToReposFalseGoToChangeList=$trueGoToReposFalseGoToChangeList, err=${e.localizedMessage}")
+            }
+        }
+    }
+
+
+    val showInRepos = { fullPath:String ->
+        findRepoThenGoToReposOrChangList(fullPath, true)
+    }
+
+    val showInChangeList = { fullPath:String ->
+        findRepoThenGoToReposOrChangList(fullPath, false)
+    }
 
 
     if(isLoading.value) {
@@ -889,24 +990,48 @@ fun FilesInnerPage(
                                             enabled = enableMenuItem,
                                             text = { Text(stringResource(R.string.copy_real_path)) },
                                             onClick = {
-                                                copyRealPath(it.fullPath)
                                                 breadCrumbDropDownMenuExpendState.value = false
+                                                copyRealPath(it.fullPath)
                                             }
                                         )
                                         DropdownMenuItem(
                                             enabled = enableMenuItem,
                                             text = { Text(stringResource(R.string.import_as_repo)) },
                                             onClick = {
-                                                initImportAsRepoDialog(listOf(it.fullPath))
                                                 breadCrumbDropDownMenuExpendState.value = false
+                                                initImportAsRepoDialog(listOf(it.fullPath))
                                             }
                                         )
                                         DropdownMenuItem(
                                             enabled = enableMenuItem,
                                             text = { Text(stringResource(R.string.init_repo)) },
                                             onClick = {
-                                                initInitRepoDialog(listOf(it.fullPath))
                                                 breadCrumbDropDownMenuExpendState.value = false
+                                                initInitRepoDialog(listOf(it.fullPath))
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.show_in_repos)) },
+                                            onClick = {
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                                showInRepos(it.fullPath)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.show_in_changelist)) },
+                                            onClick = {
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                                showInChangeList(it.fullPath)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            enabled = enableMenuItem,
+                                            text = { Text(stringResource(R.string.details)) },
+                                            onClick = {
+                                                breadCrumbDropDownMenuExpendState.value = false
+                                                initDetailsDialog(listOf(it))
                                             }
                                         )
                                     }
@@ -1370,14 +1495,9 @@ fun FilesInnerPage(
         }
     }
 
-    val showDetailsDialog = rememberSaveable { mutableStateOf(false)}
-    val details_ItemsSize = rememberSaveable { mutableLongStateOf(0L) }  // this is not items count, is file size. this size is a recursive count
-    val details_AllCount = rememberSaveable{mutableIntStateOf(0)}  // selected items count(folder + files). note: this is not a recursive count
-    val details_FilesCount = rememberSaveable{mutableIntStateOf(0)}  // files count in selected items. not recursive count
-    val details_FoldersCount = rememberSaveable{mutableIntStateOf(0)}  // folders count in selected items. not recursive count
-    val details_CountingItemsSize = rememberSaveable { mutableStateOf(false)}  // indicate is calculating file size or finished
 
     if(showDetailsDialog.value) {
+        val itemList = details_itemList.value
         ConfirmDialog2(
             title = stringResource(id = R.string.details),
             requireShowTextCompose = true,
@@ -1385,10 +1505,24 @@ fun FilesInnerPage(
             textCompose = {
                 MySelectionContainer {
                     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Row {
+                            Text(text = replaceStringResList(stringResource(R.string.items_n1_n2_folders_n3_files), listOf(""+details_AllCount.intValue, ""+details_FoldersCount.intValue, ""+details_FilesCount.intValue)))
+                        }
+
+                        Spacer(modifier = Modifier.height(15.dp))
+
+                        Row {
+                            // if counting not finished: "123MB..." else "123MB"
+                            Text(text = replaceStringResList(stringResource(R.string.size_n), listOf(getHumanReadableSizeStr(details_ItemsSize.longValue))) + (if (details_CountingItemsSize.value) "..." else ""))
+                        }
+
 
                         //when only selected 1 item, show it's name and path
-                        if(selectedItems.value.size==1) {
-                            val item = selectedItems.value[0]
+                        if(itemList.size==1) {
+                            val item = itemList[0]
+
+                            Spacer(modifier = Modifier.height(15.dp))
+
                             Row {
                                 Text(text = stringResource(R.string.name)+": "+item.name)
                             }
@@ -1399,19 +1533,8 @@ fun FilesInnerPage(
                                 Text(text = stringResource(R.string.path)+": "+item.fullPath)
                             }
 
-                            Spacer(modifier = Modifier.height(15.dp))
+//                            Spacer(modifier = Modifier.height(15.dp))
 
-                        }
-
-                        Row {
-                            Text(text = replaceStringResList(stringResource(R.string.items_n1_n2_folders_n3_files), listOf(""+details_AllCount.intValue, ""+details_FoldersCount.intValue, ""+details_FilesCount.intValue)))
-                        }
-
-                        Spacer(modifier = Modifier.height(15.dp))
-
-                        Row {
-                            // if counting not finished: "123MB..." else "123MB"
-                            Text(text = replaceStringResList(stringResource(R.string.size_n), listOf(getHumanReadableSizeStr(details_ItemsSize.longValue))) + (if (details_CountingItemsSize.value) "..." else ""))
                         }
 
                     }
@@ -1508,32 +1631,7 @@ fun FilesInnerPage(
                 showRemoveFromGitDialog.value = true
             },
             details@{
-                val list = selectedItems.value
-                details_FoldersCount.intValue = list.count { it.isDir }
-                details_FilesCount.intValue = list.size - details_FoldersCount.intValue
-                details_AllCount.intValue = list.size
-
-                //count files/folders size
-                doJobThenOffLoading {
-                    //prepare
-                    details_CountingItemsSize.value = true
-                    details_ItemsSize.longValue = 0
-
-                    //count
-                    list.forEach {
-                        //ps: 因为已经在函数中追加了size，所以if(it.isDir)的代码块返回0即可
-                        if(it.isDir) {
-                            FsUtils.calculateFolderSize(it.toFile(), details_ItemsSize)
-                        } else {
-                            details_ItemsSize.longValue += it.sizeInBytes
-                        }
-                    }
-
-                    //done
-                    details_CountingItemsSize.value = false
-                }
-
-                showDetailsDialog.value = true
+                initDetailsDialog(selectedItems.value.toList())
             },
 
             importAsRepo@{
@@ -1977,7 +2075,8 @@ fun FilesInnerPage(
                 isImportedMode = isImportMode,
                 selecteItem=selecteItem,
                 filesPageRequestFromParent = filesPageRequestFromParent,
-                openDirErr=openDirErr
+                openDirErr=openDirErr,
+                repoList=repoList,
             )
 
 
@@ -2008,7 +2107,8 @@ private fun doInit(
     isImportedMode:MutableState<Boolean>,
     selecteItem:(FileItemDto) ->Unit,
     filesPageRequestFromParent:MutableState<String>,
-    openDirErr:MutableState<String>
+    openDirErr:MutableState<String>,
+    repoList:CustomStateListSaveable<RepoEntity>,
 //    currentPathBreadCrumbList: MutableIntState,
 //    currentPathBreadCrumbList1: SnapshotStateList<FileItemDto>,
 //    currentPathBreadCrumbList2: SnapshotStateList<FileItemDto>
@@ -2161,9 +2261,10 @@ private fun doInit(
             lastPathName.append(s).append(File.separator)  //拼接列表路径为仓库下的 完整相对路径
             val pathDto = FileItemDto()  //这里其实只需要 fullPath 和 name两个参数
 
-            //面包屑不做是否目录的判定，直接当文件夹处理，所以无需设置这两个变量
-//            pathDto.isFile=false  //面包屑肯定是目录啦，所以这个值设不设其实无所谓
-//            pathDto.isDir=true
+            //breadCrumb must dir, if is file, will replace at up code
+            //面包屑肯定是目录，如果是文件，在上面的代码中会被替换成目录
+            pathDto.isFile=false
+            pathDto.isDir=true
 
             pathDto.fullPath = File(root, lastPathName.toString()).canonicalPath  //把仓库下完整相对路径和仓库路径拼接，得到一个绝对路径
             pathDto.name = s
@@ -2174,6 +2275,16 @@ private fun doInit(
 //        }
 
 //    }
+
+
+
+        val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
+        val listFromDb = repoDb.getReadyRepoList()
+
+        repoList.value.clear()
+        repoList.value.addAll(listFromDb)
+
+
 
         //检查是否请求打开文件
         if(requireImportFile.value) {

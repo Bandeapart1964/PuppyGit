@@ -922,5 +922,6 @@
     <string name="no_matched_item">No matched item</string>
     <string name="folder_icon">Folder icon</string>
     <string name="file_icon">File icon</string>
+    <string name="show_in_changelist">Show In ChangeList</string>
 
 </resources>

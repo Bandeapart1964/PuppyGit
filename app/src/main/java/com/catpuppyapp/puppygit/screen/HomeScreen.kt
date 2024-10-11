@@ -882,6 +882,8 @@ fun HomeScreen(
                     selectedItems = filesPageSelectedItems,
                     checkOnly = filesPageCheckOnly,
                     selectedRepo = filesPageSelectedRepo,
+                    goToRepoPage=goToRepoPage,
+                    goToChangeListPage=goToChangeListPage,
                 )
             }
             else if(currentHomeScreen.intValue == Cons.selectedItem_Editor) {

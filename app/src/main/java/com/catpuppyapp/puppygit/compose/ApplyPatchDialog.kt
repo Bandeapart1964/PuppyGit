@@ -4,23 +4,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.play.pro.R
-import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
-import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
-import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.github.git24j.core.Repository
 import java.io.File
 
@@ -35,44 +28,37 @@ fun ApplyPatchDialog(
     selectedRepo:CustomStateSaveable<RepoEntity>,
     checkOnly:MutableState<Boolean>,
     patchFileFullPath:String,
+    repoList:List<RepoEntity>,
     onCancel: () -> Unit,
     onErrCallback:suspend (err:Exception, selectedRepoId:String)->Unit,
     onFinallyCallback:()->Unit,
     onOkCallback:()->Unit,
 ) {
 
-    val appContext = AppModel.singleInstanceHolder.appContext
+    ConfirmDialog2(
+        okBtnEnabled = repoList.isNotEmpty() && selectedRepo.value.id.isNotBlank(),
+        title = stringResource(R.string.apply_patch),
+        requireShowTextCompose = true,
+        textCompose = {
+            ScrollableColumn {
+                Text(text = stringResource(R.string.select_target_repo)+":")
+                Spacer(modifier = Modifier.height(10.dp))
 
-    val loading = rememberSaveable { mutableStateOf(true)}
+                SingleSelectList(optionsList = repoList,
+                    menuItemSelected = {idx, value -> value.id == selectedRepo.value.id},
+                    menuItemOnClick = {idx, value -> selectedRepo.value = value},
+                    menuItemFormatter = {idx, value -> value?.repoName ?: ""},
+                    selectedOptionIndex = null,
+                    selectedOptionValue = selectedRepo.value
+                )
 
-    val repoList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "repoList", initValue = listOf<RepoEntity>())
+                Spacer(modifier = Modifier.height(10.dp))
 
-
-    if(!loading.value) {
-        ConfirmDialog2(
-            okBtnEnabled = repoList.value.isNotEmpty() && selectedRepo.value.id.isNotBlank(),
-            title = stringResource(R.string.apply_patch),
-            requireShowTextCompose = true,
-            textCompose = {
-                ScrollableColumn {
-                    Text(text = stringResource(R.string.select_target_repo)+":")
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    SingleSelectList(optionsList = repoList.value,
-                        menuItemSelected = {idx, value -> value.id == selectedRepo.value.id},
-                        menuItemOnClick = {idx, value -> selectedRepo.value = value},
-                        menuItemFormatter = {idx, value -> value?.repoName ?: ""},
-                        selectedOptionIndex = null,
-                        selectedOptionValue = selectedRepo.value
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    MyCheckBox(stringResource(R.string.check_only), checkOnly)
-                    if(checkOnly.value) {
-                        Text(stringResource(R.string.apply_patch_check_note), fontWeight = FontWeight.Light)
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
+                MyCheckBox(stringResource(R.string.check_only), checkOnly)
+                if(checkOnly.value) {
+                    Text(stringResource(R.string.apply_patch_check_note), fontWeight = FontWeight.Light)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
 
 //
 //                MyLazyColumn(
@@ -113,73 +99,46 @@ fun ApplyPatchDialog(
 //
 //                }
 
-                }
-            },
-            onCancel = { onCancel() }) {
+            }
+        },
+        onCancel = { onCancel() }) {
 
-            doJobThenOffLoading {
-                try {
-                    Repository.open(selectedRepo.value.fullSavePath).use { repo ->
-                        /*
-                         *(
-                                inputFile:File,
-                                repo:Repository,
-                                applyOptions: Apply.Options?=null,
-                                location:Apply.LocationT = Apply.LocationT.WORKDIR,  // default same as `git apply`
-                                checkWorkdirCleanBeforeApply: Boolean = true,
-                                checkIndexCleanBeforeApply: Boolean = false
-                            )
-                         */
-                        val inputFile = File(patchFileFullPath)
-                        val ret = Libgit2Helper.applyPatchFromFile(
-                            inputFile,
-                            repo,
-                            checkOnlyDontRealApply = checkOnly.value
+        doJobThenOffLoading {
+            try {
+                Repository.open(selectedRepo.value.fullSavePath).use { repo ->
+                    /*
+                     *(
+                            inputFile:File,
+                            repo:Repository,
+                            applyOptions: Apply.Options?=null,
+                            location:Apply.LocationT = Apply.LocationT.WORKDIR,  // default same as `git apply`
+                            checkWorkdirCleanBeforeApply: Boolean = true,
+                            checkIndexCleanBeforeApply: Boolean = false
                         )
+                     */
+                    val inputFile = File(patchFileFullPath)
+                    val ret = Libgit2Helper.applyPatchFromFile(
+                        inputFile,
+                        repo,
+                        checkOnlyDontRealApply = checkOnly.value
+                    )
 
-                        if(ret.hasError()) {
-                            if(ret.exception!=null) {
-                                throw ret.exception!!
-                            }else {
-                                throw RuntimeException(ret.msg)
-                            }
+                    if(ret.hasError()) {
+                        if(ret.exception!=null) {
+                            throw ret.exception!!
+                        }else {
+                            throw RuntimeException(ret.msg)
                         }
                     }
-
-
-                    onOkCallback()
-                }catch (e:Exception){
-                    onErrCallback(e, selectedRepo.value.id)
-                }finally {
-                    onFinallyCallback()
                 }
+
+
+                onOkCallback()
+            }catch (e:Exception){
+                onErrCallback(e, selectedRepo.value.id)
+            }finally {
+                onFinallyCallback()
             }
-        }
-    }
-
-
-    LaunchedEffect(Unit) {
-        doJobThenOffLoading job@{
-            loading.value = true
-
-            val repoDb = AppModel.singleInstanceHolder.dbContainer.repoRepository
-            val listFromDb = repoDb.getReadyRepoList()
-            if(listFromDb.isEmpty()) {
-                Msg.requireShowLongDuration(appContext.getString(R.string.repo_list_is_empty))
-                //关闭弹窗
-                onCancel()
-                return@job
-            }
-
-            repoList.value.clear()
-            repoList.value.addAll(listFromDb)
-
-            // if selectedRepo not in list, select first
-            if(listFromDb.indexOfFirst { selectedRepo.value.id == it.id } == -1) {
-                selectedRepo.value = repoList.value[0]
-            }
-
-            loading.value = false
         }
     }
 }
