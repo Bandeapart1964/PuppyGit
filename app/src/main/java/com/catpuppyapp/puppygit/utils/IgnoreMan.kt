@@ -4,16 +4,16 @@ import java.io.File
 import java.io.FileWriter
 
 /**
- * app specified ignore files manager, it under every repo's ".git/PuppyGit/ignores.txt"
+ * app specified ignore files manager, it under every repo's ".git/PuppyGit/ignore_v2.txt"
  *
  * usage:
  *   1 call `getAllValidPattern()` get a rules list
- *   2 for each file path call `matchedPatternList(input, rules)`, if return true, means should be ignore
+ *   2 for each file path call `matchedPatternList(relativePathUnderRepo, rules)`, if return true, means should be ignore
  */
 object IgnoreMan {
     private const val commentBegin = "//"
     private const val newFileContent = "$commentBegin a line start with \"$commentBegin\" will treat as comment\n$commentBegin each line one relative path under repo, support simple wildcard like *.log match all files has .log suffix\n\n"
-    private const val fileName = "ignore_v2.txt"
+    private const val fileName = "ignore_v2.txt"  // 1.0.5.3v29 was used file name: ignores.txt
 
     private fun getFile(repoDotGitDir: String): File {
         val f = File(AppModel.PuppyGitUnderGitDirManager.getDir(repoDotGitDir).canonicalPath, fileName)
