@@ -101,7 +101,8 @@ fun ApplyPatchDialog(
 
             }
         },
-        onCancel = { onCancel() }) {
+        onCancel = { onCancel() }
+    ) {  // onOK
 
         doJobThenOffLoading {
             try {
