@@ -1,3 +1,9 @@
+1.0.5.4v30 - 20241013:<br>
+ignore file change:
+- change comment start sign form "#" to "//"
+- deprecated "ignores.txt", instead by "ignore_v2.txt", if users was use puppy git ignore feature, need re-ignore files
+
+
 1.0.5.3v29 - 20241011:
 - fixed Files Page loading very slow
 - fixed Files Page open a unreadable dir when first launch app
