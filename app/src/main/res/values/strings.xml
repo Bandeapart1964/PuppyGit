@@ -386,7 +386,7 @@
     <string name="no_items_for_shown">No items for shown</string>
     <string name="index_clean">Index clean</string>
     <string name="work_tree_clean">Worktree clean</string>
-    <string name="index_not_clean">Index Not Clean</string>
+    <string name="index_dirty">Index Dirty</string>
     <string name="local_ahead_upstream">Local ahead upstream</string>
     <string name="local_behind_upstream">Local behind upstream</string>
     <string name="already_up_to_date_with_upstream">Already up-to-date with upstream</string>

@@ -98,6 +98,7 @@ import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
+import com.catpuppyapp.puppygit.utils.IgnoreMan
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -115,7 +116,6 @@ import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
 import com.catpuppyapp.puppygit.utils.showToast
 import com.catpuppyapp.puppygit.utils.state.CustomStateListSaveable
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
@@ -1260,7 +1260,7 @@ fun ChangeListInnerPage(
             if(requireAct==PageRequest.editIgnoreFile) {
                 try {
                     Repository.open(curRepoFromParentPage.value.fullSavePath).use { repo->
-                        val ignoreFilePath = Libgit2Helper.IgnoreMan.getFileFullPath(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(repo))
+                        val ignoreFilePath = IgnoreMan.getFileFullPath(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(repo))
 
                         withMainContext {
                             val initMergeMode = false
@@ -1963,7 +1963,7 @@ fun ChangeListInnerPage(
                     Repository.open(curRepoFromParentPage.value.fullSavePath).use { repo ->
                         val repoDotGitPath = Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(repo)
                         val linesWillIgnore = selectedItemList.value.map { it.relativePathUnderRepo }
-                        Libgit2Helper.IgnoreMan.appendLinesToIgnoreFile(repoDotGitPath, linesWillIgnore)
+                        IgnoreMan.appendLinesToIgnoreFile(repoDotGitPath, linesWillIgnore)
                     }
                     Msg.requireShow(appContext.getString(R.string.success))
                 }catch (e:Exception) {
@@ -2807,7 +2807,7 @@ fun ChangeListInnerPage(
                         ) {
                             if (changeListPageHasIndexItem.value){  //index不为空
                                 Text(
-                                    text =  stringResource(R.string.index_not_clean),
+                                    text =  stringResource(R.string.index_dirty),
                                     color = MyStyleKt.ClickableText.color,
                                     style = MyStyleKt.ClickableText.style,
                                     modifier = MyStyleKt.ClickableText.modifierNoPadding
@@ -3548,10 +3548,10 @@ private fun changeListInit(
 
                             // conflicts are hold ever, but normal types file will filter by app's ignore file
                             statusMap[Cons.gitStatusKeyWorkdir]?.let {  //后添加其他条目
-                                val validIgnoreRules = Libgit2Helper.IgnoreMan.getAllValidPattern(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(gitRepository))
+                                val validIgnoreRules = IgnoreMan.getAllValidPattern(Libgit2Helper.getRepoGitDirPathNoEndsWithSlash(gitRepository))
                                 it.forEach { item ->
                                     // add items are not matched with ignore rules
-                                    if(Libgit2Helper.IgnoreMan.matchedPatternList(item.relativePathUnderRepo, validIgnoreRules).not()){
+                                    if(IgnoreMan.matchedPatternList(item.relativePathUnderRepo, validIgnoreRules).not()){
                                         itemList.value.add(item)
                                     }
                                 }

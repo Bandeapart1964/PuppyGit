@@ -15,7 +15,7 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 <a href=https://github.com/Bandeapart1964/PuppyGitPro/releases>Github Release</a>
 
 ## PuppyGit Pro + Notes App = A Free Cross-platform Sync Way!
-Not only sync codes, You can use PuppyGit Pro sync your notes repository create by note-talking apps like: <a href="https://github.com/obsidianmd/obsidian-releases">Obsidian</a> / <a href="https://github.com/gsantner/markor">Markor</a> or Other!
+Not only sync codes, You can use PuppyGit Pro sync your notes repository create by note-taking apps like: <a href="https://github.com/obsidianmd/obsidian-releases">Obsidian</a> / <a href="https://github.com/gsantner/markor">Markor</a> or Other!
 
 ## Screenshots
 <div>
