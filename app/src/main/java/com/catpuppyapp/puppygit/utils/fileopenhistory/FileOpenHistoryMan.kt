@@ -64,6 +64,7 @@ object FileOpenHistoryMan {
         }catch (e:Exception) {
             // err is ok, just return a new one, when set, will overwrite old file
             curHistory = FileOpenHistory()
+            saveHistory(curHistory)  // when read from file failed, save a new history to file
             MyLog.e(TAG, "#readHistoryFromFile: read err, file content empty or corrupted, will return a new history, err is: ${e.localizedMessage}")
         }
     }

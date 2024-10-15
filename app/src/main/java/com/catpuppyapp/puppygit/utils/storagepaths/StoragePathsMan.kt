@@ -61,6 +61,7 @@ object StoragePathsMan {
         }catch (e:Exception) {
             // err is ok, just return a new one, when set, will overwrite old file
             paths = StoragePaths()
+            save(paths)  // when read failed, override settings file with a empty paths list
             MyLog.e(TAG, "#readFromFile: read err, file content empty or corrupted, will return a new object, err is: ${e.localizedMessage}")
         }
     }
