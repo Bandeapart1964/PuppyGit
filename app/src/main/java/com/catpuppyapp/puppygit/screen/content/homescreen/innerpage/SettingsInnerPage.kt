@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,7 @@ import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.ComposeHelper
 import com.catpuppyapp.puppygit.utils.LanguageUtil
+import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
 private val stateKeyTag = "SettingsInnerPage"
@@ -59,8 +61,10 @@ fun SettingsInnerPage(
     val selectedTheme = rememberSaveable { mutableIntStateOf(settingsState.value.theme) }
 
     val languageList = LanguageUtil.languageCodeList
-
     val selectedLanguage = rememberSaveable { mutableStateOf(LanguageUtil.get(appContext)) }
+
+    val logLevelList = MyLog.logLevelList
+    val selectedLogLevel = rememberSaveable { mutableStateOf(MyLog.getCurrentLogLevel()) }
 
     //back handler block start
     val isBackHandlerEnable = rememberSaveable { mutableStateOf(true)}
@@ -80,7 +84,7 @@ fun SettingsInnerPage(
         SettingsContent {
             Column {
                 Text(stringResource(R.string.theme), fontSize = 20.sp)
-                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light)
+                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
 
             Column(modifier = Modifier.width(100.dp)) {
@@ -88,10 +92,12 @@ fun SettingsInnerPage(
                     menuItemOnClick = { index, value ->
                         selectedTheme.intValue = index
 
-                        settingsState.value.theme = index
+                        if(index != settingsState.value.theme) {
+                            settingsState.value.theme = index
 
-                        SettingsUtil.update {
-                            it.theme = index
+                            SettingsUtil.update {
+                                it.theme = index
+                            }
                         }
                     }
                 )
@@ -102,7 +108,7 @@ fun SettingsInnerPage(
         SettingsContent {
             Column {
                 Text(stringResource(R.string.language), fontSize = 20.sp)
-                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light)
+                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
 
             Column(modifier = Modifier.width(120.dp)) {
@@ -113,13 +119,53 @@ fun SettingsInnerPage(
                     menuItemOnClick = { index, value ->
                         selectedLanguage.value = value
 
-                        LanguageUtil.set(appContext, value)
+                        if(value != LanguageUtil.get(appContext)) {
+                            LanguageUtil.set(appContext, value)
+                        }
                     },
                     menuItemSelected = {index, value ->
                         value == selectedLanguage.value
                     },
                     menuItemFormatter = { index, value ->
                         LanguageUtil.getLanguageTextByCode(value?:"", appContext)
+                    }
+                )
+            }
+        }
+        SettingsContent {
+            Column {
+                Text(stringResource(R.string.log_level), fontSize = 20.sp)
+//                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
+            }
+
+            Column(modifier = Modifier.width(120.dp)) {
+                SingleSelectList(
+                    optionsList = logLevelList,
+                    selectedOptionIndex = null,
+                    selectedOptionValue = selectedLogLevel.value,
+                    menuItemOnClick = { index, value ->
+                        selectedLogLevel.value = value
+
+                        if(value != MyLog.getCurrentLogLevel()) {
+                            // set in memory
+                            val newLevel = value.get(0)
+                            MyLog.setLogLevel(newLevel)
+
+                            // this update or not update, all fine
+                            //这个更新与否其实没差，因为在这用不到，而从其他地方获取的settings也是重新读取的新实例
+                            settingsState.value.logLevel=newLevel
+
+                            // save to disk
+                            SettingsUtil.update {
+                                it.logLevel = newLevel
+                            }
+                        }
+                    },
+                    menuItemSelected = {index, value ->
+                        value == selectedLogLevel.value
+                    },
+                    menuItemFormatter = { index, value ->
+                        MyLog.getTextByLogLevel(value?:"", appContext)
                     }
                 )
             }

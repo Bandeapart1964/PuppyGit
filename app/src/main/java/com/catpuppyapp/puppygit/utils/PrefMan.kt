@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object PrefMan {
-    private val fileName = "prefs"
+    private val fileName = "settings"
 
     object Key {
         /**

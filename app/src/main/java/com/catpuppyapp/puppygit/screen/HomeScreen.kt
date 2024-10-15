@@ -779,7 +779,7 @@ fun HomeScreen(
 
                             }
                         }else if(currentHomeScreen.intValue == Cons.selectedItem_Settings) {
-                            SettingsActions(refreshPage=refreshSettingsPage)
+//                            SettingsActions(refreshPage=refreshSettingsPage)
                         }else if(currentHomeScreen.intValue == Cons.selectedItem_Subscription) {
                             SubscriptionActions { // refreshPage
                                 changeStateTriggerRefreshPage(subscriptionPageNeedRefresh)

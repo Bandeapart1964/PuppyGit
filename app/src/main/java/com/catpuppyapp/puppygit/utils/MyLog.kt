@@ -1,6 +1,8 @@
 package com.catpuppyapp.puppygit.utils
 
+import android.content.Context
 import android.util.Log
+import com.catpuppyapp.puppygit.play.pro.R
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
@@ -17,6 +19,15 @@ import java.time.format.DateTimeFormatter
 //网上拷来的，来源: https://www.cnblogs.com/changyiqiang/p/11225350.html
 object MyLog {
     private val TAG = "MyLog"  //debug TAG
+
+    val logLevelList = listOf(
+        "e",
+        "w",
+        "i",
+        "d",
+        "v",
+    )
+
 
     private const val MYLOG_SWITCH = true // 日志文件总开关
     private const val MYLOG_WRITE_TO_FILE = true // 日志写入文件开关
@@ -374,6 +385,26 @@ object MyLog {
     private fun getDateOfLogFileName(f: File): String {
         val split = f.getName().split(LOG_NAME_SEPARATOR)
         return split[0]
+    }
+
+    fun getTextByLogLevel(level:String, appContext: Context):String {
+        if(level == "e") {
+            return appContext.getString(R.string.error)
+        }else if(level=="w"){
+            return appContext.getString(R.string.warn)
+        }else if(level=="i"){
+            return appContext.getString(R.string.info)
+        }else if(level=="d"){
+            return appContext.getString(R.string.debug)
+        }else if(level=="v"){
+            return appContext.getString(R.string.verbose)
+        }else {
+            return appContext.getString(R.string.unknown)
+        }
+    }
+
+    fun getCurrentLogLevel():String {
+        return ""+myLogLevel
     }
 
     /**
