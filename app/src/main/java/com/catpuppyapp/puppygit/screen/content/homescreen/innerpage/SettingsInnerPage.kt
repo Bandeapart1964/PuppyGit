@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.SettingsUtil
+import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.ComposeHelper
 import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
@@ -134,7 +136,8 @@ fun SettingsInnerPage(
 
 @Composable
 fun SettingsTitle(text:String){
-    Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceBright).fillMaxWidth().padding(start = 5.dp),
+    val inDarkTheme = Theme.inDarkTheme
+    Row(modifier = Modifier.background(color = if(inDarkTheme) Color.DarkGray else Color.LightGray).fillMaxWidth().padding(start = 5.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
