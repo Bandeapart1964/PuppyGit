@@ -70,4 +70,24 @@ data class AppSettings(
      */
     var commitHistoryLoadMoreCheckAbortSignalFrequency:Int= 1000,
 
-    )
+    /**
+     * 0 auto; 1 light; 2 dark.
+     * reference SettingsInnerPage.themeList, this value should match with the themeList indices
+     * 这的值应该和设置页面的themeList索引匹配
+     */
+    var theme:Int = 0,
+
+    /**
+     * e: err
+     * w: warn
+     * i: info
+     * d: debug
+     * v: verbose
+     */
+    var logLevel:Char = 'w',
+    /**
+     * log file keep in days
+     * 保留几天的日志
+     */
+    var logKeepDays:Int = 3,
+)

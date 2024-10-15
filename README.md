@@ -44,7 +44,6 @@ Not only sync codes, You can use PuppyGit Pro sync your notes repository create 
 
 
 ## TODO (welcome pr)
-- implement a settings page
 - multi cherry-pick
 - optimize Editor performance
 - add colors and accept buttons for accept ours/theirs in Editor when merge mode on

@@ -67,7 +67,7 @@ object MyLog {
      */
 
     //    public Context context;
-    fun init(saveDays: Int, logLevel: Char, logDirPath:String) {
+    fun init(saveDays: Int=3, logLevel: Char='w', logDirPath:String) {
         try {
             LOG_FILE_SAVE_DAYS = saveDays
             myLogLevel = logLevel
@@ -87,6 +87,15 @@ object MyLog {
 
         }
     }
+
+    fun setLogLevel(level:Char) {
+        myLogLevel = level
+    }
+
+    fun setLogFileKeepDays(days:Int) {
+        LOG_FILE_SAVE_DAYS = days
+    }
+
     private fun startWriter() {
         doJobThenOffLoading {
             var errCountLimit = 3

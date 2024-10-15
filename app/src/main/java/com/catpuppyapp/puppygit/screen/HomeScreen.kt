@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.screen
 
+import SettingsInnerPage
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
@@ -74,6 +76,7 @@ import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.Chang
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.EditorPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.FilesPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.RepoPageActions
+import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.SettingsActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.SubscriptionActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.drawer.drawerContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.AboutTitle
@@ -121,6 +124,7 @@ fun HomeScreen(
     val stateKeyTag = "HomeScreen"
 
 
+    val exitApp = AppModel.singleInstanceHolder.exitApp
     val navController = AppModel.singleInstanceHolder.navController
     val scope = rememberCoroutineScope()
     val homeTopBarScrollBehavior = AppModel.singleInstanceHolder.homeTopBarScrollBehavior
@@ -189,6 +193,10 @@ fun HomeScreen(
 //    val editorPageRequireOpenFilePath = StateUtil.getRememberSaveableState(initValue = "") // canonicalPath
 //    val needRefreshFilesPage = rememberSaveable { mutableStateOf(false) }
     val needRefreshFilesPage = rememberSaveable { mutableStateOf("")}
+    val needRefreshSettingsPage = rememberSaveable { mutableStateOf("")}
+    val refreshSettingsPage = { changeStateTriggerRefreshPage(needRefreshSettingsPage) }
+
+    val settingsListState = rememberScrollState()
 
 
     val filesPageIsFileSelectionMode = rememberSaveable { mutableStateOf(false)}
@@ -506,6 +514,7 @@ fun HomeScreen(
         stringResource(id = R.string.files),
         stringResource(id = R.string.editor),
         stringResource(id = R.string.changelist),
+        stringResource(id = R.string.settings),
         stringResource(id = R.string.about),
 //        stringResource(id = R.string.subscription),
     )
@@ -514,6 +523,7 @@ fun HomeScreen(
         Cons.selectedItem_Files,
         Cons.selectedItem_Editor,
         Cons.selectedItem_ChangeList,
+        Cons.selectedItem_Settings,
         Cons.selectedItem_About,
 //        Cons.selectedItem_Subscription,
     )
@@ -522,6 +532,7 @@ fun HomeScreen(
         Icons.Filled.Folder,
         Icons.Filled.EditNote,
         Icons.Filled.Difference,
+        Icons.Filled.Settings,
         Icons.Filled.Info,
 //        Icons.Filled.Subscriptions
     )
@@ -530,6 +541,7 @@ fun HomeScreen(
         refreshFilesPage@{ changeStateTriggerRefreshPage(needRefreshFilesPage) },
         refreshEditorPage@{ editorPageShowingFileIsReady.value=false; changeStateTriggerRefreshPage(needRefreshEditorPage) },
         refreshChangeListPage@{changeListRequireRefreshFromParentPage()},
+        refreshSettingsPage@{ refreshSettingsPage() },
         refreshAboutPage@{}, //About页面静态的，不需要刷新
 //        {},  //Subscription页面
     )
@@ -618,7 +630,7 @@ fun HomeScreen(
                                 )
                             }
                         } else if (currentHomeScreen.intValue == Cons.selectedItem_Settings) {
-                            SettingsTitle()
+                            SettingsTitle(listState = settingsListState)
                         } else if (currentHomeScreen.intValue == Cons.selectedItem_About) {
                             AboutTitle()
                         } else if(currentHomeScreen.intValue == Cons.selectedItem_Subscription) {
@@ -767,7 +779,7 @@ fun HomeScreen(
 
                             }
                         }else if(currentHomeScreen.intValue == Cons.selectedItem_Settings) {
-
+                            SettingsActions(refreshPage=refreshSettingsPage)
                         }else if(currentHomeScreen.intValue == Cons.selectedItem_Subscription) {
                             SubscriptionActions { // refreshPage
                                 changeStateTriggerRefreshPage(subscriptionPageNeedRefresh)
@@ -992,9 +1004,14 @@ fun HomeScreen(
 //                        onClose={changeListIsShowRepoList.value=false})
 //                }
             }else if(currentHomeScreen.intValue == Cons.selectedItem_Settings) {
-                Column(modifier = Modifier.padding(contentPadding)) {
-                    Text(text = "Settings Page")
-                }
+                SettingsInnerPage(
+                    contentPadding = contentPadding,
+                    needRefreshPage = needRefreshSettingsPage,
+                    appContext = appContext,
+                    openDrawer = openDrawer,
+                    exitApp = exitApp,
+                    listState = settingsListState
+                )
             }else if(currentHomeScreen.intValue == Cons.selectedItem_About) {
                 //About页面是静态的，无需刷新
                 AboutInnerPage(contentPadding, openDrawer = openDrawer)

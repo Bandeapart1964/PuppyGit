@@ -20,7 +20,6 @@ import com.catpuppyapp.puppygit.data.AppContainer
 import com.catpuppyapp.puppygit.data.AppDataContainer
 import com.catpuppyapp.puppygit.dev.FlagFileName
 import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
-import com.catpuppyapp.puppygit.dev.isDebugModeOn
 import com.catpuppyapp.puppygit.jni.LibLoader
 import com.catpuppyapp.puppygit.play.pro.BuildConfig
 import com.catpuppyapp.puppygit.settings.SettingsUtil
@@ -31,6 +30,7 @@ import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
 import com.catpuppyapp.puppygit.utils.storagepaths.StoragePathsMan
 import com.github.git24j.core.Libgit2
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 
@@ -54,6 +54,8 @@ class AppModel {
          * 中量级，应该不会阻塞很久
          */
         fun init_1(appModel: AppModel = singleInstanceHolder, applicationContext:Context, exitApp:()->Unit) {
+            val funName = "init_1"
+
             //加载libgit2等库
             LibLoader.load()
 
@@ -139,7 +141,53 @@ class AppModel {
             //初始化debugModeOn。注：app运行期间若需修改此变量，应通过DebugModeManager来修改；获取则直接通过AppModel.singleInstanceHolder.debugModeOn来获取即可
             appModel.debugModeOn = appModel.isDebugModeFlagFileExists()  //TODO 在设置页面添加相关选项“开启调试模式”，开启则在上面的目录创建debugModeOn文件，否则删除文件，这样每次启动app就能通过检查文件是否存在来判断是否开了debugMode了。(btw: 因为要在Settings初始化之前就读取到这个变量，所以不能放到Settings里)
 
-            //test
+            //初始化日志
+            //设置 日志保存时间和日志等级，(考虑：以后把这个改成从配置文件读取相关设置项的值，另外，用runBlocking可以实现阻塞调用suspend方法查db，但不推荐)
+//            MyLog.init(saveDays=3, logLevel='w', logDirPath=appModel.logDir.canonicalPath);
+            MyLog.init(logDirPath=appModel.logDir.canonicalPath)
+
+
+//            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
+            val settingsSaveDir = appModel.getOrCreateSettingsDir()
+            //初始化设置项
+            try {
+                //init settings, it shouldn't blocking long time
+                runBlocking {
+                    SettingsUtil.init(settingsSaveDir, useBak = false)
+                }
+            }catch (e:Exception) {
+                //用原始设置文件初始化异常
+                try {
+                    //初始化设置，用备用设置文件，若成功则恢复备用到原始设置文件
+                    MyLog.e(TAG, "#$funName init settings err:"+e.stackTraceToString())
+                    MyLog.w(TAG, "#$funName init origin settings err, will try use backup")
+                    runBlocking {
+                        SettingsUtil.init(settingsSaveDir, useBak = true)
+                    }
+                    MyLog.w(TAG, "#$funName init bak settings success, will restore it to origin")
+                    SettingsUtil.copyBakToOrigin()  //init成功，所以这里肯定初始化了原始和备用配置文件的File对象，因此不用传参数
+                    MyLog.w(TAG, "#$funName restore bak settings to origin success")
+                }catch (e2:Exception) {
+                    //用备用文件初始化设置也异常，尝试重建设置项，用户设置会丢失
+                    MyLog.e(TAG, "#$funName init settings with bak err:"+e2.stackTraceToString())
+                    MyLog.w(TAG, "#$funName init bak settings err, will clear origin settings, user settings will lost!")
+                    SettingsUtil.delSettingsFile(settingsSaveDir)
+                    MyLog.w(TAG, "#$funName del settings success, will reInit settings, if failed, app will not work...")
+                    runBlocking {
+                        SettingsUtil.init(settingsSaveDir, useBak = false)
+                    }
+                    MyLog.w(TAG, "#$funName reInit settings success")
+                }
+            }
+
+            // update log fields by settings
+            val settings = SettingsUtil.getSettingsSnapshot()
+            MyLog.setLogLevel(settings.logLevel)
+            // this must setted before call MyLog.delExpiredLogs()
+            MyLog.setLogFileKeepDays(settings.logKeepDays)
+
+
+            //for test unstable features
             dev_EnableUnTestedFeature = try {
                 File(appModel.appDataUnderAllReposDir, FlagFileName.enableUnTestedFeature).exists()
             }catch (_:Exception) {
@@ -152,17 +200,11 @@ class AppModel {
          * 可重可轻，有可能阻塞很久
          */
         suspend fun init_2(appModel: AppModel = singleInstanceHolder,
-                           logKeepInDays:Int=3,
-                           //检查是否设置了开发者flag，若无，检查用户是否开启了debugModeOn，若还是无，则debugMode关闭
-                           logLevel:Char = if (isDebugModeOn()) 'd' else 'w',
-                           logDirPath:String=appModel.logDir.canonicalPath,
                            editCacheDirPath:String=appModel.editCacheDir.canonicalPath
         ) {
             val funName = "init_2"
 
-            //初始化日志
-            //设置 日志保存时间和日志等级，(考虑：以后把这个改成从配置文件读取相关设置项的值，另外，用runBlocking可以实现阻塞调用suspend方法查db，但不推荐)
-            MyLog.init(logKeepInDays, logLevel, logDirPath);
+
             //删除过期日志文件
             MyLog.delExpiredLogs()
 
@@ -195,33 +237,7 @@ class AppModel {
                 MyLog.w(TAG, "#$funName migrate password err, user's password may will be invalid :(")
             }
 
-//            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
             val settingsSaveDir = appModel.getOrCreateSettingsDir()
-            //初始化设置项
-            try {
-                //初始化设置，原始设置文件
-                SettingsUtil.init(settingsSaveDir, useBak = false)
-            }catch (e:Exception) {
-                //用原始设置文件初始化异常
-                try {
-                    //初始化设置，用备用设置文件，若成功则恢复备用到原始设置文件
-                    MyLog.e(TAG, "#$funName init settings err:"+e.stackTraceToString())
-                    MyLog.w(TAG, "#$funName init origin settings err, will try use backup")
-                    SettingsUtil.init(settingsSaveDir, useBak = true)
-                    MyLog.w(TAG, "#$funName init bak settings success, will restore it to origin")
-                    SettingsUtil.copyBakToOrigin()  //init成功，所以这里肯定初始化了原始和备用配置文件的File对象，因此不用传参数
-                    MyLog.w(TAG, "#$funName restore bak settings to origin success")
-                }catch (e2:Exception) {
-                    //用备用文件初始化设置也异常，尝试重建设置项，用户设置会丢失
-                    MyLog.e(TAG, "#$funName init settings with bak err:"+e2.stackTraceToString())
-                    MyLog.w(TAG, "#$funName init bak settings err, will clear origin settings, user settings will lost!")
-                    SettingsUtil.delSettingsFile(settingsSaveDir)
-                    MyLog.w(TAG, "#$funName del settings success, will reInit settings, if failed, app will not work...")
-                    SettingsUtil.init(settingsSaveDir, useBak = false)
-                    MyLog.w(TAG, "#$funName reInit settings success")
-                }
-            }
-
             val settings = SettingsUtil.getSettingsSnapshot()
             //删除过期的快照文件
             try {

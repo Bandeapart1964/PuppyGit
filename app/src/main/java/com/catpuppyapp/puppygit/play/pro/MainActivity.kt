@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,13 +17,13 @@ import androidx.compose.ui.platform.createLifecycleAwareWindowRecomposer
 import androidx.core.view.WindowCompat
 import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.screen.AppScreenNavigator
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.PuppyGitAndroidTheme
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.showToast
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import kotlinx.coroutines.CoroutineExceptionHandler
 
 
@@ -103,9 +104,11 @@ class MainActivity : ComponentActivity() {
         window.decorView.compositionContext = recomposer
         // for catch exception, block end
 
-
+        val settings = SettingsUtil.getSettingsSnapshot()
         setContent {
-            PuppyGitAndroidTheme {
+            PuppyGitAndroidTheme(
+                darkTheme = if(settings.theme == 0) isSystemInDarkTheme() else (settings.theme == 2)
+            ) {
                 MainCompose()
                 //                Greeting(baseContext)
             }

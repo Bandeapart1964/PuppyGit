@@ -923,5 +923,11 @@
     <string name="folder_icon">Folder icon</string>
     <string name="file_icon">File icon</string>
     <string name="show_in_changelist">Show In ChangeList</string>
+    <string name="general">General</string>
+    <string name="theme">Theme</string>
+    <string name="auto">Auto</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="require_restart_app">Require Restart App</string>
 
 </resources>
