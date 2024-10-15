@@ -1,6 +1,6 @@
 **Privacy Policy**
 
-This privacy policy applies to the PuppyGit Pro app (hereby referred to as "Application") for mobile devices that was created by catpuppyapp (hereby referred to as "Service Provider") as a Commercial service. This service is intended for use "AS IS".
+This privacy policy applies to the PuppyGit app (hereby referred to as "Application") for mobile devices that was created by catpuppyapp (hereby referred to as "Service Provider") as a Commercial service. This service is intended for use "AS IS".
 
 **What information does the Application obtain and how is it used?**
 

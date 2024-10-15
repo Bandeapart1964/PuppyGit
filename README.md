@@ -1,8 +1,8 @@
 <img src="screenshots/banner.png"/>
 
 
-# PuppyGit Pro
-PuppyGit Pro is A Git Client for Android, Open Source and No Ads and Free to use
+# PuppyGit
+PuppyGit is A Git Client for Android, Open Source and No Ads and Free to use
 
 
 ## Author
@@ -14,8 +14,8 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 ## Download
 <a href=https://github.com/Bandeapart1964/PuppyGitPro/releases>Github Release</a>
 
-## PuppyGit Pro + Notes App = A Free Cross-platform Sync Way!
-Not only sync codes, You can use PuppyGit Pro sync your notes repository create by note-taking apps like: <a href="https://github.com/obsidianmd/obsidian-releases">Obsidian</a> / <a href="https://github.com/gsantner/markor">Markor</a> or Other!
+## PuppyGit + Notes App = A Free Cross-platform Sync Way!
+Not only sync codes, You can use PuppyGit sync your notes repository create by note-taking apps like: <a href="https://github.com/obsidianmd/obsidian-releases">Obsidian</a> / <a href="https://github.com/gsantner/markor">Markor</a> or Other!
 
 ## Screenshots
 <div>
@@ -54,7 +54,7 @@ Not only sync codes, You can use PuppyGit Pro sync your notes repository create 
 
 
 ## About ssh
-Idk how support ssh on Android, so PuppyGit Pro only support https for now, if you know how support ssh, please make a pr or give me some hints for that
+Idk how support ssh on Android, so PuppyGit only support https for now, if you know how support ssh, please make a pr or give me some hints for that
 
 
 ## Build
