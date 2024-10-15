@@ -63,8 +63,11 @@ object FileOpenHistoryMan {
             curHistory = JsonUtil.j.decodeFromString<FileOpenHistory>(f.readText())
         }catch (e:Exception) {
             // err is ok, just return a new one, when set, will overwrite old file
-            curHistory = FileOpenHistory()
-            saveHistory(curHistory)  // when read from file failed, save a new history to file
+//            curHistory = FileOpenHistory()
+//            saveHistory(curHistory)  // when read from file failed, save a new history to file
+
+            // when read failed, clear invalid content
+            clear()
             MyLog.e(TAG, "#readHistoryFromFile: read err, file content empty or corrupted, will return a new history, err is: ${e.localizedMessage}")
         }
     }
@@ -154,5 +157,10 @@ object FileOpenHistoryMan {
         }catch (e:Exception) {
             MyLog.e(TAG, "#clearOldSettingsHistory err: ${e.stackTraceToString()}")
         }
+    }
+
+    fun clear() {
+        curHistory = FileOpenHistory()
+        saveHistory(curHistory)  // when read from file failed, save a new history to file
     }
 }

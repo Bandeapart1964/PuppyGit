@@ -935,4 +935,25 @@
     <string name="debug">调试</string>
     <string name="verbose">冗余</string>
 
+    <string name="edit_cache">编辑缓存</string>
+    <string name="enable">启用</string>
+    <string name="disable">禁用</string>
+    <string name="file_snapshot">文件快照</string>
+    <string name="before_opening_a_file_create_a_snapshot_first">打开文件前先创建快照</string>
+    <string name="before_saving_a_file_create_a_snapshot_first">保存前先创建快照</string>
+    <string name="content_snapshot">内容快照</string>
+    <string name="diff">差异</string>
+    <string name="group_content_by_line_num">将内容按行号分组</string>
+    <string name="clear">清理</string>
+    <string name="clear_cache">清理缓存</string>
+    <string name="cleaning">正在清理…</string>
+    <string name="clean">Clean</string>
+    <string name="storage_paths">Storage Paths</string>
+    <string name="this_include_editor_opened_files_history_and_their_last_edited_position">This include editor opened files history and their last edited position</string>
+    <string name="snapshots">Snapshots</string>
+    <string name="file_opened_history">File Opened History</string>
+    <string name="the_storage_path_are_the_paths_you_chosen_and_added_when_cloning_repo">Storage Paths are you selected path when cloning a repo.</string>
+    <string name="file_and_content_snapshots">File and Content Snapshots</string>
+
+
 </resources>

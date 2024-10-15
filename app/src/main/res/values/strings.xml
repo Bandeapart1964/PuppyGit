@@ -940,5 +940,27 @@
     <string name="warn">Warn</string>
     <string name="debug">Debug</string>
     <string name="verbose">Verbose</string>
+    <string name="edit_cache">Edit Cache</string>
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+    <string name="file_snapshot">File Snapshot</string>
+    <string name="before_opening_a_file_create_a_snapshot_first">Before opening a file, create a snapshot first.</string>
+    <string name="before_saving_a_file_create_a_snapshot_first">Before saving a file, create a snapshot first.</string>
+    <string name="content_snapshot">Content Snapshot</string>
+    <string name="diff">Diff</string>
+    <string name="group_content_by_line_num">Group Content By Line Num</string>
+    <string name="clear">Clear</string>
+    <string name="clear_cache">Clear Cache</string>
+    <string name="cleaning">Cleaning…</string>
+    <string name="clean">Clean</string>
+    <string name="file_opened_history">File Opened History</string>
+    <string name="storage_paths">Storage Paths</string>
+    <string name="the_storage_path_are_the_paths_you_chosen_and_added_when_cloning_repo">The storage paths are the paths you chosen and added when cloning a Repository.</string>
+    <string name="this_include_editor_opened_files_history_and_their_last_edited_position">This include editor opened files history and their last edited position</string>
+    <string name="snapshots">Snapshots</string>
+    <string name="file_and_content_snapshots">File and Content Snapshots</string>
+    <string name="log">Log</string>
+    <string name="all_snapshots">All Snapshots</string>
+    <string name="cache">Cache</string>
 
 </resources>
