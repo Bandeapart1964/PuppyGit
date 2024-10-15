@@ -67,7 +67,7 @@ object FileOpenHistoryMan {
 //            saveHistory(curHistory)  // when read from file failed, save a new history to file
 
             // when read failed, clear invalid content
-            clear()
+            reset()
             MyLog.e(TAG, "#readHistoryFromFile: read err, file content empty or corrupted, will return a new history, err is: ${e.localizedMessage}")
         }
     }
@@ -159,7 +159,7 @@ object FileOpenHistoryMan {
         }
     }
 
-    fun clear() {
+    fun reset() {
         curHistory = FileOpenHistory()
         saveHistory(curHistory)  // when read from file failed, save a new history to file
     }

@@ -64,7 +64,7 @@ object StoragePathsMan {
 //            save(paths)  // when read failed, override settings file with a empty paths list
 
             // when read failed, clear invalid content
-            clear()
+            reset()
             MyLog.e(TAG, "#readFromFile: read err, file content empty or corrupted, will return a new object, err is: ${e.localizedMessage}")
         }
     }
@@ -126,7 +126,7 @@ object StoragePathsMan {
         save(tmp)
     }
 
-    fun clear() {
+    fun reset() {
         paths = StoragePaths()
         save(paths)
     }

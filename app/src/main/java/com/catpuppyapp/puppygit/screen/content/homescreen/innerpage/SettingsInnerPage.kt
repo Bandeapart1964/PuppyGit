@@ -1,5 +1,4 @@
 import android.app.Activity
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.filled.ToggleOff
 import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -170,7 +168,7 @@ fun SettingsInnerPage(
 
                 if(cleanStoragePath.value) {
                     try {
-                        StoragePathsMan.clear()
+                        StoragePathsMan.reset()
                     }catch (e:Exception) {
                         MyLog.e(TAG, "clean storage paths err: ${e.localizedMessage}")
                     }
@@ -178,7 +176,7 @@ fun SettingsInnerPage(
 
                 if(cleanFileOpenHistory.value) {
                     try {
-                        FileOpenHistoryMan.clear()
+                        FileOpenHistoryMan.reset()
                     }catch (e:Exception) {
                         MyLog.e(TAG, "clean file opened history err: ${e.localizedMessage}")
                     }
