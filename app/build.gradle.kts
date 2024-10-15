@@ -39,6 +39,12 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a","x86_64","x86","armeabi-v7a")
         }
+
+//        resourceConfigurations.plus(listOf("en", "zh-rCN"))
+//        androidResources {
+//            generateLocaleConfig=true
+//        }
+
         externalNativeBuild {
             cmake {
                 //这个 -DANDROID_STL=none 我也不知道什么意思，从其他项目复制来的，可能就是不用 C++ 的STL？不能用new delete之类的关键字？

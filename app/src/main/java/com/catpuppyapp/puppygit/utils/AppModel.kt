@@ -39,6 +39,18 @@ class AppModel {
         private val TAG ="AppModel"
         val singleInstanceHolder:AppModel = AppModel()
 
+
+//        /**
+//         * run before onCreate called, this method do below steps:
+//         * init log;
+//         * init settings;
+//         * update log fields by settings
+//         */
+//        fun init_0(appModel: AppModel = singleInstanceHolder){
+//            val funName = "init_0"
+//
+//        }
+
         /**
          * TODO 实现避免重复执行init的机制，并且如果app崩溃后recreate Activity，确保代码能继续正常工作。
          * TODO 啊，对了，注意appContext这变量肯定是要在recreate Activity后重新赋值的，如果实现避免重入init，需要考虑哪些需要在recreate时重新赋值，哪些不需要
@@ -141,12 +153,19 @@ class AppModel {
             //初始化debugModeOn。注：app运行期间若需修改此变量，应通过DebugModeManager来修改；获取则直接通过AppModel.singleInstanceHolder.debugModeOn来获取即可
             appModel.debugModeOn = appModel.isDebugModeFlagFileExists()  //TODO 在设置页面添加相关选项“开启调试模式”，开启则在上面的目录创建debugModeOn文件，否则删除文件，这样每次启动app就能通过检查文件是否存在来判断是否开了debugMode了。(btw: 因为要在Settings初始化之前就读取到这个变量，所以不能放到Settings里)
 
+
+
+            /*
+                init log
+             */
             //初始化日志
             //设置 日志保存时间和日志等级，(考虑：以后把这个改成从配置文件读取相关设置项的值，另外，用runBlocking可以实现阻塞调用suspend方法查db，但不推荐)
 //            MyLog.init(saveDays=3, logLevel='w', logDirPath=appModel.logDir.canonicalPath);
             MyLog.init(logDirPath=appModel.logDir.canonicalPath)
 
-
+            /*
+               init settings
+             */
 //            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
             val settingsSaveDir = appModel.getOrCreateSettingsDir()
             //初始化设置项
@@ -180,7 +199,10 @@ class AppModel {
                 }
             }
 
-            // update log fields by settings
+
+            /*
+                update log fields by settings
+             */
             val settings = SettingsUtil.getSettingsSnapshot()
             MyLog.setLogLevel(settings.logLevel)
             // this must setted before call MyLog.delExpiredLogs()
@@ -366,6 +388,8 @@ class AppModel {
             }
         }
 
+
+
     }
 
     object DebugModeManager {
@@ -453,6 +477,7 @@ class AppModel {
     private lateinit var debugModeFlagFile:File
     //外部应通过获取此文件来判断是否开启debug模式并通过DebugModeManager的set方法维护此变量和debugModeFlagFile
     //此变量为true，则设置页面的debug模式状态为开启；false则为关闭。注：设置页面的debug模式开启或关闭仅与此变量有关，与debug flag文件是否存在无关。例如：用户打开了debug模式，app创建了debug flag文件，但随后，用户手动删除了flag文件，这时设置页面debug模式仍为开启，直到下次启动app时才会更新为关闭
+    @Deprecated("use `DevFlag.isDebugModeOn` instead")
     var debugModeOn = false  //这个变量改成让用户可配置，所以弄成变量，放到init_1里初始化，然后后面的日志之类的会用到它
         private set  //应通过AppModel.DebugModeManager修改debugModeOn的值，那个方法可持久化debug模式开启或关闭，也可临时设置此变量，一举两得
 
@@ -521,4 +546,6 @@ class AppModel {
     private fun isDebugModeFlagFileExists():Boolean {
         return debugModeFlagFile.exists()
     }
+
+
 }

@@ -1,5 +1,6 @@
 package com.catpuppyapp.puppygit.play.pro
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -21,10 +22,12 @@ import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.PuppyGitAndroidTheme
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.showToast
 import kotlinx.coroutines.CoroutineExceptionHandler
+import java.util.Locale
 
 
 private val TAG = "MainActivity"
@@ -35,7 +38,15 @@ private val TAG = "MainActivity"
 //    is ContextWrapper -> baseContext.findActivity()
 //    else -> null
 //}
-
+////
+//fun Context.setAppLocale(language: String): Context {
+//    val locale = Locale(language)
+//    Locale.setDefault(locale)
+//    val config = resources.configuration
+//    config.setLocale(locale)
+//    config.setLayoutDirection(locale)
+//    return createConfigurationContext(config)
+//}
 
 class MainActivity : ComponentActivity() {
 
@@ -105,6 +116,8 @@ class MainActivity : ComponentActivity() {
         // for catch exception, block end
 
         val settings = SettingsUtil.getSettingsSnapshot()
+
+
         setContent {
             PuppyGitAndroidTheme(
                 darkTheme = if(settings.theme == 0) isSystemInDarkTheme() else (settings.theme == 2)
@@ -115,6 +128,46 @@ class MainActivity : ComponentActivity() {
         }
 
     }
+
+    override fun attachBaseContext(newBase: Context) {
+        val languageCode = LanguageUtil.get(newBase)
+        if(LanguageUtil.isSupportLanguage(languageCode)) {
+            // split language codes, e.g. split "zh-rCN" to "zh" and "CN"
+            val (language, country) = LanguageUtil.splitLanguageCode(languageCode)
+            val locale = if(country.isBlank()) Locale(language) else Locale(language, country)
+            Locale.setDefault(locale)
+            val config = newBase.resources.configuration
+            config.setLocale(locale)
+            config.setLayoutDirection(locale)
+            val context = newBase.createConfigurationContext(config)
+//            super.attachBaseContext(ContextWrapper(context))   // chatgpt say no need ContextWrapper in this usage case
+            super.attachBaseContext(context)
+        }else {  // auto detected or unsupported language
+            super.attachBaseContext(newBase)
+        }
+
+//        recreate()
+    }
+
+//
+//    fun changeLanguage(language: String) {
+//        // auto detect
+//        if(language.isBlank()) {
+//            return
+//        }
+//
+//        // specified language
+//        val locale = Locale(language)
+//        Locale.setDefault(locale)
+//        val resources: Resources = resources
+//        val config: Configuration = resources.configuration
+//        val dm = resources.displayMetrics
+//        config.setLocale(locale)
+//        config.setLayoutDirection(locale)
+//        resources.updateConfiguration(config, dm)
+//    }
+
+
 
 }
 
@@ -194,8 +247,6 @@ fun MainCompose() {
 //    }
 
 }
-
-
 
 //@Preview(showBackground = true)
 //@Composable

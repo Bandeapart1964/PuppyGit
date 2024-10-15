@@ -31,6 +31,7 @@ import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.utils.ComposeHelper
+import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 
 private val stateKeyTag = "SettingsInnerPage"
@@ -54,6 +55,10 @@ fun SettingsInnerPage(
         stringResource(R.string.dark),
     )
     val selectedTheme = rememberSaveable { mutableIntStateOf(settingsState.value.theme) }
+
+    val languageList = LanguageUtil.languageCodeList
+
+    val selectedLanguage = rememberSaveable { mutableStateOf(LanguageUtil.get(appContext)) }
 
     //back handler block start
     val isBackHandlerEnable = rememberSaveable { mutableStateOf(true)}
@@ -87,10 +92,37 @@ fun SettingsInnerPage(
                             it.theme = index
                         }
                     }
-                    )
-
+                )
             }
         }
+
+
+        SettingsContent {
+            Column {
+                Text(stringResource(R.string.language), fontSize = 20.sp)
+                Text(stringResource(R.string.require_restart_app), fontSize = 12.sp, fontWeight = FontWeight.Light)
+            }
+
+            Column(modifier = Modifier.width(120.dp)) {
+                SingleSelectList(
+                    optionsList = languageList,
+                    selectedOptionIndex = null,
+                    selectedOptionValue = selectedLanguage.value,
+                    menuItemOnClick = { index, value ->
+                        selectedLanguage.value = value
+
+                        LanguageUtil.set(appContext, value)
+                    },
+                    menuItemSelected = {index, value ->
+                        value == selectedLanguage.value
+                    },
+                    menuItemFormatter = { index, value ->
+                        LanguageUtil.getLanguageTextByCode(value?:"", appContext)
+                    }
+                )
+            }
+        }
+
     }
 
 
@@ -102,7 +134,7 @@ fun SettingsInnerPage(
 
 @Composable
 fun SettingsTitle(text:String){
-    Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceBright).fillMaxWidth(),
+    Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceBright).fillMaxWidth().padding(start = 5.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -90,4 +90,5 @@ data class AppSettings(
      * 保留几天的日志
      */
     var logKeepDays:Int = 3,
+
 )

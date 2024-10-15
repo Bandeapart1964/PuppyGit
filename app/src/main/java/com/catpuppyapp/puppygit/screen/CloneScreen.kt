@@ -651,11 +651,8 @@ fun CloneScreen(
                     updateRepoName(it)
                 },
                 label = {
-                    Text(stringResource(R.string.local_repo_name))
+                    Text(stringResource(R.string.repo_name))
                 },
-                placeholder = {
-                    Text(stringResource(R.string.local_repo_name_placeholder))
-                }
             )
 
             Row(modifier = Modifier
