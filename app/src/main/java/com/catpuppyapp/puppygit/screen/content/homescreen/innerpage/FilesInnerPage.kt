@@ -1456,7 +1456,7 @@ fun FilesInnerPage(
                                     if (activity == null) {
                                         Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
                                     } else {
-                                        activity!!.getStoragePermission()
+                                        activity.getStoragePermission()
                                     }
                                 },
                             )

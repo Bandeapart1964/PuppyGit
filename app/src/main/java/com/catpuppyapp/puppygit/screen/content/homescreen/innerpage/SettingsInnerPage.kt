@@ -1,3 +1,4 @@
+import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ScrollState
@@ -32,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.MyCheckBox
+import com.catpuppyapp.puppygit.compose.PaddingRow
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
 import com.catpuppyapp.puppygit.play.pro.R
@@ -51,6 +54,7 @@ import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
+import com.catpuppyapp.puppygit.utils.getStoragePermission
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.storagepaths.StoragePathsMan
 
@@ -61,11 +65,13 @@ private val TAG = "SettingsInnerPage"
 fun SettingsInnerPage(
     contentPadding: PaddingValues,
     needRefreshPage:MutableState<String>,
-    appContext:Context,
+//    appContext:Context,
     openDrawer:()->Unit,
     exitApp:()->Unit,
     listState:ScrollState
 ){
+
+    val appContext = LocalContext.current
 
     val settingsState = mutableCustomStateOf(stateKeyTag, "settingsState", SettingsUtil.getSettingsSnapshot())
 
@@ -402,6 +408,24 @@ fun SettingsInnerPage(
             Text(stringResource(R.string.clean), fontSize = itemFontSize)
 
         }
+
+        SettingsTitle(stringResource(R.string.permissions))
+        SettingsContent(onClick = {
+            // grant permission for read/write external storage
+            val activity = appContext as? Activity
+            if (activity == null) {
+                Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
+            }else {
+                activity.getStoragePermission()
+            }
+        }) {
+            Column {
+                Text(stringResource(R.string.manage_storage), fontSize = itemFontSize)
+                Text(stringResource(R.string.if_you_want_to_clone_repo_into_external_storage_this_permission_is_required), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
+            }
+        }
+
+        PaddingRow()
     }
 
 
@@ -431,7 +455,7 @@ fun SettingsContent(onClick:(()->Unit)?=null, content:@Composable ()->Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 60.dp)
-            .then(if(onClick!=null) Modifier.clickable { onClick() } else Modifier)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(10.dp)
         ,
         verticalAlignment = Alignment.CenterVertically,

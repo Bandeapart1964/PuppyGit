@@ -879,7 +879,7 @@
     <string name="restoring">Restoring…</string>
     <string name="go_parent">Go Parent</string>
     <string name="will_import_selected_submodules_to_repos">Will import selected submodules to Repos, then you can manage them just like manage normal Repos.</string>
-    <string name="submodule_invalid_url_err">err: invalid url, if you deleted submodule, maybe need go to ChangeList to commit changes</string>
+    <string name="submodule_invalid_url_err">错误：无效url，如果你删除了子模块，或许需要去修改列表页面提交修改</string>
     <string name="ignore">忽略</string>
     <string name="will_ignore_selected_files_are_you_sure">将会忽略选中文件，你确定吗？</string>
     <string name="edit_ignore_file">编辑忽略文件</string>
@@ -947,13 +947,19 @@
     <string name="clear">清理</string>
     <string name="clear_cache">清理缓存</string>
     <string name="cleaning">正在清理…</string>
-    <string name="clean">Clean</string>
-    <string name="storage_paths">Storage Paths</string>
-    <string name="this_include_editor_opened_files_history_and_their_last_edited_position">This include editor opened files history and their last edited position</string>
-    <string name="snapshots">Snapshots</string>
-    <string name="file_opened_history">File Opened History</string>
-    <string name="the_storage_path_are_the_paths_you_chosen_and_added_when_cloning_repo">Storage Paths are you selected path when cloning a repo.</string>
-    <string name="file_and_content_snapshots">File and Content Snapshots</string>
+    <string name="clean">清理</string>
+    <string name="storage_paths">存储路径</string>
+    <string name="this_include_editor_opened_files_history_and_their_last_edited_position">这包含编辑器打开过的文件历史和他们的最后编辑位置</string>
+    <string name="snapshots">快照</string>
+    <string name="file_opened_history">文件打开历史</string>
+    <string name="the_storage_path_are_the_paths_you_chosen_and_added_when_cloning_repo">存储路径是你在克隆仓库时选择和添加的路径</string>
+    <string name="file_and_content_snapshots">文件和内容快照</string>
+    <string name="manage_storage">管理存储</string>
+    <string name="log">日志</string>
+    <string name="all_snapshots">所有快照</string>
+    <string name="cache">缓存</string>
+    <string name="permissions">权限</string>
+    <string name="if_you_want_to_clone_repo_into_external_storage_this_permission_is_required">如果你想克隆仓库到外部存储，这个权限是必须的。</string>
 
 
 </resources>

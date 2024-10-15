@@ -962,5 +962,8 @@
     <string name="log">Log</string>
     <string name="all_snapshots">All Snapshots</string>
     <string name="cache">Cache</string>
+    <string name="permissions">Permissions</string>
+    <string name="manage_storage">Manage Storage</string>
+    <string name="if_you_want_to_clone_repo_into_external_storage_this_permission_is_required">If you want to clone repo into external storage, this permission is required.</string>
 
 </resources>

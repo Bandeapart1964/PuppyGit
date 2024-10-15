@@ -1007,7 +1007,7 @@ fun HomeScreen(
                 SettingsInnerPage(
                     contentPadding = contentPadding,
                     needRefreshPage = needRefreshSettingsPage,
-                    appContext = appContext,
+//                    appContext = appContext,
                     openDrawer = openDrawer,
                     exitApp = exitApp,
                     listState = settingsListState
