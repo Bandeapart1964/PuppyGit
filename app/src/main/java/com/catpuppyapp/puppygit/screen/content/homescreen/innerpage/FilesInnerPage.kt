@@ -1454,7 +1454,7 @@ fun FilesInnerPage(
                                 modifier = MyStyleKt.ClickableText.modifier.clickable {
                                     // grant permission for read/write external storage
                                     if (activity == null) {
-                                        Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_settings_allow_manage_storage))
+                                        Msg.requireShowLongDuration(appContext.getString(R.string.please_go_to_system_settings_allow_manage_storage))
                                     } else {
                                         activity.getStoragePermission()
                                     }

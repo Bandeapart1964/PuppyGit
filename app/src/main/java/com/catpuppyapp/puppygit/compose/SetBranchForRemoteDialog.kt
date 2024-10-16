@@ -25,16 +25,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.state.StateUtil
+import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.github.git24j.core.Repository
 
 private val TAG = "SetBranchForRemoteDialog"
@@ -136,7 +136,7 @@ fun SetBranchForRemoteDialog(
                             branchCsvStr.value = it
                         },
                         label = {
-                            Text(stringResource(R.string.branches_split_by)+" '${strListSeparator}'")
+                            Text(replaceStringResList(stringResource(R.string.branches_split_by_sign), listOf(strListSeparator)))
                         },
                         placeholder = {
                             Text(stringResource(R.string.branches_placeholder))

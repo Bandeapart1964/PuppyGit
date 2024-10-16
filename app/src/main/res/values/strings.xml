@@ -139,7 +139,6 @@
     <string name="unknown_err_plz_try_another_name">Unknown Err: plz try another name</string>
     <string name="open_file_failed">Err: Open file failed!</string>
     <string name="error_file_name_has_illegal_chars">Err: file name has illegal chars!</string>
-    <string name="open_with">Open with…</string>
     <string name="open">Open</string>
     <string name="doesnt_support_view_binary_file">Doesn\'t support view binary file</string>
     <string name="switch_repo">Switch Repository</string>
@@ -215,8 +214,8 @@
     <string name="ssh">ssh</string>
     <string name="edit_credential">Edit Credential</string>
     <string name="abort_merge_failed">Abort Merge failed!</string>
-    <string name="aborting_merge">Aborting Merge</string>
-    <string name="continue_merging">Continue Merging</string>
+    <string name="aborting_merge">Aborting Merge…</string>
+    <string name="continue_merging">Continue Merging…</string>
     <string name="abort_merge">Abort Merge</string>
     <string name="abort_merge_notice_text">Will try restore repo files to before merge state, are you sure?</string>
     <string name="repo">Repo</string>
@@ -224,7 +223,6 @@
     <string name="link">Link</string>
     <string name="linked_remotes">Linked Remotes</string>
     <string name="unlinked_remotes">Unlinked Remotes</string>
-    <string name="linked_with">Linked with</string>
     <string name="none">None</string>
     <string name="create_link">Create Link</string>
     <string name="unlink_all_ask_text">Will unlink all remotes with current credential, are you sure?</string>
@@ -303,7 +301,6 @@
     <string name="del_upstream_branch_err_operation_abort">Delete upstream branch err! operation abort!</string>
     <string name="del_remote_branch_err_operation_abort">Delete remote branch err! operation abort!</string>
     <string name="query_remote_error">Query remote error!</string>
-    <string name="push_del_upstream_branch_to_remote_failed">Push delete upstream to remote failed!</string>
     <string name="del_upstream_success">Delete upstream success</string>
     <string name="del_local_branch_success">Delete local branch success!</string>
     <string name="del_upstream_failed_upstream_is_invalid">Delete upstream failed! upstream is invalid!</string>
@@ -347,9 +344,7 @@
     <string name="url">Url</string>
     <string name="set_url">Set Url</string>
     <string name="unlink_credential">Unlink Credential</string>
-    <string name="unlink_credential_confirm_text">Will unlink credential with remote, are you sure?\n(ps:If you want to link them again, plz go to \"Credential Manager\" page)</string>
     <string name="fetch_all_success">Fetch all success</string>
-    <string name="set_url_for">Set url for</string>
     <string name="linked_credential">Linked credential</string>
     <string name="open_last">Open Last</string>
     <string name="are_you_sure_to_delete">Are you sure to delete</string>
@@ -397,7 +392,7 @@
     <string name="click_here_to_check_update">Click HERE to Check Update</string>
     <string name="fetch_success">Fetch success</string>
     <string name="hard_reset">Hard Reset</string>
-    <string name="warn_hard_reset_ask">WARN: Hard Reset will make HEAD point to \'Target\', and make worktree content same as \'Target\', means [it will removes all uncommitted changes], and if repo is not in detached HEAD mode, your current branch will point to \'Target\' too, are you sure you want to hard reset?</string>
+<!--    <string name="warn_hard_reset_ask">WARN: Hard Reset will make HEAD point to \'Target\', and make worktree content same as \'Target\', means [it will removes all uncommitted changes], and if repo is not in detached HEAD mode, your current branch will point to \'Target\' too, are you sure you want to hard reset?</string>-->
     <string name="i_am_sure_i_want_hard_reset">I am sure I want to hard reset</string>
     <string name="reset_success">Reset Success</string>
     <string name="target">Target</string>
@@ -409,7 +404,7 @@
     <string name="unshallow_success_cant_back">note: If unshallow success, You can\'t back shallowed again!</string>
     <string name="will_do_unshallow_for_repo">Will do unshallow for repo</string>
     <string name="err_file_doesnt_exist_anymore">Err: File doesn\'t exist anymore!</string>
-    <string name="unstaging">Unstaging</string>
+    <string name="unstaging">Unstaging…</string>
     <string name="will_unstage_are_u_sure">Will Unstage selected items, are you sure?</string>
     <string name="commit_all_index_items_then_sync">Commit all Index items then sync</string>
     <string name="commit_all_index_items">Commit all Index items</string>
@@ -498,7 +493,8 @@
     <string name="err_resolve_remote_failed">Err:resolve remote failed</string>
     <string name="all">All</string>
     <string name="specify">Specify</string>
-    <string name="branches_split_by">Branches split by</string>
+<!--    e.g. branch split by ','-->
+    <string name="branches_split_by_sign">Branches split by \'ph_a3f241dc_1\'</string>
     <string name="branches_placeholder">branch1,branch2,etc</string>
     <string name="err_branch_list_is_empty">err:branch list is empty!</string>
     <string name="err_branches_str_is_invalid">err:branches str is invalid!</string>
@@ -588,7 +584,7 @@
     <string name="new_tag">New Tag</string>
     <string name="err_must_set_username_and_email_before_create_annotate_tag">Err: You must set \'username\' and \'email\' for Repo before create \'Annotate Tag\'</string>
     <string name="create_tag">Create Tag</string>
-    <string name="deleting">Deleting</string>
+    <string name="deleting">Deleting…</string>
     <string name="filter">Filter</string>
     <string name="tag">Tag</string>
     <string name="better_compare">Better Compare</string>
@@ -612,7 +608,7 @@
     <string name="note_as_default_remote_will_not_override_local_tags">note: as default, Remote [will not override] Local same name Tags, except you checked \'force\'</string>
     <string name="note_as_default_local_will_override_remote_tags">note: as default, for lightweight Tags, Local [will override] Remote if fastforwardable</string>
     <string name="load_to_end">Load To End</string>
-    <string name="creating">Creating</string>
+    <string name="creating">Creating…</string>
     <string name="new_oid">New Oid</string>
     <string name="old_oid">Old Oid</string>
     <string name="stash_id">Stash ID</string>
@@ -666,7 +662,7 @@
     <string name="rebase">Rebase</string>
     <string name="will_rebase">Will Rebase</string>
     <string name="onto">onto</string>
-    <string name="rebasing">Rebasing</string>
+    <string name="rebasing">Rebasing…</string>
     <string name="rebase_success">Rebase Success</string>
     <string name="merge_continue">Merge Continue</string>
     <string name="merge_abort">Merge Abort</string>
@@ -813,7 +809,7 @@
     <string name="grant_permission">Grant Permission</string>
     <string name="please_grant_permission_before_you_add_a_storage_path">Please Grant Permission before you add a Storage Path</string>
     <string name="cross_icon_for_choose_folder">Cross icon for choose folder</string>
-    <string name="please_go_to_settings_allow_manage_storage">Please go to Settings allow manage storage</string>
+    <string name="please_go_to_system_settings_allow_manage_storage">Please go to System Settings allow Manage Storage</string>
     <string name="storage">Storage</string>
     <string name="cant_read_path">Can\'t read path</string>
     <string name="import_repo">Import Repo</string>
@@ -827,7 +823,7 @@
     <string name="rename_repo">Rename Repo</string>
     <string name="new_name">New Name</string>
     <string name="name_has_illegal_chars">name has illegal chars</string>
-    <string name="renaming">Renaming</string>
+    <string name="renaming">Renaming…</string>
     <string name="import_as_repo">Import As Repo</string>
     <string name="no_dir_selected">No dir selected</string>
     <string name="paths_are_repo_parent_dir">Paths are repo parent dir</string>
