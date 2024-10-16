@@ -222,6 +222,9 @@ class Cons {
         //在这个时间内按两次返回就会退出app，单位秒
         const val pressBackDoubleTimesInThisSecWillExit = 3;
 
+        // represent fetch all branches
+        const val gitFetchAllBranchSign = "*"
+
         //git status
         const val gitStatusModified = "Modified"
         const val gitStatusNew = "New"  //untracked

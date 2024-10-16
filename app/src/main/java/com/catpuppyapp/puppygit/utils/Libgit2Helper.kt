@@ -1619,7 +1619,7 @@ class Libgit2Helper {
         //不传参数，默认情况下返回的是remote origin匹配所有分支的refspec，形如：+refs/heads/*:refs/remotes/origin/*
 //传参数则会把remote和branch替换为传来的参数，若想获得某个branch的singlebranch refspec，把期望的branch传进来即可，
 // 以默认remote origin举例，返回值形如：+refs/heads/yourbranch:refs/remotes/origin/yourbranch
-        fun getGitRemoteFetchRefSpec(remote:String=Cons.gitDefaultRemoteOrigin, branch:String=Cons.gitGlobMatchAllSign):String {
+        fun getGitRemoteFetchRefSpec(remote:String=Cons.gitDefaultRemoteOrigin, branch:String=Cons.gitFetchAllBranchSign):String {
             val replacedRemoteStr = Cons.gitFetchRefSpecRemoteAndBranchReplacer.replace(Cons.gitRemotePlaceholder, remote)
             return replacedRemoteStr.replace(Cons.gitBranchPlaceholder, branch)
         }
@@ -3474,7 +3474,7 @@ class Libgit2Helper {
                     val start = prefixIndex + prefixStr.length
                     branchNameList.add(it.substring(start, end))
                 }
-                val isAllRealValue = branchNameList.size == 1 && branchNameList[0] == "*"
+                val isAllRealValue = branchNameList.size == 1 && branchNameList[0] == Cons.gitFetchAllBranchSign
                 return Pair(isAllRealValue, branchNameList)
             }catch (e:Exception) {
                 MyLog.e(TAG, "#getRemoteFetchBranchList() error: "+e.stackTraceToString())
