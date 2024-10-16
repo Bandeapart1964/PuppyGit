@@ -1,6 +1,7 @@
 package com.catpuppyapp.puppygit.ui.theme
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -14,9 +15,28 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.catpuppyapp.puppygit.play.pro.R
 
 object Theme {
     var inDarkTheme = false
+    val themeList = listOf(
+        0,  // auto
+        1,  // light
+        2,  // dark
+    )
+
+    fun getThemeTextByCode(themeCode:Int?, appContext: Context):String {
+        if(themeCode==0) {
+            return appContext.getString(R.string.auto)
+        }else if(themeCode == 1) {
+            return appContext.getString(R.string.light)
+        }else if(themeCode == 2) {
+            return appContext.getString(R.string.dark)
+        }else {
+            return appContext.getString(R.string.unknown)
+        }
+
+    }
 }
 
 private val DarkColorScheme = darkColorScheme(

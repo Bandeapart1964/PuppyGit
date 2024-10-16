@@ -73,11 +73,7 @@ fun SettingsInnerPage(
 
     val settingsState = mutableCustomStateOf(stateKeyTag, "settingsState", SettingsUtil.getSettingsSnapshot())
 
-    val themeList = listOf(
-        stringResource(R.string.auto),
-        stringResource(R.string.light),
-        stringResource(R.string.dark),
-    )
+    val themeList = Theme.themeList
     val selectedTheme = rememberSaveable { mutableIntStateOf(settingsState.value.theme) }
 
     val languageList = LanguageUtil.languageCodeList
@@ -198,7 +194,7 @@ fun SettingsInnerPage(
     val itemFontSize = 20.sp
     val itemDescFontSize = 12.sp
     val switcherIconSize = 60.dp
-
+    val selectorWidth = 120.dp
 
     Column(
         modifier = Modifier
@@ -214,16 +210,21 @@ fun SettingsInnerPage(
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
 
-            Column(modifier = Modifier.width(100.dp)) {
-                SingleSelectList(optionsList = themeList, selectedOptionIndex = selectedTheme,
-                    menuItemOnClick = { index, value ->
-                        selectedTheme.intValue = index
+            Column(modifier = Modifier.width(selectorWidth)) {
+                SingleSelectList(
+                    optionsList = themeList,
+                    selectedOptionIndex = null,
+                    selectedOptionValue = selectedTheme.intValue,
+                    menuItemSelected = {_, value -> value == selectedTheme.intValue },
+                    menuItemFormatter = {_, value -> Theme.getThemeTextByCode(value, appContext)},
+                    menuItemOnClick = { _, value ->
+                        selectedTheme.intValue = value
 
-                        if(index != settingsState.value.theme) {
-                            settingsState.value.theme = index
+                        if(value != settingsState.value.theme) {
+                            settingsState.value.theme = value
 
                             SettingsUtil.update {
-                                it.theme = index
+                                it.theme = value
                             }
                         }
                     }
@@ -238,7 +239,7 @@ fun SettingsInnerPage(
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
 
-            Column(modifier = Modifier.width(120.dp)) {
+            Column(modifier = Modifier.width(selectorWidth)) {
                 SingleSelectList(
                     optionsList = languageList,
                     selectedOptionIndex = null,
@@ -265,7 +266,7 @@ fun SettingsInnerPage(
 //                Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
 
-            Column(modifier = Modifier.width(120.dp)) {
+            Column(modifier = Modifier.width(selectorWidth)) {
                 SingleSelectList(
                     optionsList = logLevelList,
                     selectedOptionIndex = null,
