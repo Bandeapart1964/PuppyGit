@@ -1,4 +1,5 @@
 1.0.5.5v31 - 20241016:
+- rename app name to PuppyGit, no more Pro suffix ever
 - support chinese
 - add Settings page
 
