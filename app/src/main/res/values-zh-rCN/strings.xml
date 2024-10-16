@@ -15,7 +15,7 @@
     <string name="credential_manager">凭据管理器</string>
     <string name="ok">OK</string>
     <string name="cancel">取消</string>
-    <string name="git_url">Git Url</string>
+    <string name="git_url">地址</string>
     <string name="git_url_placeholder">例如：https://example/example.git</string>
     <string name="branch_optional">分支 (可选)</string>
     <string name="branch_name">分支名</string>
@@ -340,8 +340,8 @@
     <string name="repo_path_invalid">仓库路径无效!</string>
     <string name="err_repo_is_invalid">错误:仓库无效!</string>
     <string name="name">名称</string>
-    <string name="url">Url</string>
-    <string name="set_url">设置Url</string>
+    <string name="url">地址</string>
+    <string name="set_url">设置地址</string>
     <string name="unlink_credential">解除关联凭据</string>
     <string name="fetch_all_success">下载全部成功</string>
     <string name="linked_credential">已链接凭据</string>
@@ -544,9 +544,9 @@
     <string name="file_doesnt_exist">文件不存在</string>
     <string name="show_last_in_files">在文件页面显示上一文件</string>
     <string name="err_name_is_empty">错误: 名称为空!</string>
-    <string name="err_url_is_empty">错误: url为空</string>
-    <string name="url_not_changed">Url未改变</string>
-    <string name="err_invalid_url">错误: 无效url</string>
+    <string name="err_url_is_empty">错误: 地址为空</string>
+    <string name="url_not_changed">地址未改变</string>
+    <string name="err_invalid_url">错误: 无效地址</string>
     <string name="tags">标签</string>
     <string name="tags_pro">标签(专业版)</string>
     <string name="force">强制</string>
@@ -563,15 +563,15 @@
     <string name="warn_will_override_if_tag_name_already_exists">警告: 如果标签名已存在将被覆盖</string>
     <string name="fetch_linked">已链接下载</string>
     <string name="push_linked">已链接推送</string>
-    <string name="push_url">推送Url</string>
-    <string name="set_push_url">设置推送Url</string>
+    <string name="push_url">推送地址</string>
+    <string name="set_push_url">设置推送地址</string>
     <string name="push_credential">推送凭据</string>
     <string name="fetch_credential">下载凭据</string>
 
     <!--    the "Url" should same with value of R.string.url  -->
-    <string name="use_url">使用 \"Url\"</string>
+    <string name="use_url">使用 \"地址\"</string>
 
-    <string name="leave_it_empty_will_use_url">留空将使用 \"Url\"</string>
+    <string name="leave_it_empty_will_use_url">留空将使用 \"地址\"</string>
     <string name="link_credential">链接凭据</string>
     <string name="link_mode">链接模式</string>
     <string name="merge_continue_err">继续合并出错</string>
@@ -874,7 +874,7 @@
     <string name="restoring">正在恢复…</string>
     <string name="go_parent">转到父仓库</string>
     <string name="will_import_selected_submodules_to_repos">将导入选中子模块到仓库列表，然后你可以像管理普通仓库一样管理子模块。</string>
-    <string name="submodule_invalid_url_err">错误：无效url，如果你删除了子模块，或许需要去修改列表页面提交修改</string>
+    <string name="submodule_invalid_url_err">错误：无效地址，如果你删除了子模块，或许需要去修改列表页面提交修改</string>
     <string name="ignore">忽略</string>
     <string name="will_ignore_selected_files_are_you_sure">将会忽略选中文件，你确定吗？</string>
     <string name="edit_ignore_file">编辑忽略文件</string>
