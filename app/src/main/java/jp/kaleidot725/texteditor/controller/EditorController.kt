@@ -510,8 +510,8 @@ class EditorController(
             }
         }
 
-        if(requireSelectLine) {  //多选模式，添加选中行列表或从列表移除
-            if(isMultipleSelectionMode) {
+        if(isMultipleSelectionMode) {  //多选模式，添加选中行列表或从列表移除
+            if(requireSelectLine) {
                 if(forceAdd) {  //强制添加
                     val isSelected = _fields[targetIndex].isSelected
                     //未添加则添加，否则什么都不做
@@ -534,22 +534,22 @@ class EditorController(
                     if (isSelected) _selectedIndices.add(targetIndex) else _selectedIndices.remove(targetIndex)
                 }
 
-            }else {  //非多选模式，定位光标到对应行，选中行，（启动多选模式？有这步吗？）
+            }else{ //no touch selected lines, just go to target line
                 val copyTarget = target.copy(
-                    isSelected = true,
                     value = target.value.copy(selection = selection)
                 )
-                this.clearSelectedIndicesInternal()
+
                 _fields[targetIndex] = copyTarget
-                _selectedIndices.add(targetIndex)
             }
 
-        }else { //no touch selected lines, just go to target line
+        }else{  //非多选模式，定位光标到对应行，并选中行
             val copyTarget = target.copy(
-                value = target.value.copy(selection = selection)
+                isSelected = true,  // selected target line
+                value = target.value.copy(selection = selection), // copy for new selection range
             )
-
-            _fields[targetIndex] = copyTarget
+            this.clearSelectedIndicesInternal()  // clear selected lines
+            _fields[targetIndex] = copyTarget  // update line
+            _selectedIndices.add(targetIndex)  // add line to selected list
         }
     }
 
