@@ -344,7 +344,7 @@
     <string name="set_url">设置地址</string>
     <string name="unlink_credential">解除关联凭据</string>
     <string name="fetch_all_success">下载全部成功</string>
-    <string name="linked_credential">已链接凭据</string>
+    <string name="linked_credential">已关联凭据</string>
     <string name="open_last">打开上个文件</string>
     <string name="are_you_sure_to_delete">确定删除吗？</string>
     <string name="remove_from_git">从git移除</string>
@@ -377,12 +377,12 @@
     <string name="do_you_want_save_before_close_file">关闭文件前你想先保存吗？</string>
     <string name="reopen">重新打开</string>
     <string name="no_items_for_shown">无条目可显示</string>
-    <string name="index_clean">索引区空</string>
+    <string name="index_clean">索引区无修改</string>
     <string name="work_tree_clean">工作目录无修改</string>
-    <string name="index_dirty">索引区存在条目</string>
+    <string name="index_dirty">索引区有未提交的修改</string>
     <string name="local_ahead_upstream">本地领先上游</string>
     <string name="local_behind_upstream">本地落后上游</string>
-    <string name="already_up_to_date_with_upstream">和上游一致</string>
+    <string name="already_up_to_date_with_upstream">已是最新</string>
     <string name="welcome">欢迎</string>
     <string name="tips">提示</string>
     <string name="try_long_press_icon_get_hints">如果你不知道某些图标的含义，长按可获得提示</string>
@@ -561,8 +561,8 @@
     <string name="plz_set_git_username_and_email_first">请先设置git用户名和邮箱</string>
     <string name="invalid_commit_hash">无效提交哈希</string>
     <string name="warn_will_override_if_tag_name_already_exists">警告: 如果标签名已存在将被覆盖</string>
-    <string name="fetch_linked">已链接下载</string>
-    <string name="push_linked">已链接推送</string>
+    <string name="fetch_linked">已关联下载</string>
+    <string name="push_linked">已关联推送</string>
     <string name="push_url">推送地址</string>
     <string name="set_push_url">设置推送地址</string>
     <string name="push_credential">推送凭据</string>
@@ -572,8 +572,8 @@
     <string name="use_url">使用 \"地址\"</string>
 
     <string name="leave_it_empty_will_use_url">留空将使用 \"地址\"</string>
-    <string name="link_credential">链接凭据</string>
-    <string name="link_mode">链接模式</string>
+    <string name="link_credential">关联凭据</string>
+    <string name="link_mode">关联模式</string>
     <string name="merge_continue_err">继续合并出错</string>
     <string name="repo_not_in_merging">仓库未处于合并状态</string>
     <string name="plz_resolve_conflicts_first">请先解决冲突</string>
