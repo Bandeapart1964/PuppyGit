@@ -70,6 +70,7 @@ import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
+import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
 import com.catpuppyapp.puppygit.compose.RequireCommitMsgDialog
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
@@ -2776,15 +2777,18 @@ fun ChangeListInnerPage(
                     .fillMaxSize()
                     .padding(contentPadding)
                     .padding(bottom = 80.dp)
+                    .padding(10.dp)
                     .verticalScroll(rememberScrollState())
 
                 ,
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
 
-                ) {
-                    Text(errMsg.value)
+            ) {
+                MySelectionContainer {
+                    Text(errMsg.value, color = MyStyleKt.TextColor.error)
                 }
+            }
         }else {  //有仓库，但条目列表为空，可能没修改的东西，这时显示仓库是否clean是否和远程同步等信息
             if(itemList.value.isEmpty()) {  //列表为空
                 Column(
@@ -3309,6 +3313,7 @@ private fun changeListInit(
 //    headCommitHash:MutableState<String>
 //    scope:CoroutineScope
 ){
+    val funName = "changeListInit"
     doJobThenOffLoading (loadingOn, loadingOff, appContext.getString(R.string.loading)) launch@{
         try {
             val tmpCommit1 = commit1OidStr
@@ -3331,7 +3336,7 @@ private fun changeListInit(
                 val repoDb = dbContainer.repoRepository
                 val repoFromDb = repoDb.getById(repoId)
                 if(repoFromDb==null) {
-                    MyLog.w(TAG, "#getInit, tree to tree diff, query repo err!")
+                    MyLog.w(TAG, "#$funName, tree to tree diff, query repo err!")
                     changeListPageNoRepo.value=true
                     setErrMsg(appContext.getString(R.string.err_when_querying_repo_info))
                     return@launch
@@ -3385,7 +3390,7 @@ private fun changeListInit(
                         val cl = if(reverse) {  //commit1 是local，解析commit2为tree2，把tree2作为参数1然后传reverse为true，这时就可比较 workTreeToTree 了
                             val tree2 = Libgit2Helper.resolveTree(repo, commit2OidStr)
                             if(tree2==null) {
-                                MyLog.w(TAG, "#getInit, tree to tree diff, query tree2 err!")
+                                MyLog.w(TAG, "#$funName, tree to tree diff, query tree2 err!")
                                 setErrMsg(appContext.getString(R.string.error_invalid_commit_hash)+", 3")
                                 return@launch
                             }
@@ -3393,7 +3398,7 @@ private fun changeListInit(
                         }else {  //commit2 是local，解析commit1为tree1，tree2传null，反转传false
                             val tree1 = Libgit2Helper.resolveTree(repo, commit1OidStr)
                             if(tree1==null) {
-                                MyLog.w(TAG, "#getInit, tree to tree diff, query tree1 err!")
+                                MyLog.w(TAG, "#$funName, tree to tree diff, query tree1 err!")
                                 setErrMsg(appContext.getString(R.string.error_invalid_commit_hash)+", 4")
                                 return@launch
                             }
@@ -3407,13 +3412,13 @@ private fun changeListInit(
                     }else {  // tree to tree，两个tree都不是local(worktree)
                         val tree1 = Libgit2Helper.resolveTree(repo, commit1OidStr)
                         if(tree1==null) {
-                            MyLog.w(TAG, "#getInit, tree to tree diff, query tree1 err!")
+                            MyLog.w(TAG, "#$funName, tree to tree diff, query tree1 err!")
                             setErrMsg(appContext.getString(R.string.error_invalid_commit_hash)+", 1")
                             return@launch
                         }
                         val tree2 = Libgit2Helper.resolveTree(repo, commit2OidStr)
                         if(tree2==null) {
-                            MyLog.w(TAG, "#getInit, tree to tree diff, query tree2 err!")
+                            MyLog.w(TAG, "#$funName, tree to tree diff, query tree2 err!")
                             setErrMsg(appContext.getString(R.string.error_invalid_commit_hash)+", 2")
                             return@launch
                         }
@@ -3568,7 +3573,7 @@ private fun changeListInit(
                     //这个列表可以考虑传给index页面，不过要在index页面设置成如果没传参就查询，有参则用参的形式，但即使有参，也可通过index的刷新按钮刷新页面状态
                     val (indexIsEmpty, indexList) = Libgit2Helper.checkIndexIsEmptyAndGetIndexList(gitRepository, curRepoFromParentPage.value.id, onlyCheckEmpty = false)
                     changeListPageHasIndexItem.value = !indexIsEmpty
-                    MyLog.d(TAG,"#getInit(): changeListPageHasIndexItem = "+changeListPageHasIndexItem.value)
+                    MyLog.d(TAG,"#$funName(): changeListPageHasIndexItem = "+changeListPageHasIndexItem.value)
                     //只有在index页面，才需要更新条目列表，否则这个列表由worktree页面来更新
                     if(fromTo == Cons.gitDiffFromHeadToIndex) {
                         itemList.value.clear()
@@ -3633,13 +3638,13 @@ private fun changeListInit(
 
 
         }catch (e:Exception) {
-            //Toast在coroutine里显示不了，会报错
-//            showToast(AppModel.singleInstanceHolder.appContext, openRepoFailedErrStrRes)
 //            setErrMsgForTriggerNotify(hasErr, errMsg, e.localizedMessage?:"")
-//            MyLog.e(TAG, "Init Err:"+e.stackTraceToString())
+
+            setErrMsg(e.localizedMessage ?: "err")
+
             showErrAndSaveLog(TAG,
-                "#getInit() err, params are:fromTo=${fromTo}, commit1OidStr=${commit1OidStr}, commit2OidStr=${commit2OidStr},\nerr is:"+e.stackTraceToString(),
-                "changelist init err:"+e.localizedMessage,
+                "#$funName() err, params are:fromTo=${fromTo}, commit1OidStr=${commit1OidStr}, commit2OidStr=${commit2OidStr},\nerr is:"+e.stackTraceToString(),
+                "ChangeList init err:"+e.localizedMessage,
                 requireShowToast,
                 curRepoFromParentPage.value.id
             )

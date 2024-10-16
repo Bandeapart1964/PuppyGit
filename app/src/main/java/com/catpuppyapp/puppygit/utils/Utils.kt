@@ -585,13 +585,14 @@ suspend fun createAndInsertError(repoId:String, errMsg: String) {
 
 //做3件事：1记录错误信息到日志文件 2显示错误信息 3保存错误信息到数据库
 suspend fun showErrAndSaveLog(logTag:String, logMsg:String, showMsg:String, showMsgMethod:(String)->Unit, repoId:String, errMsgForErrDb:String = showMsg) {
-    //记录到日志
-    MyLog.e(logTag,logMsg)
     //显示提示
     showMsgMethod(showMsg)
+
     //保存数据库(给用户看的，消息尽量简单些)
     createAndInsertError(repoId, errMsgForErrDb)
 
+    //记录到日志
+    MyLog.e(logTag, logMsg)
 }
 
 fun getHumanReadableSizeStr(size:Long):String {
