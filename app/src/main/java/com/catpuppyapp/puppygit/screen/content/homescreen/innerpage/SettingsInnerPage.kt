@@ -197,6 +197,9 @@ fun SettingsInnerPage(
     val switcherIconSize = 60.dp
     val selectorWidth = 120.dp
 
+    val itemLeftWidthForSwitcher = .8f
+    val itemLeftWidthForSelector = .6f
+
     Column(
         modifier = Modifier
             .padding(contentPadding)
@@ -206,7 +209,7 @@ fun SettingsInnerPage(
         SettingsTitle(stringResource(R.string.general))
 
         SettingsContent {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSelector)) {
                 Text(stringResource(R.string.theme), fontSize = itemFontSize)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
@@ -231,7 +234,7 @@ fun SettingsInnerPage(
 
 
         SettingsContent {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSelector)) {
                 Text(stringResource(R.string.language), fontSize = itemFontSize)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
@@ -258,7 +261,7 @@ fun SettingsInnerPage(
             }
         }
         SettingsContent {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSelector)) {
                 Text(stringResource(R.string.log_level), fontSize = itemFontSize)
 //                Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
@@ -289,6 +292,11 @@ fun SettingsInnerPage(
             }
         }
 
+        SettingsContent(onClick = {
+            showCleanDialog.value = true
+        }) {
+            Text(stringResource(R.string.clean), fontSize = itemFontSize)
+        }
 
 
         SettingsTitle(stringResource(R.string.editor))
@@ -302,7 +310,7 @@ fun SettingsInnerPage(
                 it.editor.editCacheEnable = newValue
             }
         }) {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSwitcher)) {
                 Text(stringResource(R.string.edit_cache), fontSize = itemFontSize)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
             }
@@ -324,7 +332,7 @@ fun SettingsInnerPage(
                 }
             }
         ) {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSwitcher)) {
                 Text(stringResource(R.string.file_snapshot), fontSize = itemFontSize)
                 Text(stringResource(R.string.file_snapshot_desc), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
@@ -348,7 +356,7 @@ fun SettingsInnerPage(
                 }
             }
         ) {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSwitcher)) {
                 Text(stringResource(R.string.content_snapshot), fontSize = itemFontSize)
                 Text(stringResource(R.string.content_snapshot_desc), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
@@ -374,7 +382,7 @@ fun SettingsInnerPage(
                 it.diff.groupDiffContentByLineNum = newValue
             }
         }) {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSwitcher)) {
                 Text(stringResource(R.string.group_content_by_line_num), fontSize = itemFontSize)
 //                Text(stringResource(R.string.before_saving_a_file_create_a_snapshot_first), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
 //                Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
@@ -390,13 +398,8 @@ fun SettingsInnerPage(
             )
         }
 
-        SettingsTitle(stringResource(R.string.clean))
-        SettingsContent(onClick = {
-            showCleanDialog.value = true
-        }) {
-            Text(stringResource(R.string.clean), fontSize = itemFontSize)
+//        SettingsTitle(stringResource(R.string.clean))
 
-        }
 
         SettingsTitle(stringResource(R.string.permissions))
         SettingsContent(onClick = {
