@@ -1,3 +1,8 @@
+1.0.5.5v31 - 20241016:
+- support chinese
+- add Settings page
+
+
 1.0.5.4v30 - 20241013:<br>
 ignore file change:
 - change comment start sign form "#" to "//"
