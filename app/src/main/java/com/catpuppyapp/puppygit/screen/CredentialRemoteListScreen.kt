@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddLink
@@ -234,7 +236,7 @@ fun CredentialRemoteListScreen(
                         )
                     }else{
                         Column (modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, listState, 0) }) {}){
-                            Row {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= if(isShowLink) stringResource(R.string.linked_remotes) else stringResource(R.string.unlinked_remotes),
                                     maxLines = 1,
@@ -242,7 +244,7 @@ fun CredentialRemoteListScreen(
                                 )
 
                             }
-                            Row {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text= "["+curItemInPage.value.name+"]",
                                     maxLines = 1,

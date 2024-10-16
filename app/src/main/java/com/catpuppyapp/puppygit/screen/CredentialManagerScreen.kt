@@ -234,9 +234,8 @@ fun CredentialManagerScreen(
                             filterKeyword,
                         )
                     }else{
-                        Column {
-                            Row(modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, listState, 0) }) {}
-                            ) {
+                        Column(modifier = Modifier.combinedClickable(onDoubleClick = { UIHelper.scrollToItem(scope, listState, 0) }) {}) {
+                            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                 Text(
                                     text = stringResource(id = R.string.credential_manager),
                                     maxLines = 1,

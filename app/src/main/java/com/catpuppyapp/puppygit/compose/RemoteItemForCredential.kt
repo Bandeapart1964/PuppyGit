@@ -42,7 +42,10 @@ fun RemoteItemForCredential(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+
+        // .8f width, make sure right content still stay in screen when left content very long
+        // .8f 宽度确保当左边内容很长时右边内容不会被顶出屏幕
+        Column(modifier = Modifier.fillMaxWidth(.8f)) {
             Row (
                 verticalAlignment = Alignment.CenterVertically,
             ){
