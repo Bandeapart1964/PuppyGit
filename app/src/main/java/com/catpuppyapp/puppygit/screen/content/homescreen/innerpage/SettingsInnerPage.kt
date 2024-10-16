@@ -336,7 +336,7 @@ fun SettingsInnerPage(
         ) {
             Column {
                 Text(stringResource(R.string.file_snapshot), fontSize = itemFontSize)
-                Text(stringResource(R.string.before_opening_a_file_create_a_snapshot_first), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
+                Text(stringResource(R.string.file_snapshot_desc), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
 
             }
@@ -360,7 +360,7 @@ fun SettingsInnerPage(
         ) {
             Column {
                 Text(stringResource(R.string.content_snapshot), fontSize = itemFontSize)
-                Text(stringResource(R.string.before_saving_a_file_create_a_snapshot_first), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
+                Text(stringResource(R.string.content_snapshot_desc), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
                 Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
 
             }

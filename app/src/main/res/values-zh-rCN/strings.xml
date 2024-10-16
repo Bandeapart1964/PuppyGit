@@ -46,8 +46,8 @@
     <string name="repo_status_need_sync">需要同步</string>
     <string name="repo_status_need_commit">需要提交</string>
     <string name="repo_status_uptodate">已是最新</string>
-    <string name="repo_err_has_unchecked_err">有未检查的错误</string>
-    <string name="repo_err_no_err_or_all_checked">没有错误或全部已检查</string>
+    <string name="repo_err_has_unchecked_err">有未读错误</string>
+    <string name="repo_err_no_err_or_all_checked">无错误或全部已读</string>
     <string name="commit_history">提交历史</string>
     <string name="previous_page">上一页</string>
     <string name="next_page">下一页</string>
@@ -939,8 +939,8 @@
     <string name="enable">启用</string>
     <string name="disable">禁用</string>
     <string name="file_snapshot">文件快照</string>
-    <string name="before_opening_a_file_create_a_snapshot_first">打开文件前先创建快照</string>
-    <string name="before_saving_a_file_create_a_snapshot_first">保存前先创建快照</string>
+    <string name="file_snapshot_desc">保存文件前先为原始文件创建快照</string>
+    <string name="content_snapshot_desc">保存文件前先为编辑器中的内容创建快照</string>
     <string name="content_snapshot">内容快照</string>
     <string name="diff">差异</string>
     <string name="group_content_by_line_num">将内容按行号分组</string>

@@ -944,8 +944,8 @@
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     <string name="file_snapshot">File Snapshot</string>
-    <string name="before_opening_a_file_create_a_snapshot_first">Before opening a file, create a snapshot first.</string>
-    <string name="before_saving_a_file_create_a_snapshot_first">Before saving a file, create a snapshot first.</string>
+    <string name="file_snapshot_desc">Before saving file, create a snapshot for origin file first.</string>
+    <string name="content_snapshot_desc">Before saving file, create a snapshot for editor\'s content first.</string>
     <string name="content_snapshot">Content Snapshot</string>
     <string name="diff">Diff</string>
     <string name="group_content_by_line_num">Group Content By Line Num</string>
