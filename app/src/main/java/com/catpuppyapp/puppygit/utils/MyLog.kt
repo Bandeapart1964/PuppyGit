@@ -28,16 +28,18 @@ object MyLog {
         "v",
     )
 
+    const val defaultLogKeepDays = 3
+    const val defaultLogLevel = 'w'
 
     private const val MYLOG_SWITCH = true // 日志文件总开关
     private const val MYLOG_WRITE_TO_FILE = true // 日志写入文件开关
-    private var myLogLevel = 'i' // 日志等级，w代表只输出告警信息等，v代表输出所有信息, log level is err>warn>info>debug>verbose, low level include high level output
+    private var myLogLevel = defaultLogLevel // 日志等级，w代表只输出告警信息等，v代表输出所有信息, log level is err>warn>info>debug>verbose, low level include high level output
     private val writeLock = Mutex()
     private const val channelBufferSize = 50  //队列设置大一些才有意义，不然跟互斥锁没差，话说kotlin里没公平锁吗？非得这么麻烦
     private val writeChannel = Channel<String> (capacity = channelBufferSize, onBufferOverflow = BufferOverflow.SUSPEND) { /* onUndeliveredElement, 未交付的元素会调用此方法，一般用来执行关流之类的善后操作，不过我这用不上 */ }
 
     //    private static String MYLOG_PATH_SDCARD_DIR = "log";// 日志文件在sdcard中的路径
-    private var LOG_FILE_SAVE_DAYS = 3 // sd卡中日志文件的最多保存天数
+    private var logFilesKeepDays = defaultLogKeepDays // 日志文件的最多保存天数
     private const val fileNameTag = "Log" // 本类输出的日志文件名称
     private const val fileExt = ".txt"
     private const val LOG_NAME_SEPARATOR = "#"
@@ -78,9 +80,9 @@ object MyLog {
      */
 
     //    public Context context;
-    fun init(saveDays: Int=3, logLevel: Char='w', logDirPath:String) {
+    fun init(logKeepDays: Int= defaultLogKeepDays, logLevel: Char=defaultLogLevel, logDirPath:String) {
         try {
-            LOG_FILE_SAVE_DAYS = saveDays
+            logFilesKeepDays = logKeepDays
             myLogLevel = logLevel
             logDir = File(logDirPath)
             initLogWriter()
@@ -104,7 +106,7 @@ object MyLog {
     }
 
     fun setLogFileKeepDays(days:Int) {
-        LOG_FILE_SAVE_DAYS = days
+        logFilesKeepDays = days
     }
 
     private fun startWriter() {
@@ -362,7 +364,7 @@ object MyLog {
                     //debug
 
                     //删除超过天数的日志文件
-                    if (diffInDay > LOG_FILE_SAVE_DAYS) {
+                    if (diffInDay > logFilesKeepDays) {
                         f.delete()
                     }
                 } catch (e: Exception) {

@@ -1,9 +1,8 @@
 package com.catpuppyapp.puppygit.dev
 
-import com.catpuppyapp.puppygit.settings.AppSettings
-import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
+import com.catpuppyapp.puppygit.utils.MyLog
 import java.io.File
 
 //TODO before release:发布应用之前把这几个变量改成false
@@ -25,11 +24,13 @@ fun isReleaseMode():Boolean {  //检查当前是否处于生产环境，因为�
     return true  // release mode
 }
 
-fun isDebugModeOn(settings:AppSettings = SettingsUtil.getSettingsSnapshot()):Boolean {
+fun isDebugModeOn():Boolean {
     //开发者设置了debugModeOn 或 用户设置了debugModeOn，则debugMode is on
 //    return dev_debugModeOn || AppModel.singleInstanceHolder.debugModeOn
 
-    return settings.logLevel == 'd'
+//    return settings.logLevel == 'd'
+
+    return MyLog.getCurrentLogLevel() == "d"
 }
 
 fun proFeatureEnabled(featureFlag:Boolean):Boolean {

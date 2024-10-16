@@ -50,6 +50,7 @@ import com.catpuppyapp.puppygit.utils.ComposeHelper
 import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
+import com.catpuppyapp.puppygit.utils.PrefMan
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.getStoragePermission
@@ -74,7 +75,7 @@ fun SettingsInnerPage(
     val settingsState = mutableCustomStateOf(stateKeyTag, "settingsState", SettingsUtil.getSettingsSnapshot())
 
     val themeList = Theme.themeList
-    val selectedTheme = rememberSaveable { mutableIntStateOf(settingsState.value.theme) }
+    val selectedTheme = rememberSaveable { mutableIntStateOf(PrefMan.getInt(appContext, PrefMan.Key.theme, Theme.defaultThemeValue)) }
 
     val languageList = LanguageUtil.languageCodeList
     val selectedLanguage = rememberSaveable { mutableStateOf(LanguageUtil.get(appContext)) }
@@ -220,12 +221,8 @@ fun SettingsInnerPage(
                     menuItemOnClick = { _, value ->
                         selectedTheme.intValue = value
 
-                        if(value != settingsState.value.theme) {
-                            settingsState.value.theme = value
-
-                            SettingsUtil.update {
-                                it.theme = value
-                            }
+                        if(value != PrefMan.getInt(appContext, PrefMan.Key.theme, Theme.defaultThemeValue)) {
+                            PrefMan.set(appContext, PrefMan.Key.theme, ""+value)
                         }
                     }
                 )
@@ -276,17 +273,10 @@ fun SettingsInnerPage(
 
                         if(value != MyLog.getCurrentLogLevel()) {
                             // set in memory
-                            val newLevel = value.get(0)
-                            MyLog.setLogLevel(newLevel)
-
-                            // this update or not update, all fine
-                            //这个更新与否其实没差，因为在这用不到，而从其他地方获取的settings也是重新读取的新实例
-                            settingsState.value.logLevel=newLevel
+                            MyLog.setLogLevel(value.get(0))
 
                             // save to disk
-                            SettingsUtil.update {
-                                it.logLevel = newLevel
-                            }
+                            PrefMan.set(appContext, PrefMan.Key.logLevel, value)
                         }
                     },
                     menuItemSelected = {index, value ->

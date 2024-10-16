@@ -18,12 +18,13 @@ import androidx.compose.ui.platform.createLifecycleAwareWindowRecomposer
 import androidx.core.view.WindowCompat
 import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.screen.AppScreenNavigator
-import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.PuppyGitAndroidTheme
+import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.MyLog
+import com.catpuppyapp.puppygit.utils.PrefMan
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.showToast
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -115,12 +116,13 @@ class MainActivity : ComponentActivity() {
         window.decorView.compositionContext = recomposer
         // for catch exception, block end
 
-        val settings = SettingsUtil.getSettingsSnapshot()
+//        // val settings = SettingsUtil.getSettingsSnapshot()
 
+        val theme = PrefMan.getInt(applicationContext, PrefMan.Key.theme, Theme.defaultThemeValue)
 
         setContent {
             PuppyGitAndroidTheme(
-                darkTheme = if(settings.theme == 0) isSystemInDarkTheme() else (settings.theme == 2)
+                darkTheme = if(theme == Theme.auto) isSystemInDarkTheme() else (theme == Theme.dark)
             ) {
                 MainCompose()
                 //                Greeting(baseContext)

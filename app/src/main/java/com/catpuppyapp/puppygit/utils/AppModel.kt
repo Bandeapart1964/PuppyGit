@@ -30,7 +30,6 @@ import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
 import com.catpuppyapp.puppygit.utils.storagepaths.StoragePathsMan
 import com.github.git24j.core.Libgit2
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.runBlocking
 import java.io.File
 
 
@@ -154,61 +153,6 @@ class AppModel {
             appModel.debugModeOn = appModel.isDebugModeFlagFileExists()  //TODO 在设置页面添加相关选项“开启调试模式”，开启则在上面的目录创建debugModeOn文件，否则删除文件，这样每次启动app就能通过检查文件是否存在来判断是否开了debugMode了。(btw: 因为要在Settings初始化之前就读取到这个变量，所以不能放到Settings里)
 
 
-
-            /*
-                init log
-             */
-            //初始化日志
-            //设置 日志保存时间和日志等级，(考虑：以后把这个改成从配置文件读取相关设置项的值，另外，用runBlocking可以实现阻塞调用suspend方法查db，但不推荐)
-//            MyLog.init(saveDays=3, logLevel='w', logDirPath=appModel.logDir.canonicalPath);
-            MyLog.init(logDirPath=appModel.logDir.canonicalPath)
-
-            /*
-               init settings
-             */
-//            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
-            val settingsSaveDir = appModel.getOrCreateSettingsDir()
-            //初始化设置项
-            try {
-                //init settings, it shouldn't blocking long time
-                runBlocking {
-                    SettingsUtil.init(settingsSaveDir, useBak = false)
-                }
-            }catch (e:Exception) {
-                //用原始设置文件初始化异常
-                try {
-                    //初始化设置，用备用设置文件，若成功则恢复备用到原始设置文件
-                    MyLog.e(TAG, "#$funName init settings err:"+e.stackTraceToString())
-                    MyLog.w(TAG, "#$funName init origin settings err, will try use backup")
-                    runBlocking {
-                        SettingsUtil.init(settingsSaveDir, useBak = true)
-                    }
-                    MyLog.w(TAG, "#$funName init bak settings success, will restore it to origin")
-                    SettingsUtil.copyBakToOrigin()  //init成功，所以这里肯定初始化了原始和备用配置文件的File对象，因此不用传参数
-                    MyLog.w(TAG, "#$funName restore bak settings to origin success")
-                }catch (e2:Exception) {
-                    //用备用文件初始化设置也异常，尝试重建设置项，用户设置会丢失
-                    MyLog.e(TAG, "#$funName init settings with bak err:"+e2.stackTraceToString())
-                    MyLog.w(TAG, "#$funName init bak settings err, will clear origin settings, user settings will lost!")
-                    SettingsUtil.delSettingsFile(settingsSaveDir)
-                    MyLog.w(TAG, "#$funName del settings success, will reInit settings, if failed, app will not work...")
-                    runBlocking {
-                        SettingsUtil.init(settingsSaveDir, useBak = false)
-                    }
-                    MyLog.w(TAG, "#$funName reInit settings success")
-                }
-            }
-
-
-            /*
-                update log fields by settings
-             */
-            val settings = SettingsUtil.getSettingsSnapshot()
-            MyLog.setLogLevel(settings.logLevel)
-            // this must setted before call MyLog.delExpiredLogs()
-            MyLog.setLogFileKeepDays(settings.logKeepDays)
-
-
             //for test unstable features
             dev_EnableUnTestedFeature = try {
                 File(appModel.appDataUnderAllReposDir, FlagFileName.enableUnTestedFeature).exists()
@@ -226,9 +170,64 @@ class AppModel {
         ) {
             val funName = "init_2"
 
+            val applicationContext = appModel.appContext
+            /*
+                init log
+             */
+            //初始化日志
+            //设置 日志保存时间和日志等级，(考虑：以后把这个改成从配置文件读取相关设置项的值，另外，用runBlocking可以实现阻塞调用suspend方法查db，但不推荐)
+//            MyLog.init(saveDays=3, logLevel='w', logDirPath=appModel.logDir.canonicalPath);
+            MyLog.init(
+                logKeepDays=PrefMan.getInt(applicationContext, PrefMan.Key.logKeepDays, MyLog.defaultLogKeepDays),
+                logLevel=PrefMan.getChar(applicationContext, PrefMan.Key.logLevel, MyLog.defaultLogLevel),
+                logDirPath=appModel.logDir.canonicalPath
+            )
 
-            //删除过期日志文件
-            MyLog.delExpiredLogs()
+            /*
+               init settings
+             */
+//            val settingsSaveDir = appModel.innerDataDir  // deprecated, move to use-visible puppygit-data folder
+            val settingsSaveDir = appModel.getOrCreateSettingsDir()
+
+            /*
+             * init settings
+             * step: try origin settings file first, if failed, try backup file, if failed, remove settings file, create a new settings, it will lost all settings
+             */
+            //初始化设置项
+            try {
+                //init settings, it shouldn't blocking long time
+                SettingsUtil.init(settingsSaveDir, useBak = false)
+            }catch (e:Exception) {
+                //用原始设置文件初始化异常
+                try {
+                    //初始化设置，用备用设置文件，若成功则恢复备用到原始设置文件
+                    MyLog.e(TAG, "#$funName init settings err:"+e.stackTraceToString())
+                    MyLog.w(TAG, "#$funName init origin settings err, will try use backup")
+
+                    SettingsUtil.init(settingsSaveDir, useBak = true)
+
+                    MyLog.w(TAG, "#$funName init bak settings success, will restore it to origin")
+
+                    SettingsUtil.copyBakToOrigin()  //init成功，所以这里肯定初始化了原始和备用配置文件的File对象，因此不用传参数
+
+                    MyLog.w(TAG, "#$funName restore bak settings to origin success")
+                }catch (e2:Exception) {
+                    //用备用文件初始化设置也异常，尝试重建设置项，用户设置会丢失
+                    MyLog.e(TAG, "#$funName init settings with bak err:"+e2.stackTraceToString())
+                    MyLog.w(TAG, "#$funName init bak settings err, will clear origin settings, user settings will lost!")
+
+                    // delete settings files
+                    SettingsUtil.delSettingsFile(settingsSaveDir)
+
+                    MyLog.w(TAG, "#$funName del settings success, will reInit settings, if failed, app will not work...")
+
+                    // re init
+                    SettingsUtil.init(settingsSaveDir, useBak = false)
+
+                    MyLog.w(TAG, "#$funName reInit settings success")
+                }
+            }
+
 
             //加载证书 for TLS (https
             CertMan.init(appModel.appContext, appModel.certBundleDir, appModel.certUserDir)  //加载app 内嵌证书捆绑包(app cert bundle)
@@ -259,17 +258,9 @@ class AppModel {
                 MyLog.w(TAG, "#$funName migrate password err, user's password may will be invalid :(")
             }
 
-            val settingsSaveDir = appModel.getOrCreateSettingsDir()
+//           // val settingsSaveDir = appModel.getOrCreateSettingsDir()
             val settings = SettingsUtil.getSettingsSnapshot()
-            //删除过期的快照文件
-            try {
-                val snapshotKeepInDays = settings.snapshotKeepInDays
-                val snapshotSaveFolder = appModel.getOrCreateFileSnapshotDir()
-                FsUtils.delFilesOverKeepInDays(snapshotKeepInDays, snapshotSaveFolder, "snapshot folder")
 
-            }catch (e:Exception) {
-                MyLog.e(TAG, "#$funName del expired snapshot files err:"+e.stackTraceToString())
-            }
 
             //初始化EditCache
             try {
@@ -282,12 +273,7 @@ class AppModel {
                 MyLog.e(TAG, "#$funName init EditCache err:"+e.stackTraceToString())
             }
 
-            //删除过期的编辑缓存文件
-            try {
-                EditCache.delExpiredFiles()
-            }catch (e:Exception) {
-                MyLog.e(TAG, "#$funName del expired edit cache files err:"+e.stackTraceToString())
-            }
+
 
             //初始化SnapshotUtil，例如是否启用文件快照和内容快照之类的
             try {
@@ -330,6 +316,37 @@ class AppModel {
             }catch (e:Exception) {
                 MyLog.e(TAG, "#$funName init StoragePathsMan err:"+e.stackTraceToString())
             }
+
+
+
+            doJobThenOffLoading {
+                try {
+                    //删除过期日志文件
+                    MyLog.delExpiredLogs()
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#$funName del expired log files err:"+e.stackTraceToString())
+                }
+
+                //删除过期的编辑缓存文件
+                try {
+                    EditCache.delExpiredFiles()
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#$funName del expired edit cache files err:"+e.stackTraceToString())
+                }
+
+                //删除过期的快照文件
+                try {
+                    val snapshotKeepInDays = settings.snapshotKeepInDays
+                    val snapshotSaveFolder = appModel.getOrCreateFileSnapshotDir()
+                    FsUtils.delFilesOverKeepInDays(snapshotKeepInDays, snapshotSaveFolder, "snapshot folder")
+
+//                 //   appModel.getOrCreateFileSnapshotDir()  // is delete expired files, is not del the folder, so no need call this make sure folder exist
+                }catch (e:Exception) {
+                    MyLog.e(TAG, "#$funName del expired snapshot files err:"+e.stackTraceToString())
+                }
+            }
+
+
 
             //初始化与谷歌play的连接，查询支付信息之类的
 //            Billing.init(appModel.appContext)

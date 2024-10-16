@@ -15,16 +15,57 @@ object PrefMan {
          *
          * 自动检测或指定国家代码
          */
-        val lang = "lang"
+        const val lang = "lang"
+        /**
+         * e: err
+         * w: warn
+         * i: info
+         * d: debug
+         * v: verbose
+         */
+        const val logLevel = "log_level"
+        /**
+         * log file keep in days
+         * 保留几天的日志
+         */
+        const val logKeepDays = "log_keep_days"
+        /**
+         * 0 auto; 1 light; 2 dark.
+         * reference SettingsInnerPage.themeList, this value should match with the themeList indices
+         * 这的值应该和设置页面的themeList索引匹配
+         */
+        const val theme = "theme"
     }
 
     fun getPrefs(appContext: Context) = appContext.getSharedPreferences(fileName, MODE_PRIVATE)
 
     fun get(appContext: Context, key:String, defaultValue:String):String {
-        // 获取 SharedPreferences
-        val prefs = getPrefs(appContext)
-        val languageCode = prefs.getString(key, defaultValue)
-        return languageCode ?: defaultValue
+        try {
+            // 获取 SharedPreferences
+            val prefs = getPrefs(appContext)
+            val value = prefs.getString(key, defaultValue)
+            return value ?: defaultValue
+        }catch (_:Exception) {
+            return defaultValue
+        }
+    }
+
+    fun getInt(appContext: Context, key:String, defaultValue:Int):Int {
+        try {
+            val value = get(appContext, key, ""+defaultValue)
+            return value.toInt()
+        }catch (_:Exception) {
+            return defaultValue
+        }
+    }
+
+    fun getChar(appContext: Context, key:String, defaultValue:Char):Char {
+        try {
+            val value = get(appContext, key, ""+defaultValue)
+            return value.get(0)
+        }catch (_:Exception) {
+            return defaultValue
+        }
     }
 
 

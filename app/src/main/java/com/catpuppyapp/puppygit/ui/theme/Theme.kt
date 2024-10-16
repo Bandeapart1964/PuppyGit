@@ -18,19 +18,28 @@ import androidx.core.view.WindowCompat
 import com.catpuppyapp.puppygit.play.pro.R
 
 object Theme {
+    const val auto = 0
+    const val light = 1
+    const val dark = 2
+
+//    val invalidThemeValue: Int = -1
+    const val defaultThemeValue: Int = auto // default is auto
+
+    // this value will update when theme ready
     var inDarkTheme = false
+
     val themeList = listOf(
-        0,  // auto
-        1,  // light
-        2,  // dark
+        auto,  // auto
+        light,  // light
+        dark,  // dark
     )
 
     fun getThemeTextByCode(themeCode:Int?, appContext: Context):String {
-        if(themeCode==0) {
+        if(themeCode== auto) {
             return appContext.getString(R.string.auto)
-        }else if(themeCode == 1) {
+        }else if(themeCode == light) {
             return appContext.getString(R.string.light)
-        }else if(themeCode == 2) {
+        }else if(themeCode == dark) {
             return appContext.getString(R.string.dark)
         }else {
             return appContext.getString(R.string.unknown)
