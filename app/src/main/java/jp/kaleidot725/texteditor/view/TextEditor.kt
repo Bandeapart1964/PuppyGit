@@ -53,6 +53,7 @@ import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.dev.bug_Editor_GoToColumnCantHideKeyboard_Fixed
 import com.catpuppyapp.puppygit.dev.bug_Editor_SelectColumnRangeOfLine_Fixed
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.AppSettings
 import com.catpuppyapp.puppygit.settings.FileEditedPos
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
@@ -126,7 +127,7 @@ fun TextEditor(
 //    val focusRequesters = remember { mutableStateListOf<FocusRequester>() }  //不能用list，滚动两下页面就会报错
 
     val settings = SettingsUtil.getSettingsSnapshot()
-    val conflictStartKeyword = remember { mutableStateOf(settings.editor.conflictStartStr) }
+    val conflictKeyword = remember { mutableStateOf(settings.editor.conflictStartStr) }
 
     //最后显示屏幕范围的第一行的索引
 //    var lastFirstVisibleLineIndexState  by remember { mutableIntStateOf(lastEditedPos.firstVisibleLineIndex) }
@@ -295,7 +296,10 @@ fun TextEditor(
         PageRequest.clearStateThenDoAct(requestFromParent) {
             doJobThenOffLoading {
                 initSearchPos()
-                doSearch(conflictStartKeyword.value, toNext = false, nextSearchPos.value)
+
+                val previousKeyWord = getPreviousKeyWordForConflict(conflictKeyword.value, settings)
+                conflictKeyword.value = previousKeyWord
+                doSearch(previousKeyWord, toNext = false, nextSearchPos.value)
             }
         }
     }
@@ -303,14 +307,18 @@ fun TextEditor(
         PageRequest.clearStateThenDoAct(requestFromParent) {
             doJobThenOffLoading {
                 initSearchPos()
-                doSearch(conflictStartKeyword.value, toNext = true, nextSearchPos.value)
+
+                val nextKeyWord = getNextKeyWordForConflict(conflictKeyword.value, settings)
+                conflictKeyword.value = nextKeyWord
+                doSearch(nextKeyWord, toNext = true, nextSearchPos.value)
             }
         }
     }
     if(requestFromParent.value==PageRequest.showNextConflictAndAllConflictsCount) {
         PageRequest.clearStateThenDoAct(requestFromParent) {
             doJobThenOffLoading {
-                val allCount = editableController.getKeywordCount(conflictStartKeyword.value)
+//                val allCount = editableController.getKeywordCount(conflictKeyword.value)  // this keyword is dynamic change when press next or previous, used for count conflict is ok though, but use conflict start str count can be better
+                val allCount = editableController.getKeywordCount(settings.editor.conflictStartStr)
                 Msg.requireShow(replaceStringResList(appContext.getString(R.string.next_conflict_all_count), listOf(allCount.toString())))
             }
         }
@@ -569,7 +577,8 @@ fun TextEditor(
                                 option = EditorController.SelectionOption.CUSTOM,
                                 columnStartIndexInclusive = lastScrollEvent!!.columnStartIndexInclusive,
                                 //如果选中某行子字符串的功能修复了，就使用正常的endIndex；否则使用startIndex，定位光标到关键字出现的位置但不选中关键字
-                                columnEndIndexExclusive = if(bug_Editor_SelectColumnRangeOfLine_Fixed) lastScrollEvent!!.columnEndIndexExclusive else lastScrollEvent!!.columnStartIndexInclusive
+                                columnEndIndexExclusive = if(bug_Editor_SelectColumnRangeOfLine_Fixed) lastScrollEvent!!.columnEndIndexExclusive else lastScrollEvent!!.columnStartIndexInclusive,
+                                requireSelectLine = false
                             )
                         }
                     }else {
@@ -863,6 +872,25 @@ fun TextEditor(
             }
         }
 
+    }
+}
+
+fun getNextKeyWordForConflict(curKeyWord:String, settings: AppSettings):String {
+    if(curKeyWord == settings.editor.conflictStartStr) {
+        return settings.editor.conflictSplitStr
+    }else if(curKeyWord == settings.editor.conflictSplitStr) {
+        return settings.editor.conflictEndStr
+    }else { // curKeyWord == settings.editor.conflictEndStr
+        return settings.editor.conflictStartStr
+    }
+}
+fun getPreviousKeyWordForConflict(curKeyWord:String, settings: AppSettings):String {
+    if(curKeyWord == settings.editor.conflictStartStr) {
+        return settings.editor.conflictEndStr
+    }else if(curKeyWord == settings.editor.conflictEndStr) {
+        return settings.editor.conflictSplitStr
+    }else { // curKeyWord == settings.editor.conflictSplitStr
+        return settings.editor.conflictStartStr
     }
 }
 

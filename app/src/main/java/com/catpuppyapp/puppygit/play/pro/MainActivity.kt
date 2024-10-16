@@ -146,7 +146,6 @@ class MainActivity : ComponentActivity() {
             super.attachBaseContext(newBase)
         }
 
-//        recreate()
     }
 
 //

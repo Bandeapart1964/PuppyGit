@@ -342,12 +342,26 @@ class EditorController(
 
     //第1个参数是行索引；第2个参数是当前行的哪个位置
     //若只传columnStartIndexInclusive，相当于定位到某一行的某一列；若传columnStartIndexInclusive 和 columnEndIndexExclusive，相当于选中某行的某一段文字
-    fun selectField(targetIndex: Int, option: SelectionOption = SelectionOption.NONE, columnStartIndexInclusive:Int=0, columnEndIndexExclusive:Int=columnStartIndexInclusive) {
+    fun selectField(
+        targetIndex: Int,
+        option: SelectionOption = SelectionOption.NONE,
+        columnStartIndexInclusive:Int=0,
+        columnEndIndexExclusive:Int=columnStartIndexInclusive,
+        requireSelectLine: Boolean=true, // if true, will add targetIndex into selected indices, set false if you don't want to select this line(e.g. when you just want go to line)
+    ) {
         lock.withLock {
-            selectFieldInternal(targetIndex, option, columnStartIndexInclusive=columnStartIndexInclusive, columnEndIndexExclusive=columnEndIndexExclusive)
+            selectFieldInternal(
+                targetIndex,
+                option,
+                columnStartIndexInclusive=columnStartIndexInclusive,
+                columnEndIndexExclusive=columnEndIndexExclusive,
+                requireSelectLine = requireSelectLine
+            )
+
             onChanged(state)
         }
     }
+
     //第1个参数是行索引；第2个参数是当前行的哪个位置
     fun selectFieldSpan(targetIndex: Int) {
         lock.withLock {
@@ -473,7 +487,8 @@ class EditorController(
         option: SelectionOption = SelectionOption.NONE,
         forceAdd:Boolean=false,  // 为true：若没添加则添加，添加了则什么都不做；为false：已添加则移除，未添加则添加
         columnStartIndexInclusive:Int=0,
-        columnEndIndexExclusive:Int=columnStartIndexInclusive
+        columnEndIndexExclusive:Int=columnStartIndexInclusive,
+        requireSelectLine:Boolean = true,
     ) {
         if (targetIndex < 0 || fields.count() <= targetIndex) {
             throw InvalidParameterException("targetIndex out of range($targetIndex)")
@@ -495,37 +510,46 @@ class EditorController(
             }
         }
 
-        if (isMultipleSelectionMode) {  //多选模式，添加选中行列表或从列表移除
-            if(forceAdd) {  //强制添加
-                val isSelected = _fields[targetIndex].isSelected
-                //未添加则添加，否则什么都不做
-                if(!isSelected) {
+        if(requireSelectLine) {  //多选模式，添加选中行列表或从列表移除
+            if(isMultipleSelectionMode) {
+                if(forceAdd) {  //强制添加
+                    val isSelected = _fields[targetIndex].isSelected
+                    //未添加则添加，否则什么都不做
+                    if(!isSelected) {
+                        val copyTarget = target.copy(
+                            isSelected = true,
+                            value = target.value.copy(selection = selection)
+                        )
+                        _fields[targetIndex] = copyTarget
+                        _selectedIndices.add(targetIndex)
+                    }
+                }else {  //切换添加和移除
+                    val isSelected = !_fields[targetIndex].isSelected
                     val copyTarget = target.copy(
-                        isSelected = true,
+                        isSelected = isSelected,
                         value = target.value.copy(selection = selection)
                     )
                     _fields[targetIndex] = copyTarget
-                    _selectedIndices.add(targetIndex)
+
+                    if (isSelected) _selectedIndices.add(targetIndex) else _selectedIndices.remove(targetIndex)
                 }
-            }else {  //切换添加和移除
-                val isSelected = !_fields[targetIndex].isSelected
+
+            }else {  //非多选模式，定位光标到对应行，选中行，（启动多选模式？有这步吗？）
                 val copyTarget = target.copy(
-                    isSelected = isSelected,
+                    isSelected = true,
                     value = target.value.copy(selection = selection)
                 )
+                this.clearSelectedIndicesInternal()
                 _fields[targetIndex] = copyTarget
-
-                if (isSelected) _selectedIndices.add(targetIndex) else _selectedIndices.remove(targetIndex)
+                _selectedIndices.add(targetIndex)
             }
 
-        } else {  //非多选模式，定位光标到对应行，选中行，（启动多选模式？有这步吗？）
+        }else { //no touch selected lines, just go to target line
             val copyTarget = target.copy(
-                isSelected = true,
                 value = target.value.copy(selection = selection)
             )
-            this.clearSelectedIndicesInternal()
+
             _fields[targetIndex] = copyTarget
-            _selectedIndices.add(targetIndex)
         }
     }
 
