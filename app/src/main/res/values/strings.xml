@@ -276,11 +276,9 @@
     <string name="checkout_remote_branch">Checkout remote branch</string>
     <string name="create_local_branch">Create local branch</string>
     <!-- 翻成中文：“将会和以下分支合并” ，冒号，后面接分支名 -->
-    <string name="will_merge">Will merge</string>
+<!--    <string name="will_merge">Will merge</string>-->
     <string name="merge_failed_src_and_target_same">Merge failed: src and target same!</string>
     <string name="merge_success">Merge success</string>
-    <string name="into">into</string>
-    <string name="and">and</string>
     <string name="already_up_to_date">Already up-to-date</string>
     <string name="set_upstream_success">Set upstream success</string>
     <string name="select_remote">Select Remote</string>
@@ -311,7 +309,6 @@
     <string name="remote_name_is_invalid">Err: Remote name is invalid!</string>
     <string name="push_del_remote_branch_failed">Push:delete remote branch failed!</string>
     <string name="del_remote_branch_success">Delete remote branch success</string>
-    <string name="upstream_is">Upstream is</string>
     <string name="load_more">Load More</string>
     <string name="parent">Parent</string>
     <string name="parents">Parents</string>
@@ -320,7 +317,6 @@
     <string name="view_messages">View Messages</string>
     <string name="recommend">Recommend</string>
     <string name="new_branch">New Branch</string>
-    <string name="warn_detach_head">Warn: detach head is dangerous! only do it if you sure you rly need it!</string>
     <string name="last_commit">Last Commit</string>
     <string name="no_parent_for_compare">No parent for compare</string>
     <string name="compare_to_parent">Compare To Parent</string>
@@ -486,7 +482,6 @@
     <string name="upstream_saved">Upstream Saved</string>
     <string name="save_and_sync">Save and Sync</string>
     <string name="set_upstream_and_sync">Set Upstream and Sync</string>
-    <string name="text_for">for</string>
     <string name="credential">Credential</string>
     <string name="remote_info">Remote Info</string>
     <string name="set_branch">Set Branch</string>
@@ -502,7 +497,7 @@
     <string name="set_fetch_refspecs">Set Fetch Refspecs</string>
     <string name="set_branches_for_fetch">Set branches for Fetch</string>
     <string name="branch_mode">Branch Mode</string>
-    <string name="branch_mode_note">note: chose \'All\' for fetch all branches, or specify a custom branches list for fetching</string>
+    <string name="branch_mode_note">Download all branches or specify a list</string>
     <string name="set_branch_mode">Set Branch Mode</string>
     <string name="fetching_all">Fetching All…</string>
     <string name="pull_err">Pull Err</string>
@@ -660,8 +655,7 @@
     <string name="rebase_current_onto">Rebase Current onto</string>
     <string name="rebase_branch1_onto_branch2">Rebase ph_a3f241dc_1 onto ph_a3f241dc_2</string>
     <string name="rebase">Rebase</string>
-    <string name="will_rebase">Will Rebase</string>
-    <string name="onto">onto</string>
+<!--    <string name="will_rebase">Will Rebase</string>-->
     <string name="rebasing">Rebasing…</string>
     <string name="rebase_success">Rebase Success</string>
     <string name="merge_continue">Merge Continue</string>
@@ -961,5 +955,7 @@
     <string name="permissions">Permissions</string>
     <string name="manage_storage">Manage Storage</string>
     <string name="if_you_want_to_clone_repo_into_external_storage_this_permission_is_required">If you want to clone repo into external storage, this permission is required.</string>
+    <string name="merge_left_into_right">merge \'ph_a3f241dc_1\' into \'ph_a3f241dc_2\'</string>
+    <string name="rebase_left_onto_right">rebase \'ph_a3f241dc_1\' onto \'ph_a3f241dc_2\'</string>
 
 </resources>

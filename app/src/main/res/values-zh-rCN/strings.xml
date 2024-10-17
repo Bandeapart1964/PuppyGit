@@ -262,7 +262,7 @@
     <string name="index_is_empty">索引区为空</string>
     <string name="gen_commit_msg_err_commit_abort">生成提交信息错误，提交中止！</string>
     <string name="create_branch_based_on">创建分支，基于</string>
-    <string name="warn_please_commit_your_change_before_checkout_or_merge">警告: 检出或合并前请先提交修改，否则可能导致 [数据丢失]！</string>
+    <string name="warn_please_commit_your_change_before_checkout_or_merge">警告：检出或合并前请先提交修改，否则可能导致 [数据丢失]！</string>
     <string name="create_branch_success">创建分支成功</string>
     <string name="checking_out">检出中…</string>
     <string name="err_when_querying_repo_info">查询仓库信息时出错!</string>
@@ -276,11 +276,9 @@
     <string name="checkout_remote_branch">检出远程分支</string>
     <string name="create_local_branch">创建本地分支</string>
     <!-- 翻成中文：“将会和以下分支合并” ，冒号，后面接分支名 -->
-    <string name="will_merge">将合并</string>
+<!--    <string name="will_merge">将合并</string>-->
     <string name="merge_failed_src_and_target_same">合并失败: 源和目标相同!</string>
     <string name="merge_success">合并成功</string>
-    <string name="into">到</string>
-    <string name="and">和</string>
     <string name="already_up_to_date">已是最新</string>
     <string name="set_upstream_success">设置上游成功</string>
     <string name="select_remote">选择远程仓库</string>
@@ -311,7 +309,6 @@
     <string name="remote_name_is_invalid">错误: 远程仓库名无效!</string>
     <string name="push_del_remote_branch_failed">推送:删除远程分支失败!</string>
     <string name="del_remote_branch_success">删除远程分支成功</string>
-    <string name="upstream_is">上游为</string>
     <string name="load_more">加载更多</string>
     <string name="parent">父节点</string>
     <string name="parents">父节点</string>
@@ -485,7 +482,6 @@
     <string name="upstream_saved">已保存上游</string>
     <string name="save_and_sync">保存并同步</string>
     <string name="set_upstream_and_sync">设置上游并同步</string>
-    <string name="text_for">为</string>
     <string name="credential">凭据</string>
     <string name="remote_info">远程仓库信息</string>
     <string name="set_branch">设置分支</string>
@@ -501,7 +497,7 @@
     <string name="set_fetch_refspecs">设置下载引用</string>
     <string name="set_branches_for_fetch">为下载设置分支</string>
     <string name="branch_mode">分支模式</string>
-    <string name="branch_mode_note">注意: 选择所有将下载所有分支，或指定一个分支列表</string>
+    <string name="branch_mode_note">下载全部分支或指定一个列表</string>
     <string name="set_branch_mode">设置分支模式</string>
     <string name="fetching_all">下载所有中…</string>
     <string name="pull_err">拉取出错</string>
@@ -623,7 +619,7 @@
 
 <!--     is_xxx and not_xxx should be difference string for filterable -->
     <string name="is_current">是当前分支</string>
-    <string name="not_current">不是当前分支</string>
+    <string name="not_current">非当前分支</string>
     <string name="is_published">已发布</string>
     <string name="not_published">未发布</string>
     <string name="is_grafted">嫁接而来</string>
@@ -659,8 +655,7 @@
     <string name="rebase_current_onto">基于当前分支变基</string>
     <string name="rebase_branch1_onto_branch2">ph_a3f241dc_1 基于 ph_a3f241dc_2 变基</string>
     <string name="rebase">变基</string>
-    <string name="will_rebase">将变基</string>
-    <string name="onto">基于</string>
+<!--    <string name="will_rebase">将变基</string>-->
     <string name="rebasing">变基中…</string>
     <string name="rebase_success">变基成功</string>
     <string name="merge_continue">继续合并</string>
@@ -768,7 +763,7 @@
     <string name="tag_oid_invalid">标签 Oid 无效</string>
     <string name="upstream_full_name">上游全名</string>
     <string name="is_symbolic">是符号</string>
-    <string name="not_symbolic">不是符号</string>
+    <string name="not_symbolic">非符号</string>
     <string name="symbolic_target">符号目标</string>
     <string name="symbolic_target_full_name">符号目标全名</string>
     <string name="has_upstream">有上游</string>
@@ -955,6 +950,8 @@
     <string name="cache">缓存</string>
     <string name="permissions">权限</string>
     <string name="if_you_want_to_clone_repo_into_external_storage_this_permission_is_required">如果你想克隆仓库到外部存储，这个权限是必须的。</string>
+    <string name="merge_left_into_right">合并 \'ph_a3f241dc_1\' 到 \'ph_a3f241dc_2\'</string>
+    <string name="rebase_left_onto_right">使 \'ph_a3f241dc_1\' 基于 \'ph_a3f241dc_2\'</string>
 
 
 </resources>

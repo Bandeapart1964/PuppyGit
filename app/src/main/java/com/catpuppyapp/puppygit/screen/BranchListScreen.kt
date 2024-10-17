@@ -46,7 +46,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -63,6 +62,7 @@ import com.catpuppyapp.puppygit.compose.BranchItem
 import com.catpuppyapp.puppygit.compose.CheckoutDialog
 import com.catpuppyapp.puppygit.compose.CheckoutDialogFrom
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.CreateBranchDialog
 import com.catpuppyapp.puppygit.compose.FilterTextField
@@ -71,6 +71,7 @@ import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ResetDialog
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SetUpstreamDialog
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
@@ -100,8 +101,8 @@ import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getSecFromTime
+import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Branch
@@ -471,55 +472,45 @@ fun BranchListScreen(
     }
 
     if(showMergeDialog.value) {
-        ConfirmDialog(title = stringResource(if(requireRebase.value) R.string.rebase else R.string.merge),
+        ConfirmDialog2(title = stringResource(if(requireRebase.value) R.string.rebase else R.string.merge),
             requireShowTextCompose = true,
             textCompose = {
-                          Column {
-                              Row {
-                                  Text(text = appContext.getString(R.string.warn_please_commit_your_change_before_checkout_or_merge),
-                                      color= Color.Red
-                                  )
-                              }
-                              Spacer(modifier = Modifier.padding(5.dp))
-                              Row {
-                                  Text(text = stringResource(if(requireRebase.value) R.string.will_rebase else R.string.will_merge)+":")
-                              }
-                              Spacer(modifier = Modifier.padding(5.dp))
-                              //if branch show "merge branch_a into branch_b",else show "merge branch_a and hash2 into HEAD"
+                          ScrollableColumn {
+//                              Row {
+//                                  Text(text = appContext.getString(R.string.warn_please_commit_your_change_before_checkout_or_merge),
+//                                      color= Color.Red
+//                                  )
+//                              }
+//                              Spacer(modifier = Modifier.padding(5.dp))
+//                              Row {
+//                                  Text(text = stringResource(if(requireRebase.value) R.string.will_rebase else R.string.will_merge)+":")
+//                              }
+//                              Spacer(modifier = Modifier.padding(5.dp))
+//                              //if branch show "merge branch_a into branch_b"
                               Row(
                                   modifier = Modifier.fillMaxWidth(),
                                   horizontalArrangement = Arrangement.Center,
                                   verticalAlignment = Alignment.CenterVertically
                               ) {
-                                  Text(text = if(requireRebase.value) repoCurrentActiveBranchOrShortDetachedHashForShown.value else curObjInPage.value.shortName,
-                                      fontWeight = FontWeight.ExtraBold,
-                                      softWrap = true,
-                                      overflow = TextOverflow.Visible
-                                  )
-                                  Text(text = " ")
-                                  if(requireRebase.value) {
-                                      Text(text = stringResource(id = R.string.onto))
-                                  }else {
-                                      Text(text = stringResource(id = R.string.into))
+                                  val left = if(!requireRebase.value) curObjInPage.value.shortName else if(curRepoIsDetached.value) Cons.gitDetachedHead else repoCurrentActiveBranchOrShortDetachedHashForShown.value
+                                  val right = if(requireRebase.value) curObjInPage.value.shortName else if(curRepoIsDetached.value) Cons.gitDetachedHead else repoCurrentActiveBranchOrShortDetachedHashForShown.value
+                                  val text = if(requireRebase.value) {
+                                      replaceStringResList(stringResource(R.string.rebase_left_onto_right), listOf(left, right))
+                                  }else{
+                                      replaceStringResList(stringResource(R.string.merge_left_into_right), listOf(left, right))
                                   }
-                                  Text(text = " ")
-                                  Text(text = if(requireRebase.value) curObjInPage.value.shortName else if(curRepoIsDetached.value) Cons.gitDetachedHead else repoCurrentActiveBranchOrShortDetachedHashForShown.value,
-                                      fontWeight = FontWeight.ExtraBold,
+
+                                  Text(text = text,
                                       softWrap = true,
                                       overflow = TextOverflow.Visible
                                   )
+
 //                                  if(curRepoIsDetached.value) {
 //                                      Text(text = " "+stringResource(id = R.string.into))
 //                                      Text(text = " HEAD",
 //                                          fontWeight = FontWeight.ExtraBold,
 //                                          )
 //                                  }
-                              }
-
-
-                              Spacer(modifier = Modifier.padding(5.dp))
-                              Row {
-                                  Text(text = stringResource(id = R.string.are_you_sure))
                               }
 
                           }
@@ -593,7 +584,7 @@ fun BranchListScreen(
                               MyCheckBox(text = stringResource(R.string.del_upstream_too), value = delUpstreamToo)
                               if(delUpstreamToo.value) {  //如果能勾选这个选项其实基本就可以断定存在有效上游了
                                   Row (modifier = Modifier.padding(horizontal = 16.dp)){
-                                      Text(text = stringResource(id = R.string.upstream_is)+": ")
+                                      Text(text = stringResource(id = R.string.upstream)+": ")
                                       Text(text = curObjInPage.value.upstream?.remoteBranchShortRefSpec?:"",  //其实如果通过上面的判断，基本就能断定存在有效上游了，这里的?:空值判断只是以防万一
                                           fontWeight = FontWeight.ExtraBold
                                       )
@@ -1038,7 +1029,7 @@ fun BranchListScreen(
             ConfirmDialog(title = stringResource(R.string.publish),
                 requireShowTextCompose = true,
                 textCompose = {
-                    Column {
+                    ScrollableColumn {
                         Row {
                             Text(text = stringResource(R.string.local) +": ")
                             Text(text = curBranch.shortName,

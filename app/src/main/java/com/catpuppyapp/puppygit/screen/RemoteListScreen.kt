@@ -58,6 +58,7 @@ import com.catpuppyapp.puppygit.compose.LoadingText
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.RemoteItem
+import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SetBranchForRemoteDialog
 import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.UnLinkCredentialAndRemoteDialogForRemoteListPage
@@ -344,15 +345,15 @@ fun RemoteListScreen(
             cancelBtnText = stringResource(id = R.string.cancel),
             requireShowTextCompose = true,
             textCompose = {
-                Column {
+                ScrollableColumn {
                     Row {
-                        Text(text = stringResource(id = R.string.text_for)+": ")
+                        Text(text = stringResource(id = R.string.remote)+": ")
                         Text(text = curObjInState.value.remoteName,
                             fontWeight = FontWeight.ExtraBold,
                             overflow = TextOverflow.Visible
                         )
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(15.dp))
                     TextField(
                         modifier = Modifier.fillMaxWidth(),
 

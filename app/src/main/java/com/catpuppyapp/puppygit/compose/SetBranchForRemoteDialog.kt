@@ -61,7 +61,7 @@ fun SetBranchForRemoteDialog(
             Text(text = appContext.getString(R.string.set_branch_mode))
         },
         text = {
-            Column {
+            ScrollableColumn {
                 Row {
                     Text(text = stringResource(R.string.branch_mode_note))
                 }
@@ -69,7 +69,7 @@ fun SetBranchForRemoteDialog(
 
 
                 Row {
-                    Text(text = appContext.getString(R.string.text_for) + ": ")
+                    Text(text = appContext.getString(R.string.remote) + ": ")
                     Text(text = remoteName,
                         fontWeight = FontWeight.ExtraBold
                     )

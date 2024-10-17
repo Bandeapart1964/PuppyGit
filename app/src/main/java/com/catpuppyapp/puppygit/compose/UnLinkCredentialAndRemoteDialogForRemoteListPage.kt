@@ -1,20 +1,22 @@
 package com.catpuppyapp.puppygit.compose
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 
 
 @Composable
@@ -34,14 +36,15 @@ fun UnLinkCredentialAndRemoteDialogForRemoteListPage(
             Text(stringResource(R.string.unlink))
         },
         text = {
-            Column {
+            ScrollableColumn {
                 Row{
-                    Text(text = stringResource(id = R.string.text_for)+": ")
+                    Text(text = stringResource(id = R.string.remote)+": ")
                     Text(text = remoteName,
                         fontWeight = FontWeight.ExtraBold,
                         overflow = TextOverflow.Visible
                     )
                 }
+                Spacer(Modifier.height(10.dp))
                 MyCheckBox(text = stringResource(R.string.fetch), value = fetchChecked)
                 MyCheckBox(text = stringResource(R.string.push), value = pushChecked)
             }
