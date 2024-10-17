@@ -37,7 +37,7 @@ object PrefMan {
         const val theme = "theme"
     }
 
-    fun getPrefs(appContext: Context) = appContext.getSharedPreferences(fileName, MODE_PRIVATE)
+    private fun getPrefs(appContext: Context) = appContext.getSharedPreferences(fileName, MODE_PRIVATE)
 
     fun get(appContext: Context, key:String, defaultValue:String):String {
         try {

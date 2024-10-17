@@ -132,22 +132,39 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val languageCode = LanguageUtil.get(newBase)
-        if(LanguageUtil.isSupportLanguage(languageCode)) {
-            // split language codes, e.g. split "zh-rCN" to "zh" and "CN"
-            val (language, country) = LanguageUtil.splitLanguageCode(languageCode)
-            val locale = if(country.isBlank()) Locale(language) else Locale(language, country)
-            Locale.setDefault(locale)
-            val config = newBase.resources.configuration
-            config.setLocale(locale)
-            config.setLayoutDirection(locale)
-            val context = newBase.createConfigurationContext(config)
-//            super.attachBaseContext(ContextWrapper(context))   // chatgpt say no need ContextWrapper in this usage case
-            super.attachBaseContext(context)
-        }else {  // auto detected or unsupported language
+        try {
+            // check language
+            val languageCode = LanguageUtil.getLangCode(newBase)
+            if(!LanguageUtil.isSupportedLanguage(languageCode)) {
+                // here should run faster as possible, throw Exception is bad for running speed
+//               // throw RuntimeException("found unsupported lang in config, will try auto detect language")
+
+                // auto detected or unsupported language
+                super.attachBaseContext(newBase)
+                return
+            }
+
+
+            // found supported language
+            super.attachBaseContext(createContextByLanguageCode(languageCode, newBase))
+        }catch (e:Exception) {
+            MyLog.e(TAG, "#attachBaseContext err: ${e.localizedMessage}")
+
+            // auto detected or unsupported language
             super.attachBaseContext(newBase)
         }
 
+    }
+
+    private fun createContextByLanguageCode(languageCode: String, baseContext: Context): Context {
+        // split language codes, e.g. split "zh-rCN" to "zh" and "CN"
+        val (language, country) = LanguageUtil.splitLanguageCode(languageCode)
+        val locale = if (country.isBlank()) Locale(language) else Locale(language, country)
+        Locale.setDefault(locale)
+        val config = baseContext.resources.configuration
+        config.setLocale(locale)
+        config.setLayoutDirection(locale)
+        return baseContext.createConfigurationContext(config)
     }
 
 //

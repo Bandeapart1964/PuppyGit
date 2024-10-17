@@ -546,15 +546,11 @@ private fun replaceStringRes(strRes:String, placeHolderCount:Int, strWillReplace
 }
 //替换string resource 中的placeholder为目标字符
 fun replaceStringResList(strRes:String, strWillReplacedList:List<String>):String {
-    var ret=""
+    var ret=strRes
     for((idx, str) in strWillReplacedList.withIndex()) {
         val idxPlus1 = idx+1
-        //第一次循环时，使用初始的字符串
-        if(idxPlus1 == 1){
-            ret = replaceStringRes(strRes,idxPlus1,str)
-        }else { //后续循环使用已赋值的字符串
-            ret = replaceStringRes(ret,idxPlus1,str)
-        }
+
+        ret = replaceStringRes(ret, idxPlus1, str)
     }
 
     return ret;

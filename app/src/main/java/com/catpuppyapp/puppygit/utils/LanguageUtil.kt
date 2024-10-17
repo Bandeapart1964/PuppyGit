@@ -1,6 +1,7 @@
 package com.catpuppyapp.puppygit.utils
 
 import android.content.Context
+import com.catpuppyapp.puppygit.constants.LangCode
 import com.catpuppyapp.puppygit.play.pro.R
 
 
@@ -10,27 +11,31 @@ object LanguageUtil {
     private val key = PrefMan.Key.lang
 
     val languageCodeList = listOf(
-        "",  // auto detected
-        "en",
-        "zh-rCN",
+        LangCode.auto,
+        LangCode.en,
+        LangCode.zh_cn,
         // other language...
     )
 
 
-    fun get(appContext: Context):String{
+    fun getLangCode(appContext: Context):String {
         return PrefMan.get(appContext, key, "")
     }
 
-    fun set(appContext: Context, value:String) {
-        PrefMan.set(appContext, key, value)
+    fun setLangCode(appContext: Context, langCode:String) {
+        PrefMan.set(appContext, key, langCode)
+    }
+
+    fun isAuto(langCode: String):Boolean {
+        return langCode == LangCode.auto || langCode.isBlank()
     }
 
     /**
      * return true if `langCode` is not auto detected(empty string) and is supported
      */
-    fun isSupportLanguage(langCode:String):Boolean {
+    fun isSupportedLanguage(langCode:String, treatAutoAsUnsupported:Boolean=true):Boolean {
         // auto detected not represented any language, so return false
-        if(langCode.isBlank()) {
+        if(treatAutoAsUnsupported && isAuto(langCode)) {
             return false
         }
 
@@ -43,11 +48,11 @@ object LanguageUtil {
             return appContext.getString(R.string.auto)
         }
 
-        if(languageCode == "en") {
+        if(languageCode == LangCode.en) {
             return appContext.getString(R.string.lang_name_english)
         }
 
-        if(languageCode == "zh-rCN") {
+        if(languageCode == LangCode.zh_cn) {
             return appContext.getString(R.string.lang_name_chinese_simplified)
         }
 

@@ -431,7 +431,7 @@
     <string name="about">关于</string>
     <string name="app_icon">App图标</string>
     <string name="contact_author">联系作者</string>
-    <string name="powered_by_open_source">Powered by Open Source</string>
+    <string name="powered_by_open_source">由开源赋能</string>
     <string name="err_get_export_dir_failed">错误:获取导出目录失败!</string>
     <string name="export_success">导出成功</string>
     <string name="export_failed">导出失败</string>

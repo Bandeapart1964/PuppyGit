@@ -78,7 +78,7 @@ fun SettingsInnerPage(
     val selectedTheme = rememberSaveable { mutableIntStateOf(PrefMan.getInt(appContext, PrefMan.Key.theme, Theme.defaultThemeValue)) }
 
     val languageList = LanguageUtil.languageCodeList
-    val selectedLanguage = rememberSaveable { mutableStateOf(LanguageUtil.get(appContext)) }
+    val selectedLanguage = rememberSaveable { mutableStateOf(LanguageUtil.getLangCode(appContext)) }
 
     val logLevelList = MyLog.logLevelList
     val selectedLogLevel = rememberSaveable { mutableStateOf(MyLog.getCurrentLogLevel()) }
@@ -247,8 +247,8 @@ fun SettingsInnerPage(
                     menuItemOnClick = { index, value ->
                         selectedLanguage.value = value
 
-                        if(value != LanguageUtil.get(appContext)) {
-                            LanguageUtil.set(appContext, value)
+                        if(value != LanguageUtil.getLangCode(appContext)) {
+                            LanguageUtil.setLangCode(appContext, value)
                         }
                     },
                     menuItemSelected = {index, value ->
