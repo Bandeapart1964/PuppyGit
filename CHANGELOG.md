@@ -1,3 +1,8 @@
+1.0.5.6v32 - 20241017:
+- fixed few minor bugs
+- improved chinese translation
+
+
 1.0.5.5v31 - 20241016:
 - rename app name to PuppyGit, no more Pro suffix ever
 - support chinese
