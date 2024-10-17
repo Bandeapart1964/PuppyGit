@@ -83,7 +83,12 @@ class MainActivity : ComponentActivity() {
 //        println("applicationContext.getExternalFilesDir(null)="+applicationContext.getExternalFilesDir(null))  // /storage/emulated/0/Android/data/com.catpuppyapp.puppygit/files
 //        println("getShortUuid():::"+getShortUuid())
 
-        AppModel.init_1(applicationContext = applicationContext, exitApp = {finish()})
+        // applicationContext, life time with app process, save reference has low risk of memory leak,
+        // but some cases can't get properly resources (such as you switched language, but use applicationContext.getString() still get english),
+//      //  AppModel.init_1(applicationContext = applicationContext, exitApp = {finish()})
+
+        // baseContext, life time with activity, can get properly resources, but save reference to static field will increase risk of memory leak
+        AppModel.init_1(applicationContext = baseContext, exitApp = {finish()})
 
         //for make imePadding() work
         WindowCompat.setDecorFitsSystemWindows(window, false)

@@ -444,7 +444,16 @@ class AppModel {
         }
     }
 
-    @Deprecated("用 `LocalContext.current` 替代，但别删，没准以后还用到")
+    /**
+     * long long ago, this is applicationContext get from Activity, but now, this maybe is baseContext of Activity,
+     * baseContext bundled with Activity, save it's reference may cause memory leak;
+     * applicationContext bundled with App (process maybe?), save it's reference more time is safe, but it can't get properly resources in some cases,
+     * e.g. when call context.getString(), baseContext can get string resource with correct language, but applicationContext maybe can't,
+     * that's why I save baseContext rather than applicationContext
+     *
+     * update this reference in Activity#onCreate can reduce risk of mem leak, but maybe still will make mem clean delay than usual
+     */
+    @Deprecated("use `LocalContext.current` instead, but this already many usages, so, keep it for now")
     lateinit var appContext:Context
 
     //mainActivity

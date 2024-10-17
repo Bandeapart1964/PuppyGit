@@ -622,8 +622,8 @@
     <string name="not_current">非当前分支</string>
     <string name="is_published">已发布</string>
     <string name="not_published">未发布</string>
-    <string name="is_grafted">嫁接而来</string>
-    <string name="not_grafted">未嫁接</string>
+    <string name="is_grafted">是嫁接</string>
+    <string name="not_grafted">非嫁接</string>
     <string name="show_in_list">在列表显示</string>
     <string name="diff_to_local">比较本地</string>
     <string name="reverse">反转</string>
