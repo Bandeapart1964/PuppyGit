@@ -656,7 +656,8 @@ fun CommitListScreen(
 
     val requireBlinkIdx = rememberSaveable{mutableIntStateOf(-1)}
 
-    val filterListState =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filterListState", LazyListState(0,0))
+//    val filterListState =mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filterListState", LazyListState(0,0))
+    val filterListState = rememberLazyListState()
     val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else listState.firstVisibleItemIndex } }
 //    ScrollListener(
@@ -670,7 +671,7 @@ fun CommitListScreen(
     scrollingDown.value = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
-                filterListState.value.firstVisibleItemIndex
+                filterListState.firstVisibleItemIndex
             } else {
                 listState.firstVisibleItemIndex
             }
@@ -1266,7 +1267,7 @@ fun CommitListScreen(
                     icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                 ) {
                     if(enableFilterState.value) {
-                        UIHelper.scrollToItem(scope, filterListState.value, 0)
+                        UIHelper.scrollToItem(scope, filterListState, 0)
                     }else {
                         UIHelper.scrollToItem(scope, listState, 0)
                     }
@@ -1494,10 +1495,11 @@ fun CommitListScreen(
             list.value
         }
 
-        val listState = if(enableFilter) rememberLazyListState() else listState
-        if(enableFilter) {  //更新filter列表state
-            filterListState.value = listState
-        }
+        val listState = if(enableFilter) filterListState else listState
+//        if(enableFilter) {  //更新filter列表state
+//            filterListState.value = listState
+//        }
+
         //更新是否启用filter
         enableFilterState.value = enableFilter
 

@@ -135,7 +135,7 @@ fun RepoInnerPage(
     repoPageScrollingDown:MutableState<Boolean>,
     repoPageFilterModeOn:MutableState<Boolean>,
     repoPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
-    filterListState:CustomStateSaveable<LazyListState>,
+    filterListState:LazyListState,
     openDrawer:()->Unit,
     showImportRepoDialog:MutableState<Boolean>,
     goToThisRepoId:MutableState<String>
@@ -1014,7 +1014,7 @@ fun RepoInnerPage(
     }
 
     val getCurActiveListState = {
-        if(repoPageFilterModeOn.value) filterListState.value else repoPageListState
+        if(repoPageFilterModeOn.value) filterListState else repoPageListState
     }
 
 
@@ -1266,7 +1266,7 @@ fun RepoInnerPage(
     repoPageScrollingDown.value = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
-                filterListState.value.firstVisibleItemIndex
+                filterListState.firstVisibleItemIndex
             } else {
                 repoPageListState.firstVisibleItemIndex
             }
@@ -1307,10 +1307,8 @@ fun RepoInnerPage(
             repoList.value
         }
 
-        val listState = if(enableFilter) rememberLazyListState() else repoPageListState
-        if(enableFilter) {  //更新filter列表state
-            filterListState.value = listState
-        }
+        val listState = if(enableFilter) filterListState else repoPageListState
+
         //更新是否启用filter
         enableFilterState.value = enableFilter
 

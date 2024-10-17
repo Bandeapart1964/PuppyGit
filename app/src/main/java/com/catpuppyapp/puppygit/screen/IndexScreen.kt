@@ -96,7 +96,8 @@ fun IndexScreen(
     )
     val changeListPageFilterModeOn = rememberSaveable { mutableStateOf(false)}
 
-    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
+//    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
+    val changelistFilterListState = rememberLazyListState()
 
     val swap =rememberSaveable { mutableStateOf(false)}
 
@@ -203,7 +204,7 @@ fun IndexScreen(
                     icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                 ) {
                     if(changeListPageFilterModeOn.value) {
-                        UIHelper.scrollToItem(scope, changelistFilterListState.value, 0)
+                        UIHelper.scrollToItem(scope, changelistFilterListState, 0)
                     }else {
                         UIHelper.scrollToItem(scope, changeListPageItemListState, 0)
                     }

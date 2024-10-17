@@ -619,11 +619,12 @@ fun RemoteListScreen(
     // 向下滚动监听，开始
     val scrollingDown = remember { mutableStateOf(false) }
 
-    val filterListState = mutableCustomStateOf(
-        keyTag = stateKeyTag,
-        keyName = "filterListState",
-        LazyListState(0,0)
-    )
+    val filterListState = rememberLazyListState()
+//    val filterListState = mutableCustomStateOf(
+//        keyTag = stateKeyTag,
+//        keyName = "filterListState",
+//        LazyListState(0,0)
+//    )
     val enableFilterState = rememberSaveable { mutableStateOf(false)}
 //    val firstVisible = remember { derivedStateOf { if(enableFilterState.value) filterListState.value.firstVisibleItemIndex else lazyListState.firstVisibleItemIndex } }
 //    ScrollListener(
@@ -637,7 +638,7 @@ fun RemoteListScreen(
     scrollingDown.value = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
-                filterListState.value.firstVisibleItemIndex
+                filterListState.firstVisibleItemIndex
             } else {
                 lazyListState.firstVisibleItemIndex
             }
@@ -761,7 +762,7 @@ fun RemoteListScreen(
                     icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                 ) {
                     if(enableFilterState.value) {
-                        UIHelper.scrollToItem(scope, filterListState.value, 0)
+                        UIHelper.scrollToItem(scope, filterListState, 0)
                     }else {
                         UIHelper.scrollToItem(scope, lazyListState, 0)
                     }
@@ -860,10 +861,10 @@ fun RemoteListScreen(
             }else {
                 list.value
             }
-            val listState = if(enableFilter) rememberLazyListState() else lazyListState
-            if(enableFilter) {  //更新filter列表state
-                filterListState.value = listState
-            }
+            val listState = if(enableFilter) filterListState else lazyListState
+//            if(enableFilter) {  //更新filter列表state
+//                filterListState.value = listState
+//            }
             //更新是否启用filter
             enableFilterState.value = enableFilter
 

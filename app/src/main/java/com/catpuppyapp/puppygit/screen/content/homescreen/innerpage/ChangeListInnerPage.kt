@@ -162,7 +162,7 @@ fun ChangeListInnerPage(
     changelistPageScrollingDown:MutableState<Boolean>,
     changeListPageFilterModeOn:MutableState<Boolean>,
     changeListPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
-    filterListState:CustomStateSaveable<LazyListState>,
+    filterListState:LazyListState,
     swap:Boolean,
     commitForQueryParents:String,
     rebaseCurOfAll:MutableState<String>? = null,  //ChangeList页面和Index页面需要此参数，treeToTree不需要
@@ -2212,7 +2212,7 @@ fun ChangeListInnerPage(
     changelistPageScrollingDown.value = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
-                filterListState.value.firstVisibleItemIndex
+                filterListState.firstVisibleItemIndex
             } else {
                 itemListState.firstVisibleItemIndex
             }
@@ -3114,10 +3114,11 @@ fun ChangeListInnerPage(
                     itemList.value
                 }
 
-                val listState = if(enableFilter) rememberLazyListState() else itemListState
-                if(enableFilter) {  //更新filter列表state
-                    filterListState.value = listState
-                }
+                val listState = if(enableFilter) filterListState else itemListState
+//                if(enableFilter) {  //更新filter列表state
+//                    filterListState.value = listState
+//                }
+
                 //更新是否启用filter
                 enableFilterState.value = enableFilter
 

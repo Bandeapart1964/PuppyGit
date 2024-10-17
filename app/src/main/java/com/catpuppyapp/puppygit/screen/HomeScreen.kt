@@ -270,10 +270,13 @@ fun HomeScreen(
     val showSetGlobalGitUsernameAndEmailDialog = rememberSaveable { mutableStateOf(false)}
 
 
-    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
+//    val changelistFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "changelistFilterListState", LazyListState(0,0))
+    val changelistFilterListState = rememberLazyListState()
 
-    val filesFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filesFilterListState", LazyListState(0,0));
-    val repoFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "repoFilterListState", LazyListState(0,0))
+//    val filesFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filesFilterListState", LazyListState(0,0));
+//    val repoFilterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "repoFilterListState", LazyListState(0,0))
+    val filesFilterListState = rememberLazyListState()
+    val repoFilterListState = rememberLazyListState()
 
     //当前展示的文件的canonicalPath
     val editorPageShowingFilePath = rememberSaveable { mutableStateOf("")}
@@ -803,7 +806,7 @@ fun HomeScreen(
                         icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                     ) {
                         if(changeListPageFilterModeOn.value) {
-                            UIHelper.scrollToItem(scope, changelistFilterListState.value, 0)
+                            UIHelper.scrollToItem(scope, changelistFilterListState, 0)
                         }else{
                             UIHelper.scrollToItem(scope, changeListPageItemListState, 0)
                         }
@@ -815,7 +818,7 @@ fun HomeScreen(
                         icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                     ) {
                         if(repoPageFilterModeOn.value) {
-                            UIHelper.scrollToItem(scope, repoFilterListState.value, 0)
+                            UIHelper.scrollToItem(scope, repoFilterListState, 0)
                         }else{
                             UIHelper.scrollToItem(scope, repoPageListState, 0)
                         }
@@ -827,7 +830,7 @@ fun HomeScreen(
                         icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
                     ) {
                         if(filesPageSimpleFilterOn.value) {
-                            UIHelper.scrollToItem(scope, filesFilterListState.value, 0)
+                            UIHelper.scrollToItem(scope, filesFilterListState, 0)
                         }else{
                             UIHelper.scrollToItem(scope, filesPageListState.value, 0)
                         }

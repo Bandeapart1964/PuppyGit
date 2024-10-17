@@ -146,7 +146,7 @@ fun FilesInnerPage(
     filesPageSimpleFilterKeyWord:CustomStateSaveable<TextFieldValue>,
     filesPageScrollingDown:MutableState<Boolean>,
     curListState:CustomStateSaveable<LazyListState>,
-    filterListState:CustomStateSaveable<LazyListState>,
+    filterListState:LazyListState,
 
     openDrawer:()->Unit,
     isFileSelectionMode:MutableState<Boolean>,
@@ -795,7 +795,7 @@ fun FilesInnerPage(
     filesPageScrollingDown.value = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
-                filterListState.value.firstVisibleItemIndex
+                filterListState.firstVisibleItemIndex
             } else {
                 curListState.value.firstVisibleItemIndex
             }
@@ -1092,10 +1092,10 @@ fun FilesInnerPage(
                 }
 
 
-                val listState = if(enableFilter) rememberLazyListState() else curListState.value
-                if(enableFilter) {  //更新filter列表state
-                    filterListState.value = listState
-                }
+                val listState = if(enableFilter) filterListState else curListState.value
+//                if(enableFilter) {  //更新filter列表state
+//                    filterListState.value = listState
+//                }
                 //更新是否启用filter
                 enableFilterState.value = enableFilter
 
