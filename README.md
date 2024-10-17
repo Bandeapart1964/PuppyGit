@@ -71,8 +71,15 @@ note: you should not change the passwords of old versions of password encryptors
 
 ## Help translate
 1. Download <a href="https://github.com/Bandeapart1964/PuppyGit/blob/main/app/src/main/res/values/strings.xml">strings.xml</a>
-2. Translate the file's values to your language, e.g. &lt;help&gt;help translate&lt;/help&gt; to &lt;help&gt;帮助翻译&lt;/help&gt;
-3. Create a issue attaching the file you already translated, the issue should tell which language you traslated to
+2. Translate the file's values to your language, e.g.
+```
+<help>help translate</help>
+```
+to
+```
+<help>帮助翻译</help>
+```
+3. Create a issue attaching the file you was translated, the issue should tell which language you traslated to
 
 Then I'll add your language into PuppyGit in furthur version
 
