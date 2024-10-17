@@ -146,8 +146,8 @@
 <!--    <string name="go_to_index_page">Go to Index page</string>-->
     <string name="no_repo_for_shown">无仓库可显示</string>
     <string name="end_of_the_list">--- 列表末尾 ---</string>
-    <string name="commit_selected_and_index_items_then_sync">提交索引区和选中的条目，然后执行同步</string>
-    <string name="commit_selected_and_index_items">提交索引区和选中的条目</string>
+    <string name="commit_selected_and_index_items_then_sync">提交索引和选中的条目，然后执行同步</string>
+    <string name="commit_selected_and_index_items">提交索引和选中的条目</string>
     <string name="select_all">选择所有</string>
     <string name="stage">暂存</string>
     <string name="no_item_selected">未选择条目</string>
@@ -184,7 +184,7 @@
     <string name="sync_success">同步成功!</string>
     <string name="unstage">取消暂存</string>
     <string name="unstage_success">取消暂存成功</string>
-    <string name="index">索引区</string>
+    <string name="index">索引</string>
     <string name="push">推送</string>
     <string name="pull">拉取</string>
     <string name="sync">同步</string>
@@ -259,7 +259,7 @@
     <string name="commit">提交</string>
     <string name="stage_all_failed">暂存所有失败</string>
     <string name="item_list_is_empty">条目列表为空</string>
-    <string name="index_is_empty">索引区为空</string>
+    <string name="index_is_empty">索引为空</string>
     <string name="gen_commit_msg_err_commit_abort">生成提交信息错误，提交中止！</string>
     <string name="create_branch_based_on">创建分支，基于</string>
     <string name="warn_please_commit_your_change_before_checkout_or_merge">警告：检出或合并前请先提交修改，否则可能导致 [数据丢失]！</string>
@@ -342,7 +342,7 @@
     <string name="unlink_credential">解除关联凭据</string>
     <string name="fetch_all_success">下载全部成功</string>
     <string name="linked_credential">已关联凭据</string>
-    <string name="open_last">打开上个文件</string>
+    <string name="open_last">打开最后编辑文件</string>
     <string name="are_you_sure_to_delete">确定删除吗？</string>
     <string name="remove_from_git">从git移除</string>
     <string name="will_remove_selected_items_from_git_are_u_sure">将从git移除选中条目，你确定吗？</string>
@@ -374,9 +374,9 @@
     <string name="do_you_want_save_before_close_file">关闭文件前你想先保存吗？</string>
     <string name="reopen">重新打开</string>
     <string name="no_items_for_shown">无条目可显示</string>
-    <string name="index_clean">索引区无修改</string>
+    <string name="index_clean">索引无修改</string>
     <string name="work_tree_clean">工作目录无修改</string>
-    <string name="index_dirty">索引区有未提交的修改</string>
+    <string name="index_dirty">索引有未提交的修改</string>
     <string name="local_ahead_upstream">本地领先上游</string>
     <string name="local_behind_upstream">本地落后上游</string>
     <string name="already_up_to_date_with_upstream">已是最新</string>
@@ -402,8 +402,8 @@
     <string name="err_file_doesnt_exist_anymore">错误: 文件已不存在!</string>
     <string name="unstaging">取消暂存中…</string>
     <string name="will_unstage_are_u_sure">将取消暂存选中条目，你确定吗？</string>
-    <string name="commit_all_index_items_then_sync">提交索引区全部条目并同步</string>
-    <string name="commit_all_index_items">提交索引区全部条目</string>
+    <string name="commit_all_index_items_then_sync">提交索引全部条目并同步</string>
+    <string name="commit_all_index_items">提交索引全部条目</string>
     <string name="go_to_top">前往顶部</string>
     <string name="filter_files">过滤文件</string>
     <string name="input_keyword">输入关键字</string>
@@ -538,7 +538,7 @@
     <string name="del_files_on_disk">删除硬盘上的文件</string>
     <string name="show_in_files">在文件页面显示</string>
     <string name="file_doesnt_exist">文件不存在</string>
-    <string name="show_last_in_files">在文件页面显示上一文件</string>
+    <string name="show_last_in_files">在文件页面显示最后编辑文件</string>
     <string name="err_name_is_empty">错误: 名称为空!</string>
     <string name="err_url_is_empty">错误: 地址为空</string>
     <string name="url_not_changed">地址未改变</string>
@@ -595,7 +595,7 @@
     <string name="push_tags">推送标签</string>
     <string name="warn_if_tag_name_already_exists_will_override">警告: 如果标签名已存在，将覆盖</string>
     <string name="deleting_remote_tags">删除远程标签</string>
-    <string name="tag_oid">标签Oid</string>
+    <string name="tag_oid">标签oid</string>
     <string name="no_tags_found">未发现标签</string>
     <string name="or_str">或</string>
     <string name="warn_remote_tag_override_local_tag">警告: 远程将强制覆盖本地同名标签，即使本地领先于远程</string>
@@ -604,9 +604,9 @@
     <string name="note_as_default_local_will_override_remote_tags">注意: 默认情况下, 对于轻量分支, 如果本地标签提交号领先远程仓库(forwardable)，远程仓库的标签 [将被覆盖]</string>
     <string name="load_to_end">加载到末尾</string>
     <string name="creating">Creating…</string>
-    <string name="new_oid">新Oid</string>
-    <string name="old_oid">旧Oid</string>
-    <string name="stash_id">贮存 ID</string>
+    <string name="new_oid">新oid</string>
+    <string name="old_oid">旧oid</string>
+    <string name="stash_id">贮存ID</string>
     <string name="pop">弹出</string>
     <string name="apply">应用</string>
     <string name="stash">贮存</string>
@@ -681,8 +681,8 @@
     <string name="hard">硬</string>
     <string name="hash_branch_tag">哈希/分支/标签</string>
     <string name="reset_head">reset HEAD</string>
-    <string name="reset_head_index">重置 HEAD+索引区</string>
-    <string name="reset_head_index_worktree">重置 HEAD+索引区+工作目录</string>
+    <string name="reset_head_index">重置 HEAD+索引</string>
+    <string name="reset_head_index_worktree">重置 HEAD+索引+工作目录</string>
     <string name="cherrypick_state">精选</string>
     <string name="repo_state_is_merge_but_no_merge_head_found_plz_use_abort_merge_to_clean_state">仓库状态是合并但未发现合并HEAD，请中止合并以重置仓库状态</string>
     <string name="repo_state_is_rebase_but_no_rebase_head_found_plz_use_abort_rebase_to_clean_state">仓库状态是变基但未发现变基HEAD，请中止变基以重置仓库状态</string>
@@ -760,7 +760,7 @@
     <string name="will_push_local_branch_to_remote_are_you_sure">将推送本地分支到远程仓库，你确定吗？</string>
     <string name="will_force_overwrite_remote_branch_even_it_is_ahead_to_local">将强制覆盖远程分支，即使它领先本地分支</string>
     <string name="failed_resolve_commit_by_user_input">根据用户输入解析提交失败</string>
-    <string name="tag_oid_invalid">标签 Oid 无效</string>
+    <string name="tag_oid_invalid">标签oid无效</string>
     <string name="upstream_full_name">上游全名</string>
     <string name="is_symbolic">是符号</string>
     <string name="not_symbolic">非符号</string>
@@ -768,7 +768,7 @@
     <string name="symbolic_target_full_name">符号目标全名</string>
     <string name="has_upstream">有上游</string>
     <string name="no_upstream">无上游</string>
-    <string name="last_commit_full_oid">最后一个提交的完整oid</string>
+    <string name="last_commit_full_oid">最后提交完整oid</string>
     <string name="go_upstream">转到上游</string>
     <string name="upstream_not_set_or_not_published">未设置或未发布上游</string>
     <string name="upstream_not_found">未找到上游</string>
