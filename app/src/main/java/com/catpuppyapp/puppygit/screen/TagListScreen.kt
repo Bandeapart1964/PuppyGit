@@ -137,8 +137,8 @@ fun TagListScreen(
     val nameOfNewTag = rememberSaveable { mutableStateOf("")}
     val overwriteIfNameExistOfNewTag = rememberSaveable { mutableStateOf(false)}
     val showDialogOfNewTag = rememberSaveable { mutableStateOf(false)}
-    val hashOfNewTag = rememberSaveable { mutableStateOf( "")}
-    val msgOfNewTag = rememberSaveable { mutableStateOf( "")}
+    val hashOfNewTag = rememberSaveable { mutableStateOf("HEAD")}  // set init value to HEAD
+    val msgOfNewTag = rememberSaveable { mutableStateOf("")}
 //    val requireUserInputHashOfNewTag = StateUtil.getRememberSaveableState(initValue = false)
     val annotateOfNewTag = rememberSaveable { mutableStateOf(false)}
     val initNewTagDialog = { hash:String ->
