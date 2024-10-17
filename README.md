@@ -71,17 +71,12 @@ note: you should not change the passwords of old versions of password encryptors
 
 ## Help translate
 1. Download <a href="https://github.com/Bandeapart1964/PuppyGit/blob/main/app/src/main/res/values/strings.xml">strings.xml</a>
-2. Translate the file's values to your language, e.g.
-```
-<help>help translate</help>
-```
-to
-```
-<help>帮助翻译</help>
-```
+2. Translate the file's values to your language, e.g.```<help>help translate</help>```to```<help>帮助翻译</help>```
 3. Create a issue attaching the file you was translated, the issue should tell which language you traslated to
 
 Then I'll add your language into PuppyGit in furthur version
+
+*NOTE: the string in strings.xml like "ph_a3f241dc_NUMBER" are place holders, the last NUMBER is order, e.g. a string resource ```<str1>name: ph_a3f241dc_1, age: ph_a3f241dc_2</str1>```, will replaced when running, it maybe will show as: ```"name: abc, age: 123"```, if you have mistake with the order number, e.g.```<str1>name: ph_a3f241dc_2, age: ph_a3f241dc_1</str1>```, it may cause app show wrong text like ```"name: 123, age: abc"```
 
 
 ## Comments in codes
