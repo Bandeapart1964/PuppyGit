@@ -70,10 +70,16 @@ note: you should not change the passwords of old versions of password encryptors
 
 
 ## Help translate
-now this app only support english, the english language file at src/main/res/values/strings.xml, you can translate it to your language, then send a pr
+1. Download <a href="https://github.com/Bandeapart1964/PuppyGit/blob/main/app/src/main/res/values/strings.xml">strings.xml</a>
+2. Translate the file's values to your language, e.g.```<help>help translate</help>```to```<help>帮助翻译</help>```
+3. Create a issue attaching the file you was translated, the issue should tell which language you traslated to
+
+Then I'll add your language into PuppyGit in furthur version
+
+*NOTE: the string in strings.xml like "ph_a3f241dc_NUMBER" are place holders, the last NUMBER is order, e.g. a string resource ```<str1>name: ph_a3f241dc_1, age: ph_a3f241dc_2</str1>```, will replaced when running, it maybe will show as: ```"name: abc, age: 123"```, if you have mistake with the order number, e.g.```<str1>name: ph_a3f241dc_2, age: ph_a3f241dc_1</str1>```, it may cause app show wrong text like ```"name: 123, age: abc"```
 
 
-## Comments in codes
+## Comments in code
 this project has many chinese comments, and some comments are out-of-date or nonsense, I have no plan clean them, but if you read the codes, and you wonder know some comments meaning, try translator or ask me is ok
 
 
