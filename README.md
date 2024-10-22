@@ -51,6 +51,11 @@ Not only sync codes, You can use PuppyGit sync your notes repository create by n
 - support more encoding for Editor(now only supported utf8)
 - view commit history as a interactable tree
 - view history of file(plan: add menu item in Files page single item menu, and Editor page top bar menu. if file is not in a git repo, show a toast)
+- Files: support more order methods(order by name, order by date, desc, asc, etc), and each path can have difference order method(path and order method should save to a single config file like file opend history for avoid settings file oversized)
+- Files: support override or rename for copy/move when target and src have same name
+- ChangeList: support group by folder
+- ChangeList: support show/hide submodules
+- ChangeList: support show folder first(order method)
 
 
 ## About ssh
