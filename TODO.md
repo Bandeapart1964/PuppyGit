@@ -16,3 +16,5 @@
 - signed commits (by gpg key)
 - support ssh
 - git blame
+- optional: can disable auto loading when go to ChangeList (for avoid this case: go to ChangeList, but the repo is not you want, and page loading, you can't switch repo...stucked... but actually, have workaround, go to Files or Repos page can direct show ChangeList of selected repo)
+
