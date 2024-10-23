@@ -56,6 +56,7 @@ Not only sync codes, You can use PuppyGit sync your notes repository create by n
 - ChangeList: support group by folder(try use different status options, if good, no need group by myself)(should expend when clicked a folder, if it is not a submodule or git repo. and can view diff content when clicked a file under a folder. and should make sure it can't stage a folder when it is a git repo under other repo but isn't a submodule)
 - ChangeList: support show/hide submodules(try different status opts, if good, no need implement by myself)
 - ChangeList: support show folder first(order method)
+- add go to bottom for every go to top fab(column layout, upside icon, clicked go to top, bottom icon, clicked go to bottom)
 
 
 ## About ssh
