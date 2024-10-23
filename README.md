@@ -57,8 +57,9 @@ Not only sync codes, You can use PuppyGit sync your notes repository create by n
 - ChangeList: support show/hide submodules(try different status opts, if good, no need implement by myself)
 - ChangeList: support show folder first(order method)
 - add go to bottom for every go to top fab(column layout, upside icon, clicked go to top, bottom icon, clicked go to bottom)
-- signed commits
-- support ssh remote url
+- signed commits (by gpg key)
+- support ssh
+- git blame
 
 
 ## About ssh
