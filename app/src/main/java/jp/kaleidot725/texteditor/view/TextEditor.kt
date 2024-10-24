@@ -65,7 +65,9 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
+import com.catpuppyapp.puppygit.utils.getFormatTimeFromSec
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
+import com.catpuppyapp.puppygit.utils.getSystemDefaultTimeZoneOffset
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import jp.kaleidot725.texteditor.controller.EditorController
@@ -353,6 +355,7 @@ fun TextEditor(
             val file = File(fileFullPath)
             val fileSize = getHumanReadableSizeStr(file.length())
             val (charsCount, linesCount) = editableController.getCharsAndLinesCount()
+            val lastModifiedTimeStr = getFormatTimeFromSec(sec=file.lastModified()/1000, offset = getSystemDefaultTimeZoneOffset())
             val sb = StringBuilder()
 
             sb.appendLine(appContext.getString(R.string.file_name)+": "+file.name).appendLine()
@@ -361,7 +364,10 @@ fun TextEditor(
                 .appendLine(appContext.getString(R.string.chars)+": "+charsCount).appendLine()
                 .appendLine(appContext.getString(R.string.lines) +": "+linesCount).appendLine()
 
-                .appendLine(appContext.getString(R.string.file_size)+": "+fileSize)
+                .appendLine(appContext.getString(R.string.file_size)+": "+fileSize).appendLine()
+                .appendLine(appContext.getString(R.string.last_modified)+": "+lastModifiedTimeStr)
+
+
 
             detailsStr.value = sb.toString()
             showDetailsDialog.value = true

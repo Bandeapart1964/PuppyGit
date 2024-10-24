@@ -952,6 +952,7 @@
     <string name="if_you_want_to_clone_repo_into_external_storage_this_permission_is_required">如果你想克隆仓库到外部存储，这个权限是必须的。</string>
     <string name="merge_left_into_right">合并 \'ph_a3f241dc_1\' 到 \'ph_a3f241dc_2\'</string>
     <string name="rebase_left_onto_right">使 \'ph_a3f241dc_1\' 基于 \'ph_a3f241dc_2\'</string>
+    <string name="last_modified">最后修改</string>
 
 
 </resources>

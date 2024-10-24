@@ -1544,6 +1544,12 @@ fun FilesInnerPage(
                                 Text(text = stringResource(R.string.path)+": "+item.fullPath)
                             }
 
+                            Spacer(modifier = Modifier.height(15.dp))
+
+                            Row {
+                                Text(text = stringResource(R.string.last_modified)+": "+item.lastModifiedTime)
+                            }
+
 //                            Spacer(modifier = Modifier.height(15.dp))
 
                         }
