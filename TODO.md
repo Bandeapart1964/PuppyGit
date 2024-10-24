@@ -19,4 +19,12 @@
 - optional: can disable auto loading when go to ChangeList (for avoid this case: go to ChangeList, but the repo is not you want, and page loading, you can't switch repo...stucked... but actually, have workaround, go to Files or Repos page can direct show ChangeList of selected repo)
 - support git lfs
 - optional: multi worktree manage(most time users only need 1 worktree, so this feature is low priority and optional)
+- support set color for:
+  - editor: conflict ours/theirs block
+  - diff screen: add/del/context line background
+- Diff Screen:
+  - support adjust font size
+  - support adjust line num size
+  - show/hide line num
+  - show/hide +/- sign for add/del line
 
