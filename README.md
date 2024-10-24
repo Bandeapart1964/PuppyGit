@@ -17,11 +17,11 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 ## PuppyGit + Notes App = A Free Cross-platform Sync Way!
 Not only sync codes, You can use PuppyGit sync your notes repository create by note-taking apps like: <a href="https://github.com/obsidianmd/obsidian-releases">Obsidian</a> / <a href="https://github.com/gsantner/markor">Markor</a> or Other!
 
-## about 2fa
+## 2fa
 If your github/gitlab or other platforms account enabled 2fa, you may need create a personal access token instead your password
 
-see:
-<a href=https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token>github create personal access token</a>
+see:<br>
+<a href=https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token>github create personal access token</a><br>
 <a href=https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#create-a-personal-access-token>gitlab create personal access token</a>
 
 
