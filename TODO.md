@@ -20,9 +20,9 @@
 - support git lfs
 - optional: multi worktree manage(most time users only need 1 worktree, so this feature is low priority and optional)
 - support set color for:
-  - editor: conflict ours/theirs block
-  - diff screen: add/del/context line background
-- Diff Screen:
+  - Editor: conflict ours/theirs block
+  - DiffScreen: add/del/context line background
+- DiffScreen:
   - support adjust font size
   - support adjust line num size
   - show/hide line num
