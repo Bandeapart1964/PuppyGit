@@ -27,4 +27,5 @@
   - support adjust line num size
   - show/hide line num
   - show/hide +/- sign for add/del line
+- squash commits
 
