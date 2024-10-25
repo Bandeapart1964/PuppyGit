@@ -28,4 +28,5 @@
   - show/hide line num
   - show/hide +/- sign for add/del line
 - squash commits
+- ChangeList: view difference of all changed files in one page(提供一个入口，点击进入diff页面，可预览所有修改过的文件的diff内容）
 
