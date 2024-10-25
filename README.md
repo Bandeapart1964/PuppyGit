@@ -13,7 +13,10 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 ### I am an indie developer, need Your Support Very!: <a href=https://www.patreon.com/c/catpuppyapp>My Patreon</a>
 
 ## Demo Video:
-https://youtu.be/rwQERsDXWKw
+clone repo: https://www.patreon.com/posts/puppygit-is-git-114679516
+sync your obsidian notes: https://www.patreon.com/posts/obisidian-114681158
+sync your markor notes: https://www.patreon.com/posts/markor-puppygit-114681068
+switch dark mode and chinese: https://www.patreon.com/posts/puppygit-now-and-114680923
 
 
 ## Download
