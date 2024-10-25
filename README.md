@@ -10,7 +10,7 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 
 ### If you like this app, please Star this project and share it to your friends who they need.
 
-### I am a indie developer, need Your Support Very!: <a href=https://www.patreon.com/c/catpuppyapp>My Patreon</a>
+### I am an indie developer, need Your Support Very!: <a href=https://www.patreon.com/c/catpuppyapp>My Patreon</a>
 
 ## Demo Video:
 https://youtu.be/rwQERsDXWKw
