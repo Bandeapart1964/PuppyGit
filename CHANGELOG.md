@@ -1,3 +1,9 @@
+next version:
+- fixed bug: commit history list omit commits
+- able to copy clone err msg by long pressing the err msg on err repo card
+- show last modified time in Files(selected single file) and Editor(clicked title, show file details)
+
+
 1.0.5.6v32 - 20241017:
 - fixed few minor bugs
 - improved chinese translation
