@@ -955,6 +955,7 @@
     <string name="last_modified">最后修改</string>
     <string name="is_merged">是合并而来</string>
     <string name="not_merged">非合并而来</string>
+    <string name="create_revwalk_failed_oid">创建 Revwalk 失败，oid=ph_a3f241dc_1</string>
 
 
 </resources>

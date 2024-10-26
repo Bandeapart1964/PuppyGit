@@ -67,12 +67,10 @@ import com.github.git24j.core.Tag
 import com.github.git24j.core.Tree
 import kotlinx.coroutines.channels.Channel
 import java.io.File
-import java.io.FileWriter
 import java.net.URI
 import java.nio.charset.Charset
 import java.time.ZoneOffset
 import java.util.EnumSet
-import kotlin.io.path.pathString
 
 
 private val TAG = "Libgit2Helper"
@@ -3596,30 +3594,45 @@ class Libgit2Helper {
             return createCommitDto(commitOid, allBranchList, allTagList, commit, repoId, repoIsShallow, shallowOidList)
         }
 
+        fun createRevwalk(
+            repo: Repository,
+            startOid:Oid,
+            sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(),
+        ):Revwalk?{
+
+            if(startOid==null || startOid.isNullOrEmptyOrZero) {
+                return null
+            }
+
+            val revwalk = Revwalk.create(repo)
+            // sorting first, then push a root
+            revwalk.sorting(sortMode)
+            revwalk.push(startOid)
+            return revwalk
+        }
+
         //返回值 (nextOid, CommitDtoList)，nextOid就是CommitDtoList列表里最后一个元素之后的Oid，用来实现加载更多，如果不存在下一个元素，则是null，意味着已经遍历到提交树的最初提交了
         fun getCommitList(
             repo: Repository,
+            revwalk: Revwalk,
+            initNext:Oid?,
             repoId: String,
-            startOid:Oid,
             pageSize:Int,
-            sortMode:EnumSet<SortT> = getDefaultRevwalkSortMode(),
             retList: MutableList<CommitDto>,
             loadChannel:Channel<Int>,
-
             // load to this count, check once channel
             checkChannelFrequency:Int,
-        ):Pair<Oid?, List<CommitDto>> {
+        ) {
 //            if(debugModeOn) {
 //                MyLog.d(TAG, "#getCommitList: startOid="+startOid.toString())
 //            }
 
-            if(startOid==null || startOid.isNullOrEmptyOrZero) {
-                return Pair(null, mutableListOf())
+            if(initNext == null || initNext.isNullOrEmptyOrZero) {
+                return
             }
 
-            val revwalk = Revwalk.create(repo)
-            revwalk.sorting(sortMode)
-            revwalk.push(startOid)
+            var next = initNext
+
             var count = 0
             val allBranchList = getBranchList(repo)
 
@@ -3631,7 +3644,6 @@ class Libgit2Helper {
 
             var checkChannelCount = 0
 
-            var next = revwalk.next()
             while (next!=null) {
                 try {
 //                    try {
@@ -3661,9 +3673,7 @@ class Libgit2Helper {
 //                        break
 //                    }
 
-                    if(count++ >= pageSize) {
-                        break
-                    }
+
                     val nextStr = next.toString()
                     val commit = resolveCommitByHash(repo, nextStr)
                     if(commit!=null) {
@@ -3671,19 +3681,22 @@ class Libgit2Helper {
                         //添加元素
                         retList.add(c)
                     }else {
-                        MyLog.d(TAG, "#getCommitList(): resolve commit failed, next=$nextStr")
+                        MyLog.e(TAG, "#getCommitList(): resolve commit failed, target=$nextStr")
+                    }
+
+
+                    if(++count >= pageSize) {
+                        break
                     }
 
                     //更新迭代器
                     next = revwalk.next()
                 }catch (e:Exception) {
-                    MyLog.e(TAG, "#getCommitList():err:"+e.stackTraceToString())
-                    return Pair(null, retList)
+//                    MyLog.e(TAG, "#getCommitList():err:"+e.stackTraceToString())
+                    throw e
                 }
 
             }
-
-            return Pair(next, retList)
         }
 
         //获取一个提交的所有父提交的oid字符串列表

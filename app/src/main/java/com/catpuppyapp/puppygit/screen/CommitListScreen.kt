@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -119,6 +118,7 @@ import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.catpuppyapp.puppygit.utils.withMainContext
 import com.github.git24j.core.Oid
 import com.github.git24j.core.Repository
+import com.github.git24j.core.Revwalk
 import kotlinx.coroutines.channels.Channel
 
 private val TAG = "CommitListScreen"
@@ -267,6 +267,8 @@ fun CommitListScreen(
 //        nextCommitOid.value != null &&
 //    }
 
+    val revwalk = remember { mutableStateOf<Revwalk?>(null) }
+
     val doLoadMore = doLoadMore@{ repoFullPath: String, oid: Oid, firstLoad: Boolean, forceReload: Boolean, loadToEnd:Boolean ->
         //第一次查询的时候是用head oid查询的，所以不会在这里返回
         //用全0oid替代null
@@ -290,37 +292,64 @@ fun CommitListScreen(
 
         //加载更多
         //这个用scope，似乎会随页面释放而取消任务？不知道是否需要我检查CancelException？
-        doJobThenOffLoading {
-            Repository.open(repoFullPath).use { repo ->
-                if (firstLoad) {  //如果是第一次加载或刷新页面（重新初始化页面），清下列表
-                    list.value.clear()
+        doJobThenOffLoading job@{
+            loadMoreLoading.value = true
+            loadMoreText.value = appContext.getString(R.string.loading)
+
+            try {
+                Repository.open(repoFullPath).use { repo ->
+                    if (firstLoad) {
+                        //如果是第一次加载或刷新页面（重新初始化页面），清下列表
+                        // if is first load or refresh page, clear list
+                        list.value.clear()
+
+                        //get new revwalk instance
+                        val newRevwalk = Libgit2Helper.createRevwalk(repo, oid)
+                        if(newRevwalk == null) {
+                            val oidStr = oid.toString()
+                            Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.create_revwalk_failed_oid), listOf(Libgit2Helper.getShortOidStrByFull(oidStr))))
+                            createAndInsertError(repoId, "create Revwalk failed, oid=$oidStr")
+                            return@job
+                        }
+
+                        revwalk.value = newRevwalk
+                        nextCommitOid.value = newRevwalk.next() ?: Cons.allZeroOid
+                    }
+
+                    if(nextCommitOid.value.isNullOrEmptyOrZero) {
+                        //更新变量
+                        hasMore.value = false
+                        loadMoreText.value = appContext.getString(R.string.end_of_the_list)
+                    }else {
+                        //start travel commit history
+                        Libgit2Helper.getCommitList(
+                            repo,
+                            revwalk.value!!,
+                            nextCommitOid.value,
+                            repoId,
+                            if(loadToEnd) Int.MAX_VALUE else pageSize.value,
+                            retList = list.value,  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
+                            loadChannel = loadChannel,
+                            checkChannelFrequency = settings.commitHistoryLoadMoreCheckAbortSignalFrequency
+                        )
+
+                        //update state
+                        nextCommitOid.value = revwalk.value!!.next() ?: Cons.allZeroOid
+                        hasMore.value = !nextCommitOid.value.isNullOrEmptyOrZero
+                        loadMoreText.value = if (hasMore.value) appContext.getString(R.string.load_more) else appContext.getString(R.string.end_of_the_list)
+
+                    }
+
+                    loadMoreLoading.value = false
+
                 }
 
-                loadMoreText.value = appContext.getString(R.string.loading)
-                loadMoreLoading.value = true
-
-                //开始查找
-                val (nextOid, commitList) = Libgit2Helper.getCommitList(
-                    repo,
-                    repoId,
-                    oid,
-                    if(loadToEnd) Int.MAX_VALUE else pageSize.value,
-                    retList = list.value,  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
-                    loadChannel = loadChannel,
-                    checkChannelFrequency = settings.commitHistoryLoadMoreCheckAbortSignalFrequency
-                )
-
-                //更新变量
-                nextCommitOid.value = nextOid ?: Cons.allZeroOid
-                hasMore.value = !nextCommitOid.value.isNullOrEmptyOrZero
-                loadMoreText.value = if (hasMore.value) appContext.getString(R.string.load_more) else appContext.getString(R.string.end_of_the_list)
-
-                loadMoreLoading.value = false
-
+            }catch (e:Exception) {
+                val errMsg = e.localizedMessage ?: "unknown err"
+                Msg.requireShowLongDuration(errMsg)
+                createAndInsertError(repoId, "err: $errMsg")
+                MyLog.e(TAG, "#doLoadMore: err: ${e.stackTraceToString()}")
             }
-
-//                list.value.addAll(commitList)
-//            list.requireRefreshView()
         }
     }
 
