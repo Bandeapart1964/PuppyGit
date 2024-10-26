@@ -43,8 +43,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -145,6 +147,7 @@ fun RepoInnerPage(
     val navController = AppModel.singleInstanceHolder.navController;
     val scope = rememberCoroutineScope()
 
+    val clipboardManager = LocalClipboardManager.current
 
     val cloningText = stringResource(R.string.cloning)
     val unknownErrWhenCloning = stringResource(R.string.unknown_err_when_cloning)
@@ -1362,7 +1365,11 @@ fun RepoInnerPage(
                     idx = idx,
                     needRefreshList = needRefreshRepoPage,
                     requireDelRepo = requireDelRepo,
-                    requireBlinkIdx = requireBlinkIdx
+                    requireBlinkIdx = requireBlinkIdx,
+                    copyErrMsg = {msg->
+                        clipboardManager.setText(AnnotatedString(msg))
+                        Msg.requireShow(appContext.getString(R.string.copied))
+                    }
 
                 )
                 //                            if(it.workStatus == Cons.dbRepoWorkStatusCloneErr){  //克隆错误
