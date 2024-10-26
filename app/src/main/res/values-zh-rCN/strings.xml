@@ -953,6 +953,8 @@
     <string name="merge_left_into_right">合并 \'ph_a3f241dc_1\' 到 \'ph_a3f241dc_2\'</string>
     <string name="rebase_left_onto_right">使 \'ph_a3f241dc_1\' 基于 \'ph_a3f241dc_2\'</string>
     <string name="last_modified">最后修改</string>
+    <string name="is_merged">是合并而来</string>
+    <string name="not_merged">非合并而来</string>
 
 
 </resources>

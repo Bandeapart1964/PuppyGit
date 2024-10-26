@@ -22,18 +22,29 @@ class CommitDto (
                  var tagShortNameList:MutableList<String> = mutableListOf()
 ) {
 
+    var otherMsg:String?=null
+
     fun hasOther():Boolean {
-        return isGrafted
+        return isGrafted || isMerged()
     }
 
     fun getOther():String {
-        val appContext = AppModel.singleInstanceHolder.appContext
-        val sb = StringBuilder()
-        val suffix = ", "
+        if(otherMsg==null) {
+            val appContext = AppModel.singleInstanceHolder.appContext
+            val sb = StringBuilder()
+            val suffix = ", "
 
-        sb.append(if(isGrafted) appContext.getString(R.string.is_grafted) else appContext.getString(R.string.not_grafted))
+            sb.append(if(isMerged()) appContext.getString(R.string.is_merged) else appContext.getString(R.string.not_merged)).append(suffix)
+            sb.append(if(isGrafted) appContext.getString(R.string.is_grafted) else appContext.getString(R.string.not_grafted)).append(suffix)
 
-        return sb.toString()
+            otherMsg = sb.toString().removeSuffix(suffix)
+        }
+
+        return otherMsg?:""
+    }
+
+    fun isMerged():Boolean {
+        return parentOidStrList.size>1
     }
 
     fun authorAndCommitterAreSame():Boolean {

@@ -958,5 +958,7 @@
     <string name="merge_left_into_right">merge \'ph_a3f241dc_1\' into \'ph_a3f241dc_2\'</string>
     <string name="rebase_left_onto_right">rebase \'ph_a3f241dc_1\' onto \'ph_a3f241dc_2\'</string>
     <string name="last_modified">Last Modified</string>
+    <string name="is_merged">Is Merged</string>
+    <string name="not_merged">Not Merged</string>
 
 </resources>
