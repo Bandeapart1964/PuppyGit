@@ -3664,11 +3664,16 @@ class Libgit2Helper {
                     if(count++ >= pageSize) {
                         break
                     }
-                    val commit = resolveCommitByHash(repo, next.toString())?:continue
-                    val c = createCommitDto(next, allBranchList, allTagList, commit, repoId, repoIsShallow, shallowOidList)
+                    val nextStr = next.toString()
+                    val commit = resolveCommitByHash(repo, nextStr)
+                    if(commit!=null) {
+                        val c = createCommitDto(next, allBranchList, allTagList, commit, repoId, repoIsShallow, shallowOidList)
+                        //添加元素
+                        retList.add(c)
+                    }else {
+                        MyLog.d(TAG, "#getCommitList(): resolve commit failed, next=$nextStr")
+                    }
 
-                    //添加元素
-                    retList.add(c)
                     //更新迭代器
                     next = revwalk.next()
                 }catch (e:Exception) {
