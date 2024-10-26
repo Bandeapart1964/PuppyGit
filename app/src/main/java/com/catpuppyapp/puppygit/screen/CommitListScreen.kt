@@ -270,10 +270,9 @@ fun CommitListScreen(
 //        nextCommitOid.value != null &&
 //    }
 
-    val revwalk = remember { mutableStateOf<Revwalk?>(null) }
-    val repositoryForRevWalk = remember { mutableStateOf<Repository?>(null) }
-
-    val loadLock = remember { Mutex() }
+    val revwalk = mutableCustomStateOf<Revwalk?>(stateKeyTag, "revwalk", null)
+    val repositoryForRevWalk = mutableCustomStateOf<Repository?>(stateKeyTag, "repositoryForRevWalk", null)
+    val loadLock = mutableCustomStateOf<Mutex>(stateKeyTag, "loadLock", Mutex())
 
     val doLoadMore = doLoadMore@{ repoFullPath: String, oid: Oid, firstLoad: Boolean, forceReload: Boolean, loadToEnd:Boolean ->
         //第一次查询的时候是用head oid查询的，所以不会在这里返回
@@ -299,7 +298,7 @@ fun CommitListScreen(
         //加载更多
         //这个用scope，似乎会随页面释放而取消任务？不知道是否需要我检查CancelException？
         doJobThenOffLoading job@{
-            loadLock.withLock {
+            loadLock.value.withLock {
                 loadMoreLoading.value = true
                 loadMoreText.value = appContext.getString(R.string.loading)
 
