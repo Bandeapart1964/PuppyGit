@@ -243,8 +243,8 @@ class Cons {
         val gitItemTypeDir = 2;
         val gitItemTypeSubmodule = 3;
         val gitItemTypeFileStr = "File";
-        val gitItemTypeDirStr = "Dir";
-        val gitItemTypeSubmoduleStr = "Sub";
+        val gitItemTypeDirStr = "Folder";  // use 'Folder' instead 'Dir' for distinguish with 'Dirty', else if input 'dir' as filter text, will show dirty sub and dirs
+        val gitItemTypeSubmoduleStr = "Subm";
         val gitSubmoduleDirtyStr="Dirty"  // for item type submodule, when dirty, show this at ChangeList item
         val gitDiffFromIndexToWorktree = "1";
         val gitDiffFromHeadToIndex = "2";

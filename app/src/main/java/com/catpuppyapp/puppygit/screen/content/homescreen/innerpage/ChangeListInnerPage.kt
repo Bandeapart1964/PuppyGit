@@ -3103,6 +3103,8 @@ fun ChangeListInnerPage(
                         it.fileName.lowercase().contains(k)
                                 || it.relativePathUnderRepo.lowercase().contains(k)
                                 || it.getSizeStr().lowercase().contains(k)
+                                || it.getChangeTypeAndSuffix(isDiffToLocal).lowercase().contains(k)
+                                || it.getItemTypeString().lowercase().contains(k)
                                 || it.changeType?.lowercase()?.contains(k) == true
                     }
 

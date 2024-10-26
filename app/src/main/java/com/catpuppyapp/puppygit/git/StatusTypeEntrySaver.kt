@@ -25,6 +25,8 @@ class StatusTypeEntrySaver {
 
     private var mime:MimeType? = null
 
+    private var changeTypeAndSuffix:String? = null
+    private var itemTypeString:String? = null
 //    var subs:MutableList<StatusTypeEntrySaver> = ArrayList();
 
 //    fun isDir():Boolean {
@@ -42,6 +44,31 @@ class StatusTypeEntrySaver {
 
     fun getSizeStr():String {
         return getHumanReadableSizeStr(fileSizeInBytes)
+    }
+
+    fun getChangeTypeAndSuffix(isDiffToLocal:Boolean):String {
+        if(changeTypeAndSuffix==null) {
+            val item = this
+            changeTypeAndSuffix = ((item.changeType?:"") + (if(item.itemType==Cons.gitItemTypeSubmodule) ", ${Cons.gitItemTypeSubmoduleStr+(if(isDiffToLocal && item.dirty) ", ${Cons.gitSubmoduleDirtyStr}" else "")}" else ""))
+        }
+
+        return changeTypeAndSuffix ?: ""
+    }
+
+    fun getItemTypeString():String {
+        if(itemTypeString==null) {
+            itemTypeString = if(itemType == Cons.gitItemTypeDir) {
+                Cons.gitItemTypeDirStr
+            }else if(itemType == Cons.gitItemTypeFile) {
+                Cons.gitItemTypeFileStr
+            }else if(itemType == Cons.gitItemTypeSubmodule) {
+                Cons.gitItemTypeSubmoduleStr
+            }else {
+                ""
+            }
+        }
+
+        return itemTypeString ?: ""
     }
 
     /**

@@ -141,7 +141,10 @@ fun ChangeListItem(
                 val changeTypeColor = Libgit2Helper.getChangeTypeColor(item.changeType ?: "")
                 val fontSize = 12.sp
                 Row{
-                    Text((item.changeType?:"") + (if(item.itemType==Cons.gitItemTypeSubmodule) ", ${Cons.gitItemTypeSubmoduleStr+(if(isDiffToLocal && item.dirty) ", ${Cons.gitSubmoduleDirtyStr}" else "")}" else ""), fontSize = fontSize, color = changeTypeColor)
+//                    Text((item.changeType?:"") + (if(item.itemType==Cons.gitItemTypeSubmodule) ", ${Cons.gitItemTypeSubmoduleStr+(if(isDiffToLocal && item.dirty) ", ${Cons.gitSubmoduleDirtyStr}" else "")}" else ""), fontSize = fontSize, color = changeTypeColor)
+                    Text(item.getChangeTypeAndSuffix(isDiffToLocal),
+                        fontSize = fontSize, color = changeTypeColor
+                    )
                 }
                 Row {
                     Text(text = item.getSizeStr(),fontSize = fontSize, )
