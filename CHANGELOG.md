@@ -1,4 +1,5 @@
 next version:
+- can switch Prev/Next File in DiffScreen
 - adjust go to top fab
 - fixed bug: commit history list omit commits
 - able to copy clone err msg by long pressing the err msg on err repo card
