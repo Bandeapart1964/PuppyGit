@@ -144,7 +144,7 @@ fun FilesInnerPage(
     requireInnerEditorOpenFile:(filePath:String, expectReadOnly:Boolean)->Unit,
     filesPageSimpleFilterOn:MutableState<Boolean>,
     filesPageSimpleFilterKeyWord:CustomStateSaveable<TextFieldValue>,
-    filesPageScrollingDown:MutableState<Boolean>,
+    filesPageScrolled:MutableState<Boolean>,
     curListState:CustomStateSaveable<LazyListState>,
     filterListState:LazyListState,
 
@@ -790,18 +790,28 @@ fun FilesInnerPage(
 //    ) { // onScrollDown
 //        filesPageScrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    filesPageScrollingDown.value = remember {
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
                 filterListState.firstVisibleItemIndex
             } else {
                 curListState.value.firstVisibleItemIndex
             }
-            val scrolldown = nowAt > lastAt.intValue
+
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                filesPageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束

@@ -7,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -47,6 +46,7 @@ import com.catpuppyapp.puppygit.compose.CheckoutDialog
 import com.catpuppyapp.puppygit.compose.CheckoutDialogFrom
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.FilterTextField
+import com.catpuppyapp.puppygit.compose.GoToTopAndGoToBottomFab
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyLazyColumn
@@ -68,7 +68,6 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
@@ -145,7 +144,7 @@ fun ReflogListScreen(
 
 
     // 向下滚动监听，开始
-    val scrollingDown = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(false) }
 
     val filterListState = rememberLazyListState()
 //    val filterListState = mutableCustomStateOf(
@@ -161,18 +160,27 @@ fun ReflogListScreen(
 //    ) { // onScrollDown
 //        scrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    scrollingDown.value = remember {
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
                 filterListState.firstVisibleItemIndex
             } else {
                 listState.firstVisibleItemIndex
             }
-            val scrolldown = nowAt > lastAt.intValue
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                pageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束
@@ -343,18 +351,16 @@ fun ReflogListScreen(
             )
         },
         floatingActionButton = {
-            if(scrollingDown.value) {
-                //向下滑动时显示go to top按钮
-                SmallFab(
-                    modifier = MyStyleKt.Fab.getFabModifier(),
-                    icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                ) {
-                    if(enableFilterState.value) {
-                        UIHelper.scrollToItem(scope, filterListState, 0)
-                    }else {
-                        UIHelper.scrollToItem(scope, listState, 0)
-                    }
-                }
+            if(pageScrolled.value) {
+
+                GoToTopAndGoToBottomFab(
+                    filterModeOn = enableFilterState,
+                    scope = scope,
+                    filterListState = filterListState,
+                    listState = listState,
+                    pageScrolled = pageScrolled
+                )
+
             }
         }
     ) { contentPadding ->

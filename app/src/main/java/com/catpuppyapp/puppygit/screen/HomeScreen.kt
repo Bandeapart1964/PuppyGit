@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -94,7 +93,6 @@ import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
-import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
@@ -254,7 +252,7 @@ fun HomeScreen(
         changeStateTriggerRefreshPage(needRefreshFilesPage)  //刷新页面
     }
 
-    val filesPageScrollingDown = rememberSaveable { mutableStateOf(false)}
+    val filesPageScrolled = rememberSaveable { mutableStateOf(false)}
     val filesPageListState = mutableCustomStateOf(stateKeyTag, "filesPageListState", initValue = LazyListState(0,0))
 
     val filesPageSimpleFilterOn = rememberSaveable { mutableStateOf(false)}
@@ -818,18 +816,14 @@ fun HomeScreen(
                         pageScrolled = repoPageScrolled
                     )
 
-                }else if(currentHomeScreen.intValue == Cons.selectedItem_Files && filesPageScrollingDown.value) {
-                    //向下滑动时显示go to top按钮
-                    SmallFab(
-                        modifier = MyStyleKt.Fab.getFabModifier(),
-                        icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                    ) {
-                        if(filesPageSimpleFilterOn.value) {
-                            UIHelper.scrollToItem(scope, filesFilterListState, 0)
-                        }else{
-                            UIHelper.scrollToItem(scope, filesPageListState.value, 0)
-                        }
-                    }
+                }else if(currentHomeScreen.intValue == Cons.selectedItem_Files && filesPageScrolled.value) {
+                    GoToTopAndGoToBottomFab(
+                        filterModeOn = filesPageSimpleFilterOn,
+                        scope = scope,
+                        filterListState = filesFilterListState,
+                        listState = filesPageListState.value,
+                        pageScrolled = filesPageScrolled
+                    )
                 }
             }
         ) { contentPadding ->
@@ -883,7 +877,7 @@ fun HomeScreen(
                     requireInnerEditorOpenFile,
                     filesPageSimpleFilterOn,
                     filesPageSimpleFilterKeyWord,
-                    filesPageScrollingDown,
+                    filesPageScrolled,
                     filesPageListState,
                     filterListState = filesFilterListState,
                     openDrawer = openDrawer,

@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen
 
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -25,7 +23,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -66,6 +63,7 @@ import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.compose.CreateBranchDialog
 import com.catpuppyapp.puppygit.compose.FilterTextField
+import com.catpuppyapp.puppygit.compose.GoToTopAndGoToBottomFab
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MyCheckBox
@@ -73,7 +71,6 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ResetDialog
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SetUpstreamDialog
-import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -981,7 +978,7 @@ fun BranchListScreen(
     //filter相关，结束
 
     // 向下滚动监听，开始
-    val scrollingDown = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(false) }
 
 //    val filterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filterListState", LazyListState(0,0))
     val filterListState = rememberLazyListState()
@@ -993,18 +990,27 @@ fun BranchListScreen(
 //    ) { // onScrollDown
 //        scrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    scrollingDown.value = remember {
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
                 filterListState.firstVisibleItemIndex
             } else {
                 listState.firstVisibleItemIndex
             }
-            val scrolldown = nowAt > lastAt.intValue
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                pageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束
@@ -1234,18 +1240,14 @@ fun BranchListScreen(
             )
         },
         floatingActionButton = {
-            if(scrollingDown.value) {
-                //向下滑动时显示go to top按钮
-                SmallFab(
-                    modifier = MyStyleKt.Fab.getFabModifier(),
-                    icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                ) {
-                    if(enableFilterState.value) {
-                        UIHelper.scrollToItem(scope, filterListState, 0)
-                    }else{
-                        UIHelper.scrollToItem(scope, listState, 0)
-                    }
-                }
+            if(pageScrolled.value) {
+                GoToTopAndGoToBottomFab(
+                    filterModeOn = enableFilterState,
+                    scope = scope,
+                    filterListState = filterListState,
+                    listState = listState,
+                    pageScrolled = pageScrolled
+                )
             }
         }
     ) { contentPadding ->

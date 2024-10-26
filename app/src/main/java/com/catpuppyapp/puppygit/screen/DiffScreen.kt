@@ -1,9 +1,11 @@
 package com.catpuppyapp.puppygit.screen
 
-import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.HideSource
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -165,7 +167,7 @@ fun DiffScreen(
     }
 
     // 向下滚动监听，开始
-    val scrollingDown = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(false) }
 //    val firstVisible = remember { derivedStateOf { listState.value } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,
@@ -173,14 +175,25 @@ fun DiffScreen(
 //    ) { // onScrollDown
 //        scrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    scrollingDown.value = remember {
+
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = listState.value
-            val scrolldown = nowAt > lastAt.intValue
+
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                pageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束
@@ -232,13 +245,33 @@ fun DiffScreen(
             )
         },
         floatingActionButton = {
-            if(scrollingDown.value) {
-                //向下滑动时显示go to top按钮
-                SmallFab(
-                    modifier = MyStyleKt.Fab.getFabModifier(),
-                    icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                ) {
-                    UIHelper.scrollTo(scope, listState, 0)
+            if(pageScrolled.value) {
+                Column(modifier = MyStyleKt.Fab.getFabModifier()) {
+                    //show go to top
+                    SmallFab(
+                        icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
+                    ) {
+                        UIHelper.scrollTo(scope, listState, 0)
+
+                        // hide fab after scrolled
+                        pageScrolled.value = false
+                    }
+
+                    // temporary hide fab
+                    SmallFab(
+                        icon = Icons.Filled.HideSource, iconDesc = stringResource(id = R.string.hide)
+                    ) {
+                        pageScrolled.value = false
+                    }
+
+                    // go to bottom
+                    SmallFab(
+                        icon = Icons.Filled.VerticalAlignBottom, iconDesc = stringResource(id = R.string.go_to_bottom)
+                    ) {
+                        UIHelper.scrollTo(scope, listState, Int.MAX_VALUE)
+
+                        pageScrolled.value = false
+                    }
                 }
             }
         }
