@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,6 +34,7 @@ import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
+import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.screen.content.DiffContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.DiffPageActions
@@ -62,6 +64,8 @@ fun DiffScreen(
     treeOid2Str:String,
     isSubmodule:Boolean,
     isDiffToLocal:Boolean,
+    diffableItemListKey:String, //可预览diff的条目集合
+    curItemIndexAtDiffableItemList:Int,
     naviUp: () -> Boolean,
 ) {
 
@@ -79,6 +83,14 @@ fun DiffScreen(
     //这个值存到状态变量里之后就不用管了，与页面共存亡即可，如果旋转屏幕也没事，返回rememberSaveable可恢复
 //    val relativePathUnderRepoDecoded = (Cache.Map.getThenDel(Cache.Map.Key.diffScreen_UnderRepoPath) as? String)?:""
     val relativePathUnderRepoState = rememberSaveable { mutableStateOf((Cache.getByTypeThenDel<String>(underRepoPathKey)) ?: "")}
+
+    val diffableItemList = rememberSaveable { (Cache.getByTypeThenDel<List<StatusTypeEntrySaver>>(diffableItemListKey)) ?: listOf()}
+    val curItemIndex = rememberSaveable { mutableIntStateOf(curItemIndexAtDiffableItemList) }
+    val changeType = rememberSaveable { mutableStateOf(changeType) }
+    val fileSize = rememberSaveable { mutableLongStateOf(fileSize) }
+    val isSubmodule = rememberSaveable { mutableStateOf(isSubmodule) }
+
+
 
 //    val curRepo = rememberSaveable { mutableStateOf(RepoEntity()) }
     val curRepo = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "curRepo", initValue = RepoEntity())
@@ -198,6 +210,17 @@ fun DiffScreen(
     }.value
     // 向下滚动监听，结束
 
+    val switchItem = {newItem:StatusTypeEntrySaver, newItemIndex:Int->
+        changeType.value = newItem.changeType ?:""
+        isSubmodule.value = newItem.itemType == Cons.gitItemTypeSubmodule
+        fileSize.value = newItem.fileSizeInBytes
+        relativePathUnderRepoState.value = newItem.relativePathUnderRepo
+
+        curItemIndex.value = newItemIndex
+
+        changeStateTriggerRefreshPage(needRefresh)
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
@@ -231,7 +254,7 @@ fun DiffScreen(
                 },
 
                 actions = {
-                    DiffPageActions(curRepo, fromTo = fromTo, changeType=changeType,
+                    DiffPageActions(curRepo, fromTo = fromTo, changeType=changeType.value,
                         relativePathUnderRepoState, { changeStateTriggerRefreshPage(needRefresh) },
                         listState,
                         scope,
@@ -295,11 +318,12 @@ fun DiffScreen(
         //改成统一在DiffContent里检查实际diff需要获取的内容的大小了，和文件大小有所不同，有时候文件大小很大，但需要diff的内容大小实际很小，这时其实可以diff，性能不会太差
         MySelectionContainer {
             DiffContent(repoId=repoId,relativePathUnderRepoDecoded=relativePathUnderRepoState.value,
-                fromTo=fromTo,changeType=changeType,fileSize=fileSize, naviUp=naviUp,
+                fromTo=fromTo,changeType=changeType.value,fileSize=fileSize.value, naviUp=naviUp,
                 loading=loading,dbContainer=dbContainer,contentPadding, treeOid1Str, treeOid2Str,
                 needRefresh = needRefresh, listState = listState, curRepo=curRepo,
                 requireBetterMatchingForCompare = requireBetterMatchingForCompare, fileFullPath = fileFullPath.value,
-                isSubmodule=isSubmodule, isDiffToLocal = isDiffToLocal
+                isSubmodule=isSubmodule.value, isDiffToLocal = isDiffToLocal,diffableItemList= diffableItemList,
+                curItemIndex=curItemIndex, switchItem=switchItem
             )
         }
 

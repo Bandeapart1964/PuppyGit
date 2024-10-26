@@ -230,7 +230,10 @@ class Cons {
         const val gitStatusNew = "New"  //untracked
         const val gitStatusRenamed = "Renamed"  //这种状态在我的app里应该不会出现，拆分成Deleted的和New的两种状态了
         const val gitStatusDeleted = "Deleted"
-        const val gitStatusUntracked = "Untracked"  // replaced by "New"
+
+//        @Deprecated("instead by 'Cons.gitStatusNew'")
+//        const val gitStatusUntracked = "Untracked"  // instead by "New"
+
         const val gitStatusTypechanged = "Typechanged"
         const val gitStatusConflict = "Conflict"
         // git status key，存status条目的map用的，每个key对应不同的列表

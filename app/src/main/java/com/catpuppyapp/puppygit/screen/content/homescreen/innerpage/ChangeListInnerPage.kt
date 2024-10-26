@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content.homescreen.innerpage
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -181,6 +180,7 @@ fun ChangeListInnerPage(
     val repoId = remember(repoId) { derivedStateOf { if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId } }.value
 
     val isDiffToLocal = fromTo == Cons.gitDiffFromIndexToWorktree || commit1OidStr==Cons.gitLocalWorktreeCommitHash || commit2OidStr==Cons.gitLocalWorktreeCommitHash
+    val isWorktreePage = fromTo == Cons.gitDiffFromIndexToWorktree
 
     val haptic = LocalHapticFeedback.current
 
@@ -3190,8 +3190,32 @@ fun ChangeListInnerPage(
                             if(it.changeType == Cons.gitStatusConflict) {  //如果是冲突条目，直接用编辑器打开（冲突条目没法预览diff）
                                 val initMergeMode = true  //因为changeType == conflict，所以这里直接传true即可
                                 openFileWithInnerEditor(it.canonicalPath, initMergeMode)
-                            }else {  //非冲突条目，预览diff
+                            }
+                                // on worktree page, if new file(untracked), open with editor instead view difference
+//                            else if(isWorktreePage && it.changeType == Cons.gitStatusNew){
+//                                val initMergeMode = false
+//                                openFileWithInnerEditor(it.canonicalPath, initMergeMode)
+//                            }
+                            else {  //非冲突条目，预览diff
                                 val underRepoPathKey = Cache.setThenReturnKey(it.relativePathUnderRepo)
+//                                val diffableList = itemList.filter {item -> item.changeType == Cons.gitStatusModified || item.changeType == Cons.gitStatusNew || item.changeType == Cons.gitStatusDeleted}
+                                var indexAtDiffableList = -1
+
+                                val diffableList = mutableListOf<StatusTypeEntrySaver>()
+                                val itemCopy = itemList.toList()
+                                for(idx in itemCopy.indices) {
+                                    val item = itemCopy[idx]
+                                    if(item.changeType != Cons.gitStatusConflict) {
+                                        diffableList.add(item)
+
+                                        if(item == it) {
+                                            indexAtDiffableList = diffableList.lastIndex
+                                        }
+                                    }
+                                }
+
+                                val diffableListKey = Cache.setThenReturnKey(diffableList)
+
                                 //导航到diffScreen
                                 navController.navigate(
                                     Cons.nav_DiffScreen +
@@ -3205,6 +3229,8 @@ fun ChangeListInnerPage(
                                             "/" + (if(swap) commit1OidStr else commit2OidStr) +
                                             "/" + (if(it.itemType==Cons.gitItemTypeSubmodule) 1 else 0) +
                                             "/" + (if(isDiffToLocal) 1 else 0)
+                                            + "/" + diffableListKey
+                                            + "/" + indexAtDiffableList
                                 )
 
                             }

@@ -959,6 +959,8 @@
     <string name="parent_repo">父仓库</string>
     <string name="go_to_bottom">前往底部</string>
     <string name="hide">隐藏</string>
+    <string name="prev_filename">上个：ph_a3f241dc_1</string>
+    <string name="next_filename">下个：ph_a3f241dc_1</string>
 
 
 </resources>

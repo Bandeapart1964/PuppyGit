@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.compose.CardButton
 import com.catpuppyapp.puppygit.compose.DiffRow
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.LineNum
@@ -36,10 +40,9 @@ import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.git.DiffItemSaver
 import com.catpuppyapp.puppygit.git.PuppyHunkAndLines
 import com.catpuppyapp.puppygit.git.PuppyLine
+import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.SettingsUtil
-import com.catpuppyapp.puppygit.ui.theme.Theme
-import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -48,6 +51,7 @@ import com.catpuppyapp.puppygit.utils.compare.param.StringCompareParam
 import com.catpuppyapp.puppygit.utils.createAndInsertError
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
+import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Diff
@@ -76,7 +80,10 @@ fun DiffContent(
     requireBetterMatchingForCompare:MutableState<Boolean>,
     fileFullPath:String,
     isSubmodule:Boolean,
-    isDiffToLocal:Boolean
+    isDiffToLocal:Boolean,
+    diffableItemList:List<StatusTypeEntrySaver>,
+    curItemIndex:MutableIntState,
+    switchItem:(StatusTypeEntrySaver, index:Int) -> Unit
 ) {
     //废弃，改用获取diffItem时动态计算实际需要显示的contentLen总和了
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
@@ -86,7 +93,7 @@ fun DiffContent(
 
     // remember for make sure only have one instance bundle with a composable function's one life time
     //用remember是为了确保组件生命周期内只创建一个channel实例
-    val loadChannel = remember { Channel<Int>() }
+    val loadChannel = remember { mutableStateOf(Channel<Int>())  }
 //    val loadChannelLock = Mutex()
 
 
@@ -110,6 +117,23 @@ fun DiffContent(
     )
 
     val fileChangeTypeIsModified = changeType == Cons.gitStatusModified
+
+    val closeChannelThenSwitchItem = {item:StatusTypeEntrySaver, index:Int ->
+        doJobThenOffLoading {
+            // send close signal to old channel to abort loading
+            try {
+                loadChannel.value.close()
+            }catch (_:Exception) {
+            }
+
+            loadChannel.value = Channel()
+
+            // switch new item
+            switchItem(item, index)
+        }
+
+        Unit
+    }
 
 //    @SuppressLint("UnrememberedMutableState")
 //    val job = mutableStateOf<Job?>(null)
@@ -158,6 +182,11 @@ fun DiffContent(
                     }
                 }
             }
+
+
+            Spacer(Modifier.height(50.dp))
+            naviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+
         }
     }else {  //文本类型且没超过大小且文件修改过，正常显示diff信息
         Column(
@@ -170,7 +199,7 @@ fun DiffContent(
                 //底部padding，把页面顶起来，观感更舒适（我感觉）
                 .padding(bottom = 150.dp),
 
-            ) {
+        ) {
                 // show a notice make user know submodule has uncommitted changes
                 if(submoduleIsDirty.value) {
                     Row(modifier = Modifier.fillMaxWidth(),
@@ -393,8 +422,13 @@ fun DiffContent(
                     )
                 }
 
+            Spacer(Modifier.height(50.dp))
+            naviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+
         }
     }
+
+
 
     LaunchedEffect(needRefresh.value) {
 //        if(!fileSizeOverLimit) {  //这里其实没必要，上级页面已经判断了，但我还是不放心，所以在这里再加个判断以防文件过大时误加载这个代码块导致app卡死
@@ -413,6 +447,8 @@ fun DiffContent(
                 //      从数据库异步查询repo数据，调用diff方法获得diff内容，然后使用diff内容更新页面state
                 //      最后设置页面loading 为false
                 doJobThenOffLoading launch@{
+                    val channelForThisJob = loadChannel.value
+
                     try {
                         loading.value=true
 
@@ -439,10 +475,9 @@ fun DiffContent(
                                         reverse=reverse,
                                         treeToWorkTree = true,
                                         maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
-                                        loadChannel = loadChannel,
+                                        loadChannel = channelForThisJob,
                                         checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                         checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-//                                        loadChannelLock = loadChannelLock
                                     )
                                 }else { // tree to tree, no local(worktree)
                                     val tree1 = Libgit2Helper.resolveTree(repo, treeOid1Str)
@@ -454,26 +489,28 @@ fun DiffContent(
                                         tree1,
                                         tree2,
                                         maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
-                                        loadChannel = loadChannel,
+                                        loadChannel = channelForThisJob,
                                         checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                         checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-//                                        loadChannelLock = loadChannelLock
                                     )
                                 }
 
-                                diffItem.value = diffItemSaver
+                                if(!channelForThisJob.tryReceive().isClosed) {
+                                    diffItem.value = diffItemSaver
+                                }
                             }else {  //indexToWorktree or headToIndex
                                 val diffItemSaver = Libgit2Helper.getSingleDiffItem(
                                     repo,
                                     relativePathUnderRepoDecoded,
                                     fromTo,
                                     maxSizeLimit = settings.diff.diffContentSizeMaxLimit,
-                                    loadChannel = loadChannel,
+                                    loadChannel = channelForThisJob,
                                     checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                     checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-//                                    loadChannelLock = loadChannelLock
                                     )
-                                diffItem.value = diffItemSaver
+                                if(!channelForThisJob.tryReceive().isClosed) {
+                                    diffItem.value = diffItemSaver
+                                }
                             }
 
 
@@ -506,8 +543,41 @@ fun DiffContent(
     DisposableEffect(Unit) {
         onDispose {
             doJobThenOffLoading {
-                loadChannel.close()
+                loadChannel.value.close()
             }
         }
+    }
+}
+
+@Composable
+private fun naviButton(
+    diffableItemList: List<StatusTypeEntrySaver>,
+    curItemIndex: MutableIntState,
+    switchItem: (StatusTypeEntrySaver, index: Int) -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        val size = diffableItemList.size
+        val previousIndex = curItemIndex.value - 1
+        val nextIndex = curItemIndex.value + 1
+        val hasPrevious = previousIndex >= 0 && previousIndex < size
+        val hasNext = nextIndex >= 0 && nextIndex < size
+        CardButton(
+            text =  replaceStringResList(stringResource(R.string.prev_filename), listOf(if(hasPrevious) diffableItemList[previousIndex].fileName else stringResource(R.string.none))),
+            enabled = hasPrevious
+        ) {
+            switchItem(diffableItemList[previousIndex], previousIndex)
+        }
+        Spacer(Modifier.height(10.dp))
+        CardButton(
+            text = replaceStringResList(stringResource(R.string.next_filename), listOf(if(hasNext) diffableItemList[nextIndex].fileName else stringResource(R.string.none))),
+            enabled = hasNext
+        ) {
+            switchItem(diffableItemList[nextIndex], nextIndex)
+        }
+        Spacer(Modifier.height(150.dp))
+
     }
 }
