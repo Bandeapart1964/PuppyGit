@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content.homescreen.innerpage
 
-import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -134,7 +132,7 @@ fun RepoInnerPage(
     filesPageNeedRefresh:MutableState<String>,
     goToFilesPage:(path:String) -> Unit,
     goToChangeListPage:(repoWillShowInChangeListPage: RepoEntity) -> Unit,
-    repoPageScrollingDown:MutableState<Boolean>,
+    repoPageScrolled:MutableState<Boolean>,
     repoPageFilterModeOn:MutableState<Boolean>,
     repoPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
     filterListState:LazyListState,
@@ -1264,18 +1262,28 @@ fun RepoInnerPage(
 //    ) { // onScrollDown
 //        repoPageScrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    repoPageScrollingDown.value = remember {
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
                 filterListState.firstVisibleItemIndex
             } else {
                 repoPageListState.firstVisibleItemIndex
             }
-            val scrolldown = nowAt > lastAt.intValue
+
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                repoPageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束

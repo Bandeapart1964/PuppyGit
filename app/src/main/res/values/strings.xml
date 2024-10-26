@@ -962,5 +962,7 @@
     <string name="not_merged">Not Merged</string>
     <string name="create_revwalk_failed_oid">create Revwalk failed, oid=ph_a3f241dc_1</string>
     <string name="parent_repo">Parent Repo</string>
+    <string name="go_to_bottom">Go To Bottom</string>
+    <string name="hide">Hide</string>
 
 </resources>

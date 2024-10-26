@@ -17,11 +17,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Difference
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.HideSource
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
@@ -76,7 +78,6 @@ import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.Chang
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.EditorPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.FilesPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.RepoPageActions
-import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.SettingsActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.SubscriptionActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.drawer.drawerContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.AboutTitle
@@ -435,7 +436,7 @@ fun HomeScreen(
 
 
     val changelistPageScrollingDown = remember { mutableStateOf(false) }
-    val repoPageScrollingDown = remember { mutableStateOf(false) }
+    val repoPageScrolled = remember { mutableStateOf(false) }
 
     // two usages: 1. re query repo list when click title;  2. after imported submodules at ChangeList page
     val needReQueryRepoListForChangeListTitle = rememberSaveable { mutableStateOf("")}
@@ -811,18 +812,41 @@ fun HomeScreen(
                             UIHelper.scrollToItem(scope, changeListPageItemListState, 0)
                         }
                     }
-                }else if(currentHomeScreen.intValue == Cons.selectedItem_Repos && repoPageScrollingDown.value) {
-                    //向下滑动时显示go to top按钮
-                    SmallFab(
-                        modifier = MyStyleKt.Fab.getFabModifier(),
-                        icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                    ) {
-                        if(repoPageFilterModeOn.value) {
-                            UIHelper.scrollToItem(scope, repoFilterListState, 0)
-                        }else{
-                            UIHelper.scrollToItem(scope, repoPageListState, 0)
+                }else if(currentHomeScreen.intValue == Cons.selectedItem_Repos && repoPageScrolled.value) {
+                    Column(modifier = MyStyleKt.Fab.getFabModifier()) {
+                        //show go to top
+                        SmallFab(
+                            icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
+                        ) {
+                            if(repoPageFilterModeOn.value) {
+                                UIHelper.scrollToItem(scope, repoFilterListState, 0)
+                            }else{
+                                UIHelper.scrollToItem(scope, repoPageListState, 0)
+                            }
+
+                            // hide fab after scrolled
+                            repoPageScrolled.value = false
+                        }
+
+                        SmallFab(
+                            icon = Icons.Filled.HideSource, iconDesc = stringResource(id = R.string.hide)
+                        ) {
+                            repoPageScrolled.value = false
+                        }
+
+                        SmallFab(
+                            icon = Icons.Filled.VerticalAlignBottom, iconDesc = stringResource(id = R.string.go_to_bottom)
+                        ) {
+                            if(repoPageFilterModeOn.value) {
+                                UIHelper.scrollToItem(scope, repoFilterListState, Int.MAX_VALUE)
+                            }else{
+                                UIHelper.scrollToItem(scope, repoPageListState, Int.MAX_VALUE)
+                            }
+
+                            repoPageScrolled.value = false
                         }
                     }
+
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_Files && filesPageScrollingDown.value) {
                     //向下滑动时显示go to top按钮
                     SmallFab(
@@ -857,7 +881,7 @@ fun HomeScreen(
                     filesPageNeedRefresh=needRefreshFilesPage,
                     goToFilesPage = goToFilesPage,
                     goToChangeListPage = goToChangeListPage,
-                    repoPageScrollingDown=repoPageScrollingDown,
+                    repoPageScrolled=repoPageScrolled,
                     repoPageFilterModeOn=repoPageFilterModeOn,
                     repoPageFilterKeyWord= repoPageFilterKeyWord,
                     filterListState = repoFilterListState,

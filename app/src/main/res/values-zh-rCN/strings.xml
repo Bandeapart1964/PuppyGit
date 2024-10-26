@@ -957,6 +957,8 @@
     <string name="not_merged">非合并而来</string>
     <string name="create_revwalk_failed_oid">创建 Revwalk 失败，oid=ph_a3f241dc_1</string>
     <string name="parent_repo">父仓库</string>
+    <string name="go_to_bottom">前往底部</string>
+    <string name="hide">隐藏</string>
 
 
 </resources>
