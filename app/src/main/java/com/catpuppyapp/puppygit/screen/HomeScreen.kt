@@ -17,13 +17,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Difference
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.HideSource
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerState
@@ -58,6 +56,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.FilterTextField
+import com.catpuppyapp.puppygit.compose.GoToTopAndGoToBottomFab
 import com.catpuppyapp.puppygit.compose.LoadingDialog
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.SmallFab
@@ -435,7 +434,7 @@ fun HomeScreen(
 
 
 
-    val changelistPageScrollingDown = remember { mutableStateOf(false) }
+    val changelistPageScrolled = remember { mutableStateOf(false) }
     val repoPageScrolled = remember { mutableStateOf(false) }
 
     // two usages: 1. re query repo list when click title;  2. after imported submodules at ChangeList page
@@ -800,52 +799,24 @@ fun HomeScreen(
                     ) {
                         editorPageRequestFromParent.value = PageRequest.requireSave
                     }
-                }else if(currentHomeScreen.intValue == Cons.selectedItem_ChangeList && changelistPageScrollingDown.value) {
-                    //向下滑动时显示go to top按钮
-                    SmallFab(
-                        modifier = MyStyleKt.Fab.getFabModifier(),
-                        icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                    ) {
-                        if(changeListPageFilterModeOn.value) {
-                            UIHelper.scrollToItem(scope, changelistFilterListState, 0)
-                        }else{
-                            UIHelper.scrollToItem(scope, changeListPageItemListState, 0)
-                        }
-                    }
+                }else if(currentHomeScreen.intValue == Cons.selectedItem_ChangeList && changelistPageScrolled.value) {
+
+                    GoToTopAndGoToBottomFab(
+                        filterModeOn = changeListPageFilterModeOn,
+                        scope = scope,
+                        filterListState = changelistFilterListState,
+                        listState = changeListPageItemListState,
+                        pageScrolled = changelistPageScrolled
+                    )
+
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_Repos && repoPageScrolled.value) {
-                    Column(modifier = MyStyleKt.Fab.getFabModifier()) {
-                        //show go to top
-                        SmallFab(
-                            icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                        ) {
-                            if(repoPageFilterModeOn.value) {
-                                UIHelper.scrollToItem(scope, repoFilterListState, 0)
-                            }else{
-                                UIHelper.scrollToItem(scope, repoPageListState, 0)
-                            }
-
-                            // hide fab after scrolled
-                            repoPageScrolled.value = false
-                        }
-
-                        SmallFab(
-                            icon = Icons.Filled.HideSource, iconDesc = stringResource(id = R.string.hide)
-                        ) {
-                            repoPageScrolled.value = false
-                        }
-
-                        SmallFab(
-                            icon = Icons.Filled.VerticalAlignBottom, iconDesc = stringResource(id = R.string.go_to_bottom)
-                        ) {
-                            if(repoPageFilterModeOn.value) {
-                                UIHelper.scrollToItem(scope, repoFilterListState, Int.MAX_VALUE)
-                            }else{
-                                UIHelper.scrollToItem(scope, repoPageListState, Int.MAX_VALUE)
-                            }
-
-                            repoPageScrolled.value = false
-                        }
-                    }
+                    GoToTopAndGoToBottomFab(
+                        filterModeOn = repoPageFilterModeOn,
+                        scope = scope,
+                        filterListState = repoFilterListState,
+                        listState = repoPageListState,
+                        pageScrolled = repoPageScrolled
+                    )
 
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_Files && filesPageScrollingDown.value) {
                     //向下滑动时显示go to top按钮
@@ -1004,7 +975,7 @@ fun HomeScreen(
                     changeListPageNoRepo=changeListPageNoRepo,
                     hasNoConflictItems = changeListPageHasNoConflictItems,
                     goToFilesPage = goToFilesPage,
-                    changelistPageScrollingDown=changelistPageScrollingDown,
+                    changelistPageScrolled=changelistPageScrolled,
                     changeListPageFilterModeOn= changeListPageFilterModeOn,
                     changeListPageFilterKeyWord=changeListPageFilterKeyWord,
                     filterListState = changelistFilterListState,

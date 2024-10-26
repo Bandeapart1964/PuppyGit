@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -159,7 +158,7 @@ fun ChangeListInnerPage(
     changeListPageNoRepo:MutableState<Boolean>,
     hasNoConflictItems:MutableState<Boolean>,
     goToFilesPage:(path:String) -> Unit = {},  //跳转到Files页面以浏览仓库文件，只有主页需要传这个参数，Index和TreeToTree页面不需要
-    changelistPageScrollingDown:MutableState<Boolean>,
+    changelistPageScrolled:MutableState<Boolean>,
     changeListPageFilterModeOn:MutableState<Boolean>,
     changeListPageFilterKeyWord:CustomStateSaveable<TextFieldValue>,
     filterListState:LazyListState,
@@ -2207,18 +2206,28 @@ fun ChangeListInnerPage(
 //    ) { // onScrollDown
 //        changelistPageScrollingDown.value = true
 //    }
-    @SuppressLint("UnrememberedMutableState")
-    val lastAt = mutableIntStateOf(0)
-    changelistPageScrollingDown.value = remember {
+    val lastAt = remember { mutableIntStateOf(0) }
+    val lastIsScrollDown = remember { mutableStateOf(false) }
+    val forUpdateScrollState = remember {
         derivedStateOf {
             val nowAt = if(enableFilterState.value) {
                 filterListState.firstVisibleItemIndex
             } else {
                 itemListState.firstVisibleItemIndex
             }
-            val scrolldown = nowAt > lastAt.intValue
+
+            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+//            val scrolledUp = nowAt < lastAt.intValue
+
+            val scrolled = nowAt != lastAt.intValue  // scrolled
             lastAt.intValue = nowAt
-            scrolldown
+
+            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+                changelistPageScrolled.value = true
+            }
+
+            lastIsScrollDown.value = scrolledDown
         }
     }.value
     // 向下滚动监听，结束

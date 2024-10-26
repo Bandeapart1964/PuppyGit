@@ -5,7 +5,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,7 +12,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,8 +36,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.catpuppyapp.puppygit.compose.FilterTextField
+import com.catpuppyapp.puppygit.compose.GoToTopAndGoToBottomFab
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
-import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.commitsTreeToTreeDiffReverseTestPassed
@@ -56,7 +54,6 @@ import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.addPrefix
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository
@@ -167,7 +164,7 @@ fun TreeToTreeChangeListScreen(
     val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changeListPageItemListState = rememberLazyListState()
     val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changelistPageScrollingDown = remember { mutableStateOf(false) }
+    val changelistPageScrolled = remember { mutableStateOf(false) }
 
     val changeListPageFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,
@@ -338,18 +335,14 @@ fun TreeToTreeChangeListScreen(
             )
         },
         floatingActionButton = {
-            if(changelistPageScrollingDown.value) {
-                //向下滑动时显示go to top按钮
-                SmallFab(
-                    modifier = MyStyleKt.Fab.getFabModifier(),
-                    icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                ) {
-                    if(changeListPageFilterModeOn.value) {
-                        UIHelper.scrollToItem(scope, changelistFilterListState, 0)
-                    }else{
-                        UIHelper.scrollToItem(scope, changeListPageItemListState, 0)
-                    }
-                }
+            if(changelistPageScrolled.value) {
+                GoToTopAndGoToBottomFab(
+                    filterModeOn = changeListPageFilterModeOn,
+                    scope = scope,
+                    filterListState = changelistFilterListState,
+                    listState = changeListPageItemListState,
+                    pageScrolled = changelistPageScrolled
+                )
             }
         }
     ) { contentPadding ->
@@ -376,7 +369,7 @@ fun TreeToTreeChangeListScreen(
             repoId=repoId,
             changeListPageNoRepo=changeListPageNoRepo,
             hasNoConflictItems = changeListPageHasNoConflictItems,  //这选项是worktree和Index页面用的，TreeToTree其实用不到这个选项，只是占位
-            changelistPageScrollingDown=changelistPageScrollingDown,
+            changelistPageScrolled=changelistPageScrolled,
             changeListPageFilterModeOn= changeListPageFilterModeOn,
             changeListPageFilterKeyWord=changeListPageFilterKeyWord,
             filterListState = changelistFilterListState,
