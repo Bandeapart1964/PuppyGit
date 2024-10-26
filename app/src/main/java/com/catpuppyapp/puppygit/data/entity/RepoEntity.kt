@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.StorageDirCons
 import com.catpuppyapp.puppygit.data.entity.common.BaseFields
+import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.getSecFromTime
 import com.catpuppyapp.puppygit.utils.getShortUUID
 import com.github.git24j.core.Repository
@@ -107,4 +108,22 @@ data class RepoEntity(
      */
     @Ignore
     var parentRepoValid:Boolean=false
+
+
+    @Ignore
+    var otherText:String?=null
+
+
+    fun hasOther():Boolean {
+        return dbIntToBool(isShallow)
+    }
+
+    fun getOther(): String {
+        if(otherText == null) {
+            // for better filterable, these text should not localize
+            otherText = if(dbIntToBool(isShallow)) "is_shallow" else "not_shallow"
+        }
+
+        return otherText ?: ""
+    }
 }

@@ -544,12 +544,37 @@ fun RepoCard(
                 }
 
 
+                if(repoStatusGood && repoDto.hasOther()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = stringResource(R.string.other) + ":")
+                        Text(
+                            text = repoDto.getOther(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+
+                            // for now the "other text" is short, if become long in future, make clicked show full "other text" in a dialog
+                            //目前 other text短，如果以后长到无法在卡片完整显示，实现点击文字在弹窗显示完整other text
+//                            style = MyStyleKt.ClickableText.style,
+//                            color = MyStyleKt.ClickableText.color,
+//                            modifier = MyStyleKt.ClickableText.modifier.clickable {  // on click
+//                                setCurRepo()
+//                                pageRequest.value = PageRequest.showOther
+//                            },
+
+                            fontWeight = FontWeight.Light
+
+                        )
+                    }
+                }
+
 
                 if(repoDto.parentRepoValid) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = stringResource(R.string.parent) + ":")
+                        Text(text = stringResource(R.string.parent_repo) + ":")
                         Text(
                             text = repoDto.parentRepoName,
                             maxLines = 1,

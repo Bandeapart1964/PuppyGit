@@ -961,5 +961,6 @@
     <string name="is_merged">Is Merged</string>
     <string name="not_merged">Not Merged</string>
     <string name="create_revwalk_failed_oid">create Revwalk failed, oid=ph_a3f241dc_1</string>
+    <string name="parent_repo">Parent Repo</string>
 
 </resources>
