@@ -268,6 +268,7 @@ fun CommitListScreen(
 //    }
 
     val revwalk = remember { mutableStateOf<Revwalk?>(null) }
+    val repositoryForRevWalk = remember { mutableStateOf<Repository?>(null) }
 
     val doLoadMore = doLoadMore@{ repoFullPath: String, oid: Oid, firstLoad: Boolean, forceReload: Boolean, loadToEnd:Boolean ->
         //第一次查询的时候是用head oid查询的，所以不会在这里返回
@@ -297,52 +298,68 @@ fun CommitListScreen(
             loadMoreText.value = appContext.getString(R.string.loading)
 
             try {
-                Repository.open(repoFullPath).use { repo ->
-                    if (firstLoad) {
-                        //如果是第一次加载或刷新页面（重新初始化页面），清下列表
-                        // if is first load or refresh page, clear list
-                        list.value.clear()
+                if (firstLoad) {
+                    // do reset: clear list and release old repo instance
+                    //如果是第一次加载或刷新页面（重新初始化页面），清下列表
+                    // if is first load or refresh page, clear list
+                    list.value.clear()
 
-                        //get new revwalk instance
-                        val newRevwalk = Libgit2Helper.createRevwalk(repo, oid)
-                        if(newRevwalk == null) {
-                            val oidStr = oid.toString()
-                            Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.create_revwalk_failed_oid), listOf(Libgit2Helper.getShortOidStrByFull(oidStr))))
-                            createAndInsertError(repoId, "create Revwalk failed, oid=$oidStr")
-                            return@job
-                        }
+                    // close old repo, release resource
+                    repositoryForRevWalk.value?.close()
+                    repositoryForRevWalk.value = null  // if don't set to null, when assign new instance to state, implicitly call equals(), the closed repo will thrown an err
 
-                        revwalk.value = newRevwalk
-                        nextCommitOid.value = newRevwalk.next() ?: Cons.allZeroOid
+
+                    // do init: create new repo instance
+                    val repo = Repository.open(repoFullPath)
+                    //get new revwalk instance
+                    val newRevwalk = Libgit2Helper.createRevwalk(repo, oid)
+                    if(newRevwalk == null) {
+                        val oidStr = oid.toString()
+                        Msg.requireShowLongDuration(replaceStringResList(appContext.getString(R.string.create_revwalk_failed_oid), listOf(Libgit2Helper.getShortOidStrByFull(oidStr))))
+                        createAndInsertError(repoId, "create Revwalk failed, oid=$oidStr")
+                        return@job
                     }
 
-                    if(nextCommitOid.value.isNullOrEmptyOrZero) {
-                        //更新变量
-                        hasMore.value = false
-                        loadMoreText.value = appContext.getString(R.string.end_of_the_list)
-                    }else {
-                        //start travel commit history
-                        Libgit2Helper.getCommitList(
-                            repo,
-                            revwalk.value!!,
-                            nextCommitOid.value,
-                            repoId,
-                            if(loadToEnd) Int.MAX_VALUE else pageSize.value,
-                            retList = list.value,  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
-                            loadChannel = loadChannel,
-                            checkChannelFrequency = settings.commitHistoryLoadMoreCheckAbortSignalFrequency
-                        )
+//                    println("repo.equals(repositoryForRevWalk.value):${repo.equals(repositoryForRevWalk.value)}")  // expect: false, output: false
 
-                        //update state
-                        nextCommitOid.value = revwalk.value!!.next() ?: Cons.allZeroOid
-                        hasMore.value = !nextCommitOid.value.isNullOrEmptyOrZero
-                        loadMoreText.value = if (hasMore.value) appContext.getString(R.string.load_more) else appContext.getString(R.string.end_of_the_list)
+                    // the revwalk must use with the repo instance which created it, else will throw an err "signed...prefix -..." something
+                    // revwalk必须与创建它的仓库一起使用，否则会报错，报什么"signed...prefix -..."之类的错误
+                    repositoryForRevWalk.value = repo
+                    revwalk.value = newRevwalk
+                    nextCommitOid.value = newRevwalk.next() ?: Cons.allZeroOid
 
-                    }
+//                    println("oldRepoInstance == repositoryForRevWalk.value:${oldRepoInstance == repositoryForRevWalk.value}")  // expect:false, output:false
+                    // release memory
+//                    oldRepoInstance?.close()
+                }
 
-                    loadMoreLoading.value = false
+                val repo = repositoryForRevWalk.value!!
+
+                if(nextCommitOid.value.isNullOrEmptyOrZero) {
+                    //更新变量
+                    hasMore.value = false
+                    loadMoreText.value = appContext.getString(R.string.end_of_the_list)
+                }else {
+                    //start travel commit history
+                    Libgit2Helper.getCommitList(
+                        repo,
+                        revwalk.value!!,
+                        nextCommitOid.value,
+                        repoId,
+                        if(loadToEnd) Int.MAX_VALUE else pageSize.value,
+                        retList = list.value,  //直接赋值给状态列表了，若性能差，可实现一个批量添加机制，比如查出50个条目添加一次，之类的
+                        loadChannel = loadChannel,
+                        checkChannelFrequency = settings.commitHistoryLoadMoreCheckAbortSignalFrequency
+                    )
+
+                    //update state
+                    nextCommitOid.value = revwalk.value!!.next() ?: Cons.allZeroOid
+                    hasMore.value = !nextCommitOid.value.isNullOrEmptyOrZero
+                    loadMoreText.value = if (hasMore.value) appContext.getString(R.string.load_more) else appContext.getString(R.string.end_of_the_list)
 
                 }
+
+                loadMoreLoading.value = false
 
             }catch (e:Exception) {
                 val errMsg = e.localizedMessage ?: "unknown err"
@@ -1677,8 +1694,10 @@ fun CommitListScreen(
             val repoFullPath = repoFromDb.fullSavePath
             val repoName = repoFromDb.repoName
 //            val isDetached = dbIntToBool(repoFromDb.isDetached)
+            var oid:Oid? = null
+
             Repository.open(repoFullPath).use { repo ->
-                val oid:Oid = if(!useFullOid) {  // resolve head
+                oid = if(!useFullOid) {  // resolve head
                     val head = Libgit2Helper.resolveHEAD(repo)
                     if (head == null) {
                         MyLog.w(TAG, "#LaunchedEffect: head is null! repoId=$repoId}")
@@ -1711,12 +1730,15 @@ fun CommitListScreen(
                 //不要在这给nexCommitOid和条目列表赋值！要在doLoadMore里给它们赋值！
 //                nextCommitOid.value = headOid
 
-                val firstLoad = true
-                val forceReload = (requestType == StateRequestType.forceReload)
-                val loadToEnd = false
-                //传repoFullPath是用来打开git仓库的
-                doLoadMore(repoFullPath, oid, firstLoad, forceReload, loadToEnd)
             }
+
+
+            // do first load
+            val firstLoad = true
+            val forceReload = (requestType == StateRequestType.forceReload)
+            val loadToEnd = false
+            //传repoFullPath是用来打开git仓库的
+            doLoadMore(repoFullPath, oid!!, firstLoad, forceReload, loadToEnd)
         }
     }
 

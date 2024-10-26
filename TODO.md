@@ -29,4 +29,4 @@
   - show/hide +/- sign for add/del line
 - squash commits
 - ChangeList: view difference of all changed files in one page(提供一个入口，点击进入diff页面，可预览所有修改过的文件的diff内容）
-
+- check code, resolve memory leak: I bet this code has many memory leak, because in git24j, many constructors create instance with weak ptr, which hold instance, but never free it
