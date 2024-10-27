@@ -1,6 +1,7 @@
 package jp.kaleidot725.texteditor.view
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -766,8 +767,9 @@ fun TextEditor(
                         ) { modifier ->
                             // FileEditor里的innerTextFiled()会执行这的代码
                             Box(
-                                modifier = modifier.
-                                    combinedClickable(
+                                modifier = modifier
+                                    .background(bgColor)
+                                    .combinedClickable(
                                         //不显示点击效果（闪烁动画）
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
@@ -796,7 +798,8 @@ fun TextEditor(
                                     enabled = !textEditorState.isMultipleSelectionMode && !readOnlyMode,
                                     focusRequester = focusRequester,
                                     fontSize = fontSize,
-                                    bgColor = bgColor,
+//                                    bgColor = bgColor,
+                                    bgColor = Color.Unspecified,
                                     onUpdateText = { newText ->
                                         try{
                                             //写入编辑缓存
