@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,9 +21,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -51,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.catpuppyapp.puppygit.compose.AcceptButtons
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
@@ -1173,50 +1171,8 @@ fun TextEditor(
     }
 }
 
-@Composable
-private fun AcceptButtons(
-    lineIndex: Int,
-    lineText: String,
-    prepareAcceptBlock: (Boolean, Boolean, Int, String) -> Unit,
-    conflictOursBlockBgColor: Color,
-    conflictTheirsBlockBgColor: Color,
-    conflictSplitLineBgColor: Color
-) {
-    Row {
-        TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
-            onClick = {
-                prepareAcceptBlock(true, false, lineIndex, lineText)
-            },
-        ) {
-            Text(stringResource(R.string.accept_ours))
-        }
-        TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
-            onClick = {
-                prepareAcceptBlock(false, true, lineIndex, lineText)
-            }
-        ) {
-            Text(stringResource(R.string.accept_theirs))
-        }
-        TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictSplitLineBgColor.copy(alpha = .5f)),
-            onClick = {
-                prepareAcceptBlock(true, true, lineIndex, lineText)
-            }
-        ) {
-            Text(stringResource(R.string.accept_both))
-        }
-        TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = MyStyleKt.TextColor.danger.copy(alpha = .3f)),
-            onClick = {
-                prepareAcceptBlock(false, false, lineIndex, lineText)
-            }
-        ) {
-            Text(stringResource(R.string.reject_both))
-        }
-    }
-}
+
+
 
 fun getNextKeyWordForConflict(curKeyWord:String, settings: AppSettings):String {
     if(curKeyWord == settings.editor.conflictStartStr) {
