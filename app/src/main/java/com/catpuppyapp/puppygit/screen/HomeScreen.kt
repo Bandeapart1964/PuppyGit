@@ -364,7 +364,7 @@ fun HomeScreen(
     val editorPageMergeMode = remember{mutableStateOf(false)}
     val editorReadOnlyMode = remember{mutableStateOf(false)}
 
-    val settingsTmp = SettingsUtil.getSettingsSnapshot()  //避免状态变量里的设置项过旧，重新获取一个
+    val settingsTmp = remember { SettingsUtil.getSettingsSnapshot() }   //避免状态变量里的设置项过旧，重新获取一个
     val editorShowLineNum = remember{mutableStateOf(settingsTmp.editor.showLineNum)}
     val editorLineNumFontSize = remember { mutableIntStateOf( settingsTmp.editor.lineNumFontSize)}
     val editorLastSavedLineNumFontSize = remember { mutableIntStateOf( editorLineNumFontSize.intValue) } //用来检查，如果没变，就不执行保存，避免写入硬盘

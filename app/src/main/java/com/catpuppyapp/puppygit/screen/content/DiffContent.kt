@@ -89,7 +89,7 @@ fun DiffContent(
 //    val fileSizeOverLimit = isFileSizeOverLimit(fileSize)
 
 //    val scope = rememberCoroutineScope()
-    val settings=SettingsUtil.getSettingsSnapshot()
+    val settings= remember { SettingsUtil.getSettingsSnapshot() }
 
     // remember for make sure only have one instance bundle with a composable function's one life time
     //用remember是为了确保组件生命周期内只创建一个channel实例
@@ -135,6 +135,7 @@ fun DiffContent(
         Unit
     }
 
+    //BAD: if not remember, will create instance every re-composing!
 //    @SuppressLint("UnrememberedMutableState")
 //    val job = mutableStateOf<Job?>(null)
 

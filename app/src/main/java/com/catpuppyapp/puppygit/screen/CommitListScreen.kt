@@ -190,7 +190,7 @@ fun CommitListScreen(
 //    ) {
 //        mutableStateOf(getHolder(stateKeyTag, "list",  mutableListOf<CommitDto>()))
 //    }
-    val settings = SettingsUtil.getSettingsSnapshot()
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
     //page size for load more
     val pageSize = rememberSaveable{ mutableStateOf(settings.commitHistoryPageSize) }
     val rememberPageSize = rememberSaveable { mutableStateOf(false) }

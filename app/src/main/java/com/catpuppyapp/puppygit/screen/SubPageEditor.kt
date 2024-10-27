@@ -128,7 +128,7 @@ fun SubPageEditor(
     val editorPageMergeMode = remember{mutableStateOf(if(UserUtil.isPro() && (dev_EnableUnTestedFeature || editorMergeModeTestPassed)) initMergeMode else false)}
 
 
-    val settingsTmp = SettingsUtil.getSettingsSnapshot()  //避免状态变量里的设置项过旧，重新获取一个
+    val settingsTmp = remember { SettingsUtil.getSettingsSnapshot() }  //避免状态变量里的设置项过旧，重新获取一个
     val editorShowLineNum = remember{mutableStateOf(settingsTmp.editor.showLineNum)}
     val editorLineNumFontSize = remember { mutableIntStateOf(settingsTmp.editor.lineNumFontSize)}
     val editorFontSize = remember { mutableIntStateOf(settingsTmp.editor.fontSize)}
