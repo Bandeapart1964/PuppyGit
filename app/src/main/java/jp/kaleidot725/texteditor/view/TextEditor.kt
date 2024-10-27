@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +22,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -49,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
+import com.catpuppyapp.puppygit.compose.ConfirmDialog2
 import com.catpuppyapp.puppygit.compose.CopyableDialog
 import com.catpuppyapp.puppygit.constants.LineNum
 import com.catpuppyapp.puppygit.constants.PageRequest
@@ -73,6 +77,7 @@ import com.catpuppyapp.puppygit.utils.getSystemDefaultTimeZoneOffset
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import jp.kaleidot725.texteditor.controller.EditorController
+import jp.kaleidot725.texteditor.controller.FindDirection
 import jp.kaleidot725.texteditor.state.TextEditorState
 import java.io.File
 import java.util.Date
@@ -168,6 +173,14 @@ fun TextEditor(
 
     val settings = remember { SettingsUtil.getSettingsSnapshot() }
     val conflictKeyword = remember { mutableStateOf(settings.editor.conflictStartStr) }
+
+
+    val conflictOursBlockBgColor = remember {UIHelper.getConflictOursBlockBgColor()}
+    val conflictTheirsBlockBgColor = remember{UIHelper.getConflictTheirsBlockBgColor()}
+    val conflictStartLineBgColor = remember{UIHelper.getConflictStartLineBgColor()}
+    val conflictSplitLineBgColor = remember{UIHelper.getConflictSplitLineBgColor()}
+    val conflictEndLineBgColor = remember{UIHelper.getConflictEndLineBgColor()}
+
 
     //最后显示屏幕范围的第一行的索引
 //    var lastFirstVisibleLineIndexState  by remember { mutableIntStateOf(lastEditedPos.firstVisibleLineIndex) }
@@ -340,6 +353,15 @@ fun TextEditor(
             doJobThenOffLoading {
                 initSearchPos()
 
+                val nextSearchLine = textEditorState.fields.get(nextSearchPos.value.lineIndex).value.text
+                if(nextSearchLine.startsWith(settings.editor.conflictStartStr)) {
+                    conflictKeyword.value = settings.editor.conflictStartStr
+                }else if(nextSearchLine.startsWith(settings.editor.conflictSplitStr)) {
+                    conflictKeyword.value = settings.editor.conflictSplitStr
+                }else if(nextSearchLine.startsWith(settings.editor.conflictEndStr)) {
+                    conflictKeyword.value = settings.editor.conflictEndStr
+                }
+
                 val previousKeyWord = getPreviousKeyWordForConflict(conflictKeyword.value, settings)
                 conflictKeyword.value = previousKeyWord
                 doSearch(previousKeyWord, toNext = false, nextSearchPos.value)
@@ -350,6 +372,17 @@ fun TextEditor(
         PageRequest.clearStateThenDoAct(requestFromParent) {
             doJobThenOffLoading {
                 initSearchPos()
+
+                // update cur conflict keyword, if cursor on conflict str line, if dont do this, UX bad, e.g. I clicked conflict splict line, then click prev conflict, expect is go conflict start line, but if last search is start line, this time will go to end line, anti-intuition
+                // 如果光标在冲突开始、分割、结束行之一，更新搜索关键字，如果不这样做，会出现一些反直觉的bug：我点击了conflict split line，然后点上，期望是查找conflict start line，但如果上次搜索状态是start line，那这次就会去搜索end line，反直觉
+                val nextSearchLine = textEditorState.fields.get(nextSearchPos.value.lineIndex).value.text
+                if(nextSearchLine.startsWith(settings.editor.conflictStartStr)) {
+                    conflictKeyword.value = settings.editor.conflictStartStr
+                }else if(nextSearchLine.startsWith(settings.editor.conflictSplitStr)) {
+                    conflictKeyword.value = settings.editor.conflictSplitStr
+                }else if(nextSearchLine.startsWith(settings.editor.conflictEndStr)) {
+                    conflictKeyword.value = settings.editor.conflictEndStr
+                }
 
                 val nextKeyWord = getNextKeyWordForConflict(conflictKeyword.value, settings)
                 conflictKeyword.value = nextKeyWord
@@ -531,6 +564,112 @@ fun TextEditor(
 //        }
 //        Unit
 //    }
+
+
+    val keepStartIndex = remember { mutableStateOf(-1) }
+    val keepEndIndex = remember { mutableStateOf(-1) }
+    val delStartIndex = remember { mutableStateOf(-1) }
+    val delEndIndex = remember { mutableStateOf(-1) }
+    val delSingleIndex = remember { mutableStateOf(-1) }
+    val acceptOursState = remember { mutableStateOf(false) }
+    val showAcceptConfirmDialog = remember { mutableStateOf(false) }
+
+    fun prepareAcceptBlock(acceptOurs: Boolean, index: Int, curLineText: String) {
+//        println("index=$index, curLine=$curLineText")
+
+        val curStartsWithStart = curLineText.startsWith(settings.editor.conflictStartStr)
+        val curStartsWithSplit = curLineText.startsWith(settings.editor.conflictSplitStr)
+        val curStartsWithEnd = curLineText.startsWith(settings.editor.conflictEndStr)
+        if(!(curStartsWithStart || curStartsWithSplit || curStartsWithEnd)) {
+            Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
+            return
+        }
+
+
+        val firstFindDirection = if(curStartsWithStart) {
+            FindDirection.DOWN
+        }else {
+            FindDirection.UP
+        }
+
+        val firstExpectStr = if(curStartsWithStart) {
+            settings.editor.conflictSplitStr
+        }else if(curStartsWithSplit) {
+            settings.editor.conflictStartStr
+        }else {  // conflict end str like ">x7 branchName"
+            settings.editor.conflictSplitStr
+        }
+
+
+        val (firstIndex, _) = editableController.indexAndValueOf(startIndex=index, direction=firstFindDirection, predicate={it.startsWith(firstExpectStr)}, includeStartIndex = false)
+
+        if(firstIndex == -1) {
+            Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
+            return
+        }
+
+        val secondFindDirection = if(curStartsWithEnd) {
+            FindDirection.UP
+        }else {
+            FindDirection.DOWN
+        }
+
+        val secondExpectStr = if(curStartsWithEnd) {
+            settings.editor.conflictStartStr
+        }else {
+            settings.editor.conflictEndStr
+        }
+
+        val secondStartFindIndexAt =if(curStartsWithSplit) {
+            index
+        }else {
+            firstIndex
+        }
+        val (secondIndex, _) = editableController.indexAndValueOf(startIndex=secondStartFindIndexAt, direction=secondFindDirection, predicate={it.startsWith(secondExpectStr)}, includeStartIndex = false)
+
+        if(secondIndex==-1) {
+            Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
+            return
+        }
+
+        // special case: start may larger than end index, e.g. will keep 30 to 20, but, only shown wrong, will not err when deleting
+        // 特殊情况：start index可能大于end index，例如：30 到 20，不过只是显示有误，实际执行无误
+        if(acceptOurs) {
+            acceptOursState.value = true
+            delSingleIndex.value = if(curStartsWithStart) index else if(curStartsWithSplit) firstIndex else secondIndex  //this is start conflict str index
+            delStartIndex.value = if(curStartsWithStart || curStartsWithEnd) firstIndex else index  // this is split conflict str index
+            delEndIndex.value = if(curStartsWithStart || curStartsWithSplit) secondIndex else index  // this is end conflict str index
+            keepStartIndex.value = delSingleIndex.value + 1  // this is startIndex+1
+            keepEndIndex.value = delStartIndex.value - 1  // this is splitIndex-1
+        }else {
+            acceptOursState.value = false
+            delSingleIndex.value = if(curStartsWithStart || curStartsWithSplit) secondIndex else index  // this is end conflict str index
+            delStartIndex.value = if(curStartsWithStart) index else if(curStartsWithSplit) firstIndex else secondIndex  // this is start conflict str index
+            delEndIndex.value = if(curStartsWithStart || curStartsWithEnd) firstIndex else index  // this is split str index
+            keepStartIndex.value = delEndIndex.value + 1  //this is split index +1
+            keepEndIndex.value = delSingleIndex.value - 1  // this is end index -1
+        }
+
+        // show dialog, make sure user confirm
+        showAcceptConfirmDialog.value = true
+    }
+
+    if(showAcceptConfirmDialog.value) {
+        ConfirmDialog2(
+            title = if(acceptOursState.value) stringResource(R.string.accept_ours) else stringResource(R.string.accept_theirs),
+            text = "will keep lines:${keepStartIndex.value+1} to ${keepEndIndex.value+1}\n\nwill delete lines: ${delSingleIndex.value+1}, ${delStartIndex.value+1} to ${delEndIndex.value+1}",
+            onCancel = {showAcceptConfirmDialog.value = false}
+        ) {
+            showAcceptConfirmDialog.value=false
+            doJobThenOffLoading{
+                val indicesWillDel = mutableListOf(delSingleIndex.value)
+                indicesWillDel.addAll(IntRange(start = delStartIndex.value, endInclusive = delEndIndex.value).toList())
+
+                editableController.deleteLineByIndices(indicesWillDel)
+            }
+        }
+    }
+
 
     LaunchedEffect(lastScrollEvent) TextEditorLaunchedEffect@{
         try {
@@ -734,16 +873,51 @@ fun TextEditor(
             ) {
                 //fields本身就是toList()出来的，无需再toList()
                 textEditorState.fields.forEachIndexed{ index, textFieldState ->
+                    val curLineText = textFieldState.value.text
 
                     val bgColor = if(mergeMode) {
                         UIHelper.getBackgroundColorForMergeConflictSplitText(
-                            text = textFieldState.value.text,
+                            text = curLineText,
                             settings = settings,
-                            inDarkTheme = inDarkTheme,
-                            expectConflictStrDto = expectConflictStrDto.value
+                            expectConflictStrDto = expectConflictStrDto.value,
+                            oursBgColor = conflictOursBlockBgColor,
+                            theirsBgColor = conflictTheirsBlockBgColor,
+                            startLineBgColor=conflictStartLineBgColor,
+                            splitLineBgColor=conflictSplitLineBgColor,
+                            endLineBgColor=conflictEndLineBgColor
                         )
                     } else {
                         Color.Unspecified
+                    }
+
+
+                    // show button for start/split/end line, a little bit ugly, but handy,
+                    // e.g. when scroll to end, checked ours/theirs blocks, then want to accept one, no need go back start to find accept button
+                    if(curLineText.startsWith(settings.editor.conflictStartStr)
+//                        || curLineText.startsWith(settings.editor.conflictSplitStr)
+//                        || curLineText.startsWith(settings.editor.conflictEndStr)
+                    ) {
+//                    if(curLineText.startsWith(settings.editor.conflictStartStr)) {  // only show button on start line
+                        item {
+                            Row {
+                                TextButton(
+                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
+                                    onClick = {
+                                        prepareAcceptBlock(acceptOurs=true, index, curLineText)
+                                    },
+                                ) {
+                                    Text(stringResource(R.string.accept_ours))
+                                }
+                                TextButton(
+                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
+                                    onClick = {
+                                        prepareAcceptBlock(acceptOurs=false, index, curLineText)
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.accept_theirs))
+                                }
+                            }
+                        }
                     }
 
                     item(key = textFieldState.id) {
@@ -904,6 +1078,29 @@ fun TextEditor(
 
                                     },
                                 )
+                            }
+                        }
+                    }
+
+                    if(curLineText.startsWith(settings.editor.conflictEndStr)) {
+                        item {
+                            Row {
+                                TextButton(
+                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
+                                    onClick = {
+                                        prepareAcceptBlock(acceptOurs=true, index, curLineText)
+                                    },
+                                ) {
+                                    Text(stringResource(R.string.accept_ours))
+                                }
+                                TextButton(
+                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
+                                    onClick = {
+                                        prepareAcceptBlock(acceptOurs=false, index, curLineText)
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.accept_theirs))
+                                }
                             }
                         }
                     }

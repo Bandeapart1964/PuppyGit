@@ -453,7 +453,10 @@ class EditorController(
             _fields.clear()
             _fields.addAll(emptyList<String>().createInitTextFieldStates())
             _selectedIndices.clear()
-            selectFieldInternal(0)
+
+            // I am not sure, this should needn't call it, if call when select mode on, maybe will selected first line
+            //我不确定这个是否应该调用，应该不需要，如果 调用 且 选择模式状态为开启，则会在删除所有内容后选中第1行
+//            selectFieldInternal(0)
 
             isContentChanged?.value=true
             editorPageIsContentSnapshoted?.value= false
@@ -616,6 +619,64 @@ class EditorController(
         return Pair(chars, lines)
     }
 
+    fun indexAndValueOf(startIndex:Int, direction: FindDirection, predicate: (text:String) -> Boolean, includeStartIndex:Boolean): Pair<Int, String> {
+        val list = fields
+        var retPair = Pair(-1, "")
+
+        try {
+            val range = if(direction==FindDirection.UP) {
+                val endIndex = if(includeStartIndex) startIndex else (startIndex-1)
+                if(!isGoodIndexForList(endIndex, list)) {
+                    throw RuntimeException("bad index range")
+                }
+
+                (0..endIndex).reversed()
+            }else {
+                val tempStartIndex =if(includeStartIndex) startIndex else (startIndex+1)
+                if(!isGoodIndexForList(tempStartIndex, list)) {
+                    throw RuntimeException("bad index range")
+                }
+
+                tempStartIndex..list.lastIndex
+            }
+
+            for(i in range) {
+                val item = list[i]
+                val text = item.value.text
+                if(predicate(text)) {
+                    retPair = Pair(i, text)
+                    break
+                }
+            }
+
+        }catch (_:Exception) {
+
+        }
+
+        return retPair
+
+    }
+
+    fun deleteLineByIndices(indices:List<Int>) {
+        if(indices.isEmpty()) {
+            return
+        }
+
+        lock.withLock {
+            val newList = fields.filterIndexed {index, _ ->
+                !indices.contains(index)
+            }
+
+            _fields.clear()
+            _fields.addAll(newList)
+
+            isContentChanged?.value=true
+            editorPageIsContentSnapshoted?.value= false
+
+            onChanged(state)
+        }
+    }
+
     enum class SelectionOption {
         FIRST_POSITION,
         LAST_POSITION,
@@ -634,6 +695,11 @@ class EditorController(
             }
         }
     }
+}
+
+enum class FindDirection {
+    UP,
+    DOWN
 }
 
 @Composable

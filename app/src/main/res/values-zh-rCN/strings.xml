@@ -961,6 +961,7 @@
     <string name="hide">隐藏</string>
     <string name="prev_filename">上个：ph_a3f241dc_1</string>
     <string name="next_filename">下个：ph_a3f241dc_1</string>
+    <string name="invalid_conflict_block">无效冲突区域</string>
 
 
 </resources>

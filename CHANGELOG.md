@@ -1,4 +1,7 @@
 next version:
+- Editor, resolve conflict optimize: 
+  - ours/theirs now has background color
+  - add accept ours/theirs buttons
 - can switch Prev/Next File in DiffScreen
 - adjust go to top fab
 - fixed bug: commit history list omit commits

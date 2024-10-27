@@ -187,20 +187,42 @@ object UIHelper {
     }
 
 
+    fun getConflictOursBlockBgColor():Color {
+        return if(Theme.inDarkTheme) Color(0xFF333314) else Color.Yellow.copy(alpha = 0.2f)
+    }
+
+    fun getConflictTheirsBlockBgColor():Color {
+        return if(Theme.inDarkTheme) Color(0xFF331133) else Color.Magenta.copy(alpha = 0.2f)
+    }
+
+    fun getConflictStartLineBgColor():Color {
+        return if(Theme.inDarkTheme) Color(0xFF605714) else Color.Yellow.copy(alpha = 0.6f)
+    }
+
+    fun getConflictSplitLineBgColor():Color {
+        return if(Theme.inDarkTheme) Color(0xFF0D5052) else Color.Cyan.copy(alpha = 0.6f)
+    }
+
+    fun getConflictEndLineBgColor():Color {
+        return if(Theme.inDarkTheme) Color(0xFF591159) else Color.Magenta.copy(alpha = 0.6f)
+    }
+
     fun getBackgroundColorForMergeConflictSplitText(
         text: String,
         settings: AppSettings,
-        inDarkTheme: Boolean,
         expectConflictStrDto:ExpectConflictStrDto,
+
+        oursBgColor:Color,
+        theirsBgColor:Color,
+        startLineBgColor:Color,
+        splitLineBgColor:Color,
+        endLineBgColor:Color,
+        normalBgColor:Color = Color.Unspecified,
     ): Color {
         val nextExpectConflictStr = expectConflictStrDto.getNextExpectConflictStr()
         val curExpectConflictStr = expectConflictStrDto.curConflictStr
         val curExpectConflictStrMatched = expectConflictStrDto.curConflictStrMatched
 
-        val startBgColor = if(inDarkTheme) Color(0xFF605714) else Color.Yellow.copy(alpha = 0.6f)
-        val splitBgColor = if(inDarkTheme) Color(0xFF0D5052) else Color.Cyan.copy(alpha = 0.6f)
-        val endBgColor = if(inDarkTheme) Color(0xFF591159) else Color.Magenta.copy(alpha = 0.6f)
-        val normalBgColor = Color.Unspecified
 
         val (curExpect, nextExcept) = expectConflictStrDto.getCurAndNextExpect()
 
@@ -215,19 +237,20 @@ object UIHelper {
 //                   // expectConflictStrDto.curConflictStr = settings.editor.conflictStartStr
                 }
 
-                if(nextExcept==0) startBgColor else if(nextExcept==1) splitBgColor else endBgColor
+                if(nextExcept==0) startLineBgColor else if(nextExcept==1) splitLineBgColor else endLineBgColor
             }else {
 //                //if(curExpect==0) startBgColor else if(curExpect==1) splitBgColor else endBgColor
 
                 // split line only colored itself
                 //分割行只为自己着色，后续使用结束行的颜色（accept theirs)
-                if(curExpect==0) startBgColor else endBgColor
+                if(curExpect==0) oursBgColor else theirsBgColor
             }
         }else {
-            // first match, should matched start
+            // first match, should matched start ever
             if(text.startsWith(curExpectConflictStr)) {
                 expectConflictStrDto.curConflictStrMatched = true
-                if(curExpect==0) startBgColor else if(curExpect==1) splitBgColor else endBgColor
+                if(curExpect==0) startLineBgColor else if(curExpect==1) splitLineBgColor else endLineBgColor
+//                startLineBgColor  // this should be fine too
             }else {
                 normalBgColor
             }

@@ -966,5 +966,6 @@
     <string name="hide">Hide</string>
     <string name="prev_filename">Prev: ph_a3f241dc_1</string>
     <string name="next_filename">Next: ph_a3f241dc_1</string>
+    <string name="invalid_conflict_block">invalid conflict block</string>
 
 </resources>
