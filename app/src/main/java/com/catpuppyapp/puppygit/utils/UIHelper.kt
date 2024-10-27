@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.settings.AppSettings
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
+import jp.kaleidot725.texteditor.view.ExpectConflictStrDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -185,16 +186,55 @@ object UIHelper {
 //        return MaterialTheme.colorScheme.surfaceBright
     }
 
-    fun getBackgroundColorForMergeConflictSplitText(text:String, settings: AppSettings, inDarkTheme: Boolean): Color {
-        return if(text.startsWith(settings.editor.conflictStartStr)) {
-            if(inDarkTheme) Color(0xFF0C4B0C) else Color.Green.copy(alpha = 0.6f)
-        }else if(text.startsWith(settings.editor.conflictSplitStr)){
-            if(inDarkTheme) Color(0xFF0D5052) else Color.Cyan.copy(alpha = 0.6f)
-        }else if(text.startsWith(settings.editor.conflictEndStr)) {
-            if(inDarkTheme) Color(0xFF591159) else Color.Magenta.copy(alpha = 0.6f)
+
+    fun getBackgroundColorForMergeConflictSplitText(
+        text: String,
+        settings: AppSettings,
+        inDarkTheme: Boolean,
+        expectConflictStrDto:ExpectConflictStrDto,
+    ): Color {
+        val nextExpectConflictStr = expectConflictStrDto.getNextExpectConflictStr()
+        val curExpectConflictStr = expectConflictStrDto.curConflictStr
+        val curExpectConflictStrMatched = expectConflictStrDto.curConflictStrMatched
+
+        val startBgColor = if(inDarkTheme) Color(0xFF605714) else Color.Yellow.copy(alpha = 0.6f)
+        val splitBgColor = if(inDarkTheme) Color(0xFF0D5052) else Color.Cyan.copy(alpha = 0.6f)
+        val endBgColor = if(inDarkTheme) Color(0xFF591159) else Color.Magenta.copy(alpha = 0.6f)
+        val normalBgColor = Color.Unspecified
+
+        val (curExpect, nextExcept) = expectConflictStrDto.getCurAndNextExpect()
+
+        val retColor = if(curExpectConflictStrMatched) {
+            if(text.startsWith(nextExpectConflictStr)) {
+                expectConflictStrDto.curConflictStr = if(nextExcept==0) settings.editor.conflictStartStr else if(nextExcept==1) settings.editor.conflictSplitStr else settings.editor.conflictEndStr
+
+                // matched end
+                if(nextExcept==2) {
+                    expectConflictStrDto.reset()
+//                   // expectConflictStrDto.curConflictStrMatched = false
+//                   // expectConflictStrDto.curConflictStr = settings.editor.conflictStartStr
+                }
+
+                if(nextExcept==0) startBgColor else if(nextExcept==1) splitBgColor else endBgColor
+            }else {
+//                //if(curExpect==0) startBgColor else if(curExpect==1) splitBgColor else endBgColor
+
+                // split line only colored itself
+                //分割行只为自己着色，后续使用结束行的颜色（accept theirs)
+                if(curExpect==0) startBgColor else endBgColor
+            }
         }else {
-            Color.Unspecified
+            // first match, should matched start
+            if(text.startsWith(curExpectConflictStr)) {
+                expectConflictStrDto.curConflictStrMatched = true
+                if(curExpect==0) startBgColor else if(curExpect==1) splitBgColor else endBgColor
+            }else {
+                normalBgColor
+            }
         }
+
+
+        return retColor
 
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalTextInputService
@@ -77,6 +78,42 @@ import java.util.Date
 
 private val TAG ="TextEditor"
 private val stateKeyTag ="TextEditor"
+
+class ExpectConflictStrDto(
+    var settings: AppSettings = SettingsUtil.getSettingsSnapshot()
+) {
+    var curConflictStr: String = settings.editor.conflictStartStr
+    var curConflictStrMatched: Boolean = false
+
+    fun reset() {
+        curConflictStr = settings.editor.conflictStartStr
+        curConflictStrMatched = false
+    }
+
+    fun getNextExpectConflictStr():String{
+        return if(curConflictStr == settings.editor.conflictStartStr) {
+            settings.editor.conflictSplitStr
+        }else if(curConflictStr == settings.editor.conflictSplitStr) {
+            settings.editor.conflictEndStr
+        }else { // curStr == settings.editor.conflictEndStr
+            settings.editor.conflictStartStr
+        }
+    }
+
+    fun getCurAndNextExpect():Pair<Int,Int> {
+        val curExpect = if(curConflictStr.startsWith(settings.editor.conflictStartStr)){
+            0
+        }else if(curConflictStr.startsWith(settings.editor.conflictSplitStr)) {
+            1
+        }else {
+            2
+        }
+
+        val nextExcept = if(curExpect + 1 > 2) 0 else curExpect+1
+
+        return Pair(curExpect, nextExcept)
+    }
+}
 
 typealias DecorationBoxComposable = @Composable (
     index: Int,
@@ -128,7 +165,7 @@ fun TextEditor(
     val focusRequesters = remember { mutableStateMapOf<Int, FocusRequester>() }
 //    val focusRequesters = remember { mutableStateListOf<FocusRequester>() }  //不能用list，滚动两下页面就会报错
 
-    val settings = SettingsUtil.getSettingsSnapshot()
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
     val conflictKeyword = remember { mutableStateOf(settings.editor.conflictStartStr) }
 
     //最后显示屏幕范围的第一行的索引
@@ -147,6 +184,9 @@ fun TextEditor(
     //此值为假或readOnly为真则不显示键盘
     //没找到合适的方法手动启用，因此默认启用，暂时没更改的场景
     val allowKeyboard = remember { mutableStateOf(true) }
+
+    val expectConflictStrDto = mutableCustomStateOf(stateKeyTag, "expectConflict", ExpectConflictStrDto(settings=settings))
+
 
     val nextSearchPos = mutableCustomStateOf(
         keyTag = stateKeyTag,
@@ -683,6 +723,8 @@ fun TextEditor(
                 // noop
             }
         }else{
+            expectConflictStrDto.value.reset()
+
             LazyColumn(
                 state = lazyColumnState,
                 //fillMaxSize是为了点哪都能触发滚动，这样点哪都能隐藏顶栏
@@ -691,6 +733,18 @@ fun TextEditor(
             ) {
                 //fields本身就是toList()出来的，无需再toList()
                 textEditorState.fields.forEachIndexed{ index, textFieldState ->
+
+                    val bgColor = if(mergeMode) {
+                        UIHelper.getBackgroundColorForMergeConflictSplitText(
+                            text = textFieldState.value.text,
+                            settings = settings,
+                            inDarkTheme = inDarkTheme,
+                            expectConflictStrDto = expectConflictStrDto.value
+                        )
+                    } else {
+                        Color.Unspecified
+                    }
+
                     item(key = textFieldState.id) {
                         val focusRequester by remember { mutableStateOf(FocusRequester()) }
 
@@ -742,6 +796,7 @@ fun TextEditor(
                                     enabled = !textEditorState.isMultipleSelectionMode && !readOnlyMode,
                                     focusRequester = focusRequester,
                                     fontSize = fontSize,
+                                    bgColor = bgColor,
                                     onUpdateText = { newText ->
                                         try{
                                             //写入编辑缓存

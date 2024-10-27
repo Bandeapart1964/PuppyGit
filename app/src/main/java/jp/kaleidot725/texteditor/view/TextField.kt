@@ -52,11 +52,11 @@ internal fun TextField(
     searchMode:Boolean,   //因为更新光标有bug，会在搜索时错误更新编辑列导致搜索卡在原地，所以才传这个参数，否则用不到
     mergeMode:Boolean,
     fontSize:MutableIntState,
+    bgColor:Color,
 ) {
     val currentTextField by rememberUpdatedState(newValue = textFieldState.value)
     val inDarkTheme = Theme.inDarkTheme
 
-    val settings = SettingsUtil.getSettingsSnapshot()
 
     LaunchedEffect(textFieldState.isSelected) {
         if (textFieldState.isSelected) {
@@ -87,7 +87,7 @@ internal fun TextField(
         },
         //字体样式:字体颜色、字体大小、背景颜色等
         textStyle = TextStyle.Default.copy(fontSize = fontSize.intValue.sp, color = UIHelper.getFontColor(inDarkTheme),
-            background = if(mergeMode) UIHelper.getBackgroundColorForMergeConflictSplitText(currentTextField.text, settings, inDarkTheme) else Color.Unspecified
+            background = bgColor
         ),
         //光标颜色
         cursorBrush = SolidColor(if(inDarkTheme) Color.LightGray else Color.Black),
