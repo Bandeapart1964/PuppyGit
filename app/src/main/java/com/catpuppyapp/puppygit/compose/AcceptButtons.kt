@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
-import com.catpuppyapp.puppygit.ui.theme.Theme
+import com.catpuppyapp.puppygit.utils.UIHelper
 
 
 @Composable
@@ -32,9 +32,6 @@ fun AcceptButtons(
             lineIndex = lineIndex,
             lineText = lineText,
             prepareAcceptBlock = prepareAcceptBlock,
-            conflictOursBlockBgColor = conflictOursBlockBgColor,
-            conflictTheirsBlockBgColor = conflictTheirsBlockBgColor,
-            conflictSplitLineBgColor = conflictSplitLineBgColor
         )
     }else {
         AcceptButtons_TextButton(
@@ -57,18 +54,13 @@ private fun AcceptButtons_LongPressedIcon(
     lineIndex: Int,
     lineText: String,
     prepareAcceptBlock: (Boolean, Boolean, Int, String) -> Unit,
-    conflictOursBlockBgColor: Color,
-    conflictTheirsBlockBgColor: Color,
-    conflictSplitLineBgColor: Color
 ) {
-    val iconColor = if(Theme.inDarkTheme) Color.Gray else Color.DarkGray
     Row {
         LongPressAbleIconBtn(
             tooltipText = stringResource(R.string.accept_ours),
             icon = Icons.Outlined.ArrowCircleLeft,
             iconContentDesc = stringResource(R.string.accept_ours),
-//            iconModifier = Modifier.size(100.dp),
-            iconColor = iconColor
+            iconColor = UIHelper.getAcceptOursIconColor()
         ) {
             prepareAcceptBlock(true, false, lineIndex, lineText)
         }
@@ -78,8 +70,7 @@ private fun AcceptButtons_LongPressedIcon(
             tooltipText = stringResource(R.string.accept_theirs),
             icon = Icons.Outlined.ArrowCircleRight,
             iconContentDesc = stringResource(R.string.accept_theirs),
-//            iconModifier = Modifier.size(100.dp),
-            iconColor = iconColor
+            iconColor = UIHelper.getAcceptTheirsIconColor()
         ) {
             prepareAcceptBlock(false, true, lineIndex, lineText)
         }
@@ -89,8 +80,7 @@ private fun AcceptButtons_LongPressedIcon(
             tooltipText = stringResource(R.string.accept_both),
             icon = Icons.Outlined.CheckCircle,
             iconContentDesc = stringResource(R.string.accept_both),
-//            iconModifier = Modifier.size(100.dp),
-            iconColor = iconColor
+            iconColor = UIHelper.getAcceptBothIconColor()
         ) {
             prepareAcceptBlock(true, true, lineIndex, lineText)
         }
@@ -100,8 +90,7 @@ private fun AcceptButtons_LongPressedIcon(
             tooltipText = stringResource(R.string.reject_both),
             icon = Icons.Outlined.RemoveCircleOutline,
             iconContentDesc = stringResource(R.string.reject_both),
-//            iconModifier = Modifier.size(100.dp),
-            iconColor = iconColor
+            iconColor = UIHelper.getRejectBothIconColor()
         ) {
             prepareAcceptBlock(false, false, lineIndex, lineText)
         }
