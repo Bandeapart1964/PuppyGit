@@ -962,6 +962,12 @@
     <string name="prev_filename">上个：ph_a3f241dc_1</string>
     <string name="next_filename">下个：ph_a3f241dc_1</string>
     <string name="invalid_conflict_block">无效冲突区域</string>
+    <string name="accept_both">接受两者</string>
+    <string name="reject_both">拒绝两者</string>
+    <string name="will_accept_ours_and_delete_lines_line_indexs">将接受我方, 并删除行：ph_a3f241dc_1, ph_a3f241dc_2-ph_a3f241dc_3</string>
+    <string name="will_accept_theirs_and_delete_lines_line_indexs">将接受对方, 并删除行：ph_a3f241dc_1, ph_a3f241dc_2-ph_a3f241dc_3</string>
+    <string name="will_accept_both_and_delete_lines_line_indexs">将接受双方，并删除行：ph_a3f241dc_1, ph_a3f241dc_2, ph_a3f241dc_3</string>
+    <string name="will_reject_both_and_delete_lines_line_indexs">接拒绝双方，并删除行：ph_a3f241dc_1-ph_a3f241dc_2</string>
 
 
 </resources>

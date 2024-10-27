@@ -566,15 +566,25 @@ fun TextEditor(
 //    }
 
 
-    val keepStartIndex = remember { mutableStateOf(-1) }
-    val keepEndIndex = remember { mutableStateOf(-1) }
+    // actually only need know which lines will delete, no need know which will kept
+//    val keepStartIndex = remember { mutableStateOf(-1) }
+//    val keepEndIndex = remember { mutableStateOf(-1) }
+
     val delStartIndex = remember { mutableStateOf(-1) }
     val delEndIndex = remember { mutableStateOf(-1) }
     val delSingleIndex = remember { mutableStateOf(-1) }
     val acceptOursState = remember { mutableStateOf(false) }
+    val acceptTheirsState = remember { mutableStateOf(false) }
     val showAcceptConfirmDialog = remember { mutableStateOf(false) }
 
-    fun prepareAcceptBlock(acceptOurs: Boolean, index: Int, curLineText: String) {
+    /**
+     * find accept block indecies,
+     * find direction:
+     * if curLineText starts with conflict start str: conflict start -> split -> end (all go down)
+     * if starts with split str: split -> start -> end (go down, then go up)
+     * if starts with end str: end -> split -> start (all go up)
+     */
+    val prepareAcceptBlock= label@{acceptOurs: Boolean, acceptTheirs:Boolean, index: Int, curLineText: String ->
 //        println("index=$index, curLine=$curLineText")
 
         val curStartsWithStart = curLineText.startsWith(settings.editor.conflictStartStr)
@@ -582,7 +592,7 @@ fun TextEditor(
         val curStartsWithEnd = curLineText.startsWith(settings.editor.conflictEndStr)
         if(!(curStartsWithStart || curStartsWithSplit || curStartsWithEnd)) {
             Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
-            return
+            return@label
         }
 
 
@@ -605,7 +615,7 @@ fun TextEditor(
 
         if(firstIndex == -1) {
             Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
-            return
+            return@label
         }
 
         val secondFindDirection = if(curStartsWithEnd) {
@@ -629,25 +639,52 @@ fun TextEditor(
 
         if(secondIndex==-1) {
             Msg.requireShow(appContext.getString(R.string.invalid_conflict_block))
-            return
+            return@label
         }
+
+        val startConflictLineIndex = if(curStartsWithStart) index else if(curStartsWithSplit) firstIndex else secondIndex  //this is start conflict str index
+        val splitConflictLineIndex = if(curStartsWithStart || curStartsWithEnd) firstIndex else index  // this is split conflict str index
+        val endConflictLineIndex = if(curStartsWithStart || curStartsWithSplit) secondIndex else index  // this is end conflict str index
 
         // special case: start may larger than end index, e.g. will keep 30 to 20, but, only shown wrong, will not err when deleting
         // 特殊情况：start index可能大于end index，例如：30 到 20，不过只是显示有误，实际执行无误
-        if(acceptOurs) {
+        if(acceptOurs && acceptTheirs.not()) {
             acceptOursState.value = true
-            delSingleIndex.value = if(curStartsWithStart) index else if(curStartsWithSplit) firstIndex else secondIndex  //this is start conflict str index
-            delStartIndex.value = if(curStartsWithStart || curStartsWithEnd) firstIndex else index  // this is split conflict str index
-            delEndIndex.value = if(curStartsWithStart || curStartsWithSplit) secondIndex else index  // this is end conflict str index
-            keepStartIndex.value = delSingleIndex.value + 1  // this is startIndex+1
-            keepEndIndex.value = delStartIndex.value - 1  // this is splitIndex-1
-        }else {
+            acceptTheirsState.value = false
+
+            // remove single index and range [start, end]
+            delSingleIndex.value = startConflictLineIndex
+            delStartIndex.value = splitConflictLineIndex
+            delEndIndex.value = endConflictLineIndex
+
+//            keepStartIndex.value = startConflictLineIndex + 1  // this is startIndex+1
+//            keepEndIndex.value = splitConflictLineIndex - 1  // this is splitIndex-1
+        }else if(acceptOurs.not() && acceptTheirs) {
             acceptOursState.value = false
-            delSingleIndex.value = if(curStartsWithStart || curStartsWithSplit) secondIndex else index  // this is end conflict str index
-            delStartIndex.value = if(curStartsWithStart) index else if(curStartsWithSplit) firstIndex else secondIndex  // this is start conflict str index
-            delEndIndex.value = if(curStartsWithStart || curStartsWithEnd) firstIndex else index  // this is split str index
-            keepStartIndex.value = delEndIndex.value + 1  //this is split index +1
-            keepEndIndex.value = delSingleIndex.value - 1  // this is end index -1
+            acceptTheirsState.value = true
+
+            // remove single index and range [start, end]
+            delSingleIndex.value = endConflictLineIndex
+            delStartIndex.value = startConflictLineIndex
+            delEndIndex.value = splitConflictLineIndex
+
+//            keepStartIndex.value = splitConflictLineIndex + 1  //this is split index +1
+//            keepEndIndex.value = endConflictLineIndex - 1  // this is end index -1
+        }else if(acceptOurs && acceptTheirs) {  // accept both
+            acceptOursState.value = true
+            acceptTheirsState.value = true
+
+            // remove 3 indices, no range
+            delSingleIndex.value = startConflictLineIndex
+            delStartIndex.value= splitConflictLineIndex
+            delEndIndex.value = endConflictLineIndex
+        }else { // reject both
+            acceptOursState.value = false
+            acceptTheirsState.value = false
+
+            // remove range [start, end]
+            delStartIndex.value = startConflictLineIndex
+            delEndIndex.value = endConflictLineIndex
         }
 
         // show dialog, make sure user confirm
@@ -656,14 +693,34 @@ fun TextEditor(
 
     if(showAcceptConfirmDialog.value) {
         ConfirmDialog2(
-            title = if(acceptOursState.value) stringResource(R.string.accept_ours) else stringResource(R.string.accept_theirs),
-            text = "will keep lines:${keepStartIndex.value+1} to ${keepEndIndex.value+1}\n\nwill delete lines: ${delSingleIndex.value+1}, ${delStartIndex.value+1} to ${delEndIndex.value+1}",
+            title = if(acceptOursState.value && acceptTheirsState.value.not()) stringResource(R.string.accept_ours)
+            else if(acceptOursState.value.not() && acceptTheirsState.value) stringResource(R.string.accept_theirs)
+            else if(acceptOursState.value && acceptTheirsState.value) stringResource(R.string.accept_both)
+            else stringResource(R.string.reject_both),
+
+            text = if(acceptOursState.value && acceptTheirsState.value.not()) replaceStringResList(stringResource(R.string.will_accept_ours_and_delete_lines_line_indexs), listOf(""+(delSingleIndex.value + 1), ""+(delStartIndex.value + 1), ""+(delEndIndex.value + 1)))
+            else if(acceptOursState.value.not() && acceptTheirsState.value) replaceStringResList(stringResource(R.string.will_accept_theirs_and_delete_lines_line_indexs), listOf(""+(delSingleIndex.value + 1), ""+(delStartIndex.value + 1), ""+(delEndIndex.value + 1)))
+            else if(acceptOursState.value && acceptTheirsState.value) replaceStringResList(stringResource(R.string.will_accept_both_and_delete_lines_line_indexs), listOf(""+(delSingleIndex.value + 1), ""+(delStartIndex.value + 1), ""+(delEndIndex.value + 1)))
+            else replaceStringResList(stringResource(R.string.will_reject_both_and_delete_lines_line_indexs), listOf(""+(delStartIndex.value + 1), ""+(delEndIndex.value + 1))),
+
             onCancel = {showAcceptConfirmDialog.value = false}
         ) {
             showAcceptConfirmDialog.value=false
+
             doJobThenOffLoading{
-                val indicesWillDel = mutableListOf(delSingleIndex.value)
-                indicesWillDel.addAll(IntRange(start = delStartIndex.value, endInclusive = delEndIndex.value).toList())
+                val indicesWillDel = if((acceptOursState.value && acceptTheirsState.value.not()) || (acceptOursState.value.not() && acceptTheirsState.value)){
+                    //accept ours/theirs
+                    val tmp = mutableListOf(delSingleIndex.value)
+                    tmp.addAll(IntRange(start = delStartIndex.value, endInclusive = delEndIndex.value).toList())
+                    tmp
+                }else if(acceptOursState.value && acceptTheirsState.value) {  // accept both
+                    val tmp = mutableListOf(delSingleIndex.value)
+                    tmp.add(delStartIndex.value)
+                    tmp.add(delEndIndex.value)
+                    tmp
+                }else {  // reject both
+                    IntRange(start = delStartIndex.value, endInclusive = delEndIndex.value).toList()
+                }
 
                 editableController.deleteLineByIndices(indicesWillDel)
             }
@@ -899,24 +956,14 @@ fun TextEditor(
                     ) {
 //                    if(curLineText.startsWith(settings.editor.conflictStartStr)) {  // only show button on start line
                         item {
-                            Row {
-                                TextButton(
-                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
-                                    onClick = {
-                                        prepareAcceptBlock(acceptOurs=true, index, curLineText)
-                                    },
-                                ) {
-                                    Text(stringResource(R.string.accept_ours))
-                                }
-                                TextButton(
-                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
-                                    onClick = {
-                                        prepareAcceptBlock(acceptOurs=false, index, curLineText)
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.accept_theirs))
-                                }
-                            }
+                            AcceptButtons(
+                                lineIndex = index,
+                                lineText = curLineText,
+                                prepareAcceptBlock = prepareAcceptBlock,
+                                conflictOursBlockBgColor = conflictOursBlockBgColor,
+                                conflictTheirsBlockBgColor = conflictTheirsBlockBgColor,
+                                conflictSplitLineBgColor = conflictSplitLineBgColor
+                            )
                         }
                     }
 
@@ -1084,24 +1131,14 @@ fun TextEditor(
 
                     if(curLineText.startsWith(settings.editor.conflictEndStr)) {
                         item {
-                            Row {
-                                TextButton(
-                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
-                                    onClick = {
-                                        prepareAcceptBlock(acceptOurs=true, index, curLineText)
-                                    },
-                                ) {
-                                    Text(stringResource(R.string.accept_ours))
-                                }
-                                TextButton(
-                                    colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
-                                    onClick = {
-                                        prepareAcceptBlock(acceptOurs=false, index, curLineText)
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.accept_theirs))
-                                }
-                            }
+                            AcceptButtons(
+                                lineIndex = index,
+                                lineText = curLineText,
+                                prepareAcceptBlock = prepareAcceptBlock,
+                                conflictOursBlockBgColor = conflictOursBlockBgColor,
+                                conflictTheirsBlockBgColor = conflictTheirsBlockBgColor,
+                                conflictSplitLineBgColor = conflictSplitLineBgColor
+                            )
                         }
                     }
 
@@ -1133,6 +1170,51 @@ fun TextEditor(
             }
         }
 
+    }
+}
+
+@Composable
+private fun AcceptButtons(
+    lineIndex: Int,
+    lineText: String,
+    prepareAcceptBlock: (Boolean, Boolean, Int, String) -> Unit,
+    conflictOursBlockBgColor: Color,
+    conflictTheirsBlockBgColor: Color,
+    conflictSplitLineBgColor: Color
+) {
+    Row {
+        TextButton(
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictOursBlockBgColor),
+            onClick = {
+                prepareAcceptBlock(true, false, lineIndex, lineText)
+            },
+        ) {
+            Text(stringResource(R.string.accept_ours))
+        }
+        TextButton(
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictTheirsBlockBgColor),
+            onClick = {
+                prepareAcceptBlock(false, true, lineIndex, lineText)
+            }
+        ) {
+            Text(stringResource(R.string.accept_theirs))
+        }
+        TextButton(
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictSplitLineBgColor),
+            onClick = {
+                prepareAcceptBlock(true, true, lineIndex, lineText)
+            }
+        ) {
+            Text(stringResource(R.string.accept_both))
+        }
+        TextButton(
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = MyStyleKt.TextColor.danger.copy(alpha = .5f)),
+            onClick = {
+                prepareAcceptBlock(false, false, lineIndex, lineText)
+            }
+        ) {
+            Text(stringResource(R.string.reject_both))
+        }
     }
 }
 
