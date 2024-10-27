@@ -1200,7 +1200,7 @@ private fun AcceptButtons(
             Text(stringResource(R.string.accept_theirs))
         }
         TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictSplitLineBgColor),
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = conflictSplitLineBgColor.copy(alpha = .5f)),
             onClick = {
                 prepareAcceptBlock(true, true, lineIndex, lineText)
             }
@@ -1208,7 +1208,7 @@ private fun AcceptButtons(
             Text(stringResource(R.string.accept_both))
         }
         TextButton(
-            colors = ButtonDefaults.textButtonColors().copy(containerColor = MyStyleKt.TextColor.danger.copy(alpha = .5f)),
+            colors = ButtonDefaults.textButtonColors().copy(containerColor = MyStyleKt.TextColor.danger.copy(alpha = .3f)),
             onClick = {
                 prepareAcceptBlock(false, false, lineIndex, lineText)
             }
