@@ -200,7 +200,7 @@ object UIHelper {
     }
 
     fun getConflictSplitLineBgColor():Color {
-        return if(Theme.inDarkTheme) Theme.darkLightBlue else Color.Blue.copy(alpha = 0.4f)
+        return if(Theme.inDarkTheme) Theme.darkLightBlue.copy(alpha = 0.4f) else Color.Blue.copy(alpha = 0.2f)
     }
 
     fun getConflictEndLineBgColor():Color {

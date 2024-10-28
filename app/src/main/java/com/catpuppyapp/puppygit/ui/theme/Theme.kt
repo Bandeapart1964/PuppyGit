@@ -20,7 +20,7 @@ import com.catpuppyapp.puppygit.play.pro.R
 
 object Theme {
     val Orange = Color(0xFFFF5722)
-    val darkLightBlue = Color(0xDF406060)
+    val darkLightBlue = Color(0xDF456464)
 
 
 
