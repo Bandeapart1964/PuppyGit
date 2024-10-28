@@ -288,7 +288,7 @@ fun HomeScreen(
         keyName = "editorPageTextEditorState",
         initValue =TextEditorState.create("")
     )
-    val editorPageShowSaveDoneToast = rememberSaveable { mutableStateOf(false)}
+//    val editorPageShowSaveDoneToast = rememberSaveable { mutableStateOf(false)}
 //    val needRefreshEditorPage = rememberSaveable { mutableStateOf(false) }
     val needRefreshEditorPage = rememberSaveable { mutableStateOf("")}
     val editorPageIsSaving = rememberSaveable { mutableStateOf(false)}
@@ -296,8 +296,8 @@ fun HomeScreen(
     val showReloadDialog = rememberSaveable { mutableStateOf( false)}
 
     val changeListHasIndexItems = rememberSaveable { mutableStateOf( false)}
-    val changeListRequirePull = rememberSaveable { mutableStateOf(false)}
-    val changeListRequirePush = rememberSaveable { mutableStateOf(false)}
+//    val changeListRequirePull = rememberSaveable { mutableStateOf(false)}
+//    val changeListRequirePush = rememberSaveable { mutableStateOf(false)}
     val changeListRequireDoActFromParent = rememberSaveable { mutableStateOf( false)}
     val changeListRequireDoActFromParentShowTextWhenDoingAct = rememberSaveable { mutableStateOf("")}
     val changeListEnableAction = rememberSaveable { mutableStateOf( true)}
@@ -306,7 +306,7 @@ fun HomeScreen(
     val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changeListPageItemListState = rememberLazyListState()
     val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changelistRepoIdState = rememberSaveable { mutableStateOf("") }
+    val changelistNewestPageId = rememberSaveable { mutableStateOf("") }
 
     val changeListPageDropDownMenuItemOnClick={item:RepoEntity->
         //如果切换仓库，清空选中项列表
@@ -983,7 +983,7 @@ fun HomeScreen(
                     changeListRepoList= changeListRepoList,
                     goToChangeListPage=goToChangeListPage,
                     needReQueryRepoList = needReQueryRepoListForChangeListTitle,
-                    repoIdState = changelistRepoIdState
+                    newestPageId = changelistNewestPageId
                     // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
 //                    commit1OidStr = Cons.gitIndexCommitHash,
 //                    commit2OidStr = Cons.gitLocalWorktreeCommitHash

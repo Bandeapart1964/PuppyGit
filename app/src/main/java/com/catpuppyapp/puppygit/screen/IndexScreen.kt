@@ -122,7 +122,7 @@ fun IndexScreen(
     val changeListPageItemListState = rememberLazyListState()
     val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changelistPageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
-    val changelistRepoIdState = rememberSaveable { mutableStateOf("") }
+    val changelistNewestPageId = rememberSaveable { mutableStateOf("") }
 
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
@@ -233,7 +233,7 @@ fun IndexScreen(
             commitForQueryParents = "",
             rebaseCurOfAll = changeListPageRebaseCurOfAll,
             openDrawer = {}, //非顶级页面按返回键不需要打开抽屉
-            repoIdState = changelistRepoIdState
+            newestPageId = changelistNewestPageId
 
 //            commit1OidStr=commit1OidStr,
 //            commitParentList=commitParentList

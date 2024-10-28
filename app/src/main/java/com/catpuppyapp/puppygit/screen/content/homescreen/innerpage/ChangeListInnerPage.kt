@@ -109,6 +109,7 @@ import com.catpuppyapp.puppygit.utils.dbIntToBool
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.doJobWithMainContext
 import com.catpuppyapp.puppygit.utils.getSecFromTime
+import com.catpuppyapp.puppygit.utils.getShortUUID
 import com.catpuppyapp.puppygit.utils.isRepoReadyAndPathExist
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.showErrAndSaveLog
@@ -170,19 +171,23 @@ fun ChangeListInnerPage(
     changeListRepoList:CustomStateListSaveable<RepoEntity>? =null,
     goToChangeListPage:(goToThisRepo:RepoEntity)->Unit ={},
     needReQueryRepoList:MutableState<String>? =null,
-    repoIdState:MutableState<String>,  // for check if repo changed （用来检测仓库是否改变了，有时候有的仓库查询慢，切换仓库，切换后查出来了，会覆盖条目列表，出现仓库b显示了仓库a的条目的问题，更新列表前检测下repoid是否变化能避免此bug）
+    newestPageId:MutableState<String>,  // for check if switched page （用来检测页面是否切换过，有时候有的仓库查询慢，切换仓库，切换后查出来了，会覆盖条目列表，出现仓库b显示了仓库a的条目的问题，更新列表前检测下此值是否有变化能避免此bug）
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
 ) {
 
+    // for detect page changed
+    val pageId = remember {
+        val newId = getShortUUID()
+        newestPageId.value = newId
+        newId
+    }
+
     //避免导航的时候出现 “//” 导致导航失败
     val commit1OidStr = commit1OidStr.ifBlank { Cons.allZeroOid.toString() }
     val commit2OidStr = commit2OidStr.ifBlank { Cons.allZeroOid.toString() }
-    val repoId = remember(repoId) { derivedStateOf {
-        val curRepoId = if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId
-        repoIdState.value = curRepoId
-        curRepoId
-    } }.value  // must call .value, else derived block may not execting
+    val repoId = remember(repoId) { derivedStateOf { if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId } }.value  // must call .value, else derived block may not executing
+
 
     val isDiffToLocal = fromTo == Cons.gitDiffFromIndexToWorktree || commit1OidStr==Cons.gitLocalWorktreeCommitHash || commit2OidStr==Cons.gitLocalWorktreeCommitHash
     val isWorktreePage = fromTo == Cons.gitDiffFromIndexToWorktree
@@ -3281,6 +3286,12 @@ fun ChangeListInnerPage(
 
     LaunchedEffect(needRefreshChangeListPage.value + refreshRequiredByParentPage.value) {
         try {
+            // this assigned should not be necessary,
+            // because remember haven't hold a mutableState value,
+            // so it just a simple variable, should catchable as constant by lambda
+            // on the other hand, assigned is fine though
+            val pageIdSnapshot = pageId
+
             changeListInit(
                 dbContainer = dbContainer,
                 appContext = appContext,
@@ -3320,7 +3331,9 @@ fun ChangeListInnerPage(
                     // debug end
 
                     // production
-                    repoId != repoIdState.value
+
+                    // if true, page changed
+                    pageIdSnapshot != newestPageId.value
                 }
 
 //        isDiffToHead=isDiffToHead,
