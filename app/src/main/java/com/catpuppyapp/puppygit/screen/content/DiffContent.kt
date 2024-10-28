@@ -186,7 +186,7 @@ fun DiffContent(
 
 
             Spacer(Modifier.height(50.dp))
-            naviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+            NaviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
 
         }
     }else {  //文本类型且没超过大小且文件修改过，正常显示diff信息
@@ -424,7 +424,7 @@ fun DiffContent(
                 }
 
             Spacer(Modifier.height(50.dp))
-            naviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+            NaviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
 
         }
     }
@@ -551,7 +551,7 @@ fun DiffContent(
 }
 
 @Composable
-private fun naviButton(
+private fun NaviButton(
     diffableItemList: List<StatusTypeEntrySaver>,
     curItemIndex: MutableIntState,
     switchItem: (StatusTypeEntrySaver, index: Int) -> Unit,
