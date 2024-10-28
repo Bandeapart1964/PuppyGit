@@ -170,6 +170,7 @@ fun ChangeListInnerPage(
     changeListRepoList:CustomStateListSaveable<RepoEntity>? =null,
     goToChangeListPage:(goToThisRepo:RepoEntity)->Unit ={},
     needReQueryRepoList:MutableState<String>? =null,
+    repoIdState:MutableState<String>,  // for check if repo changed （用来检测仓库是否改变了，有时候有的仓库查询慢，切换仓库，切换后查出来了，会覆盖条目列表，出现仓库b显示了仓库a的条目的问题，更新列表前检测下repoid是否变化能避免此bug）
     //这组件再多一个参数就崩溃了，不要再加了，会报verifyError错误，升级gradle或许可以解决，具体原因不明（缓存问题，删除项目根目录下的.gradle目录重新构建即可）
 //    isDiffToHead:MutableState<Boolean> = mutableStateOf(false),  //仅 treeTotree页面需要此参数，用来判断是否在和headdiff
 ) {
@@ -177,7 +178,11 @@ fun ChangeListInnerPage(
     //避免导航的时候出现 “//” 导致导航失败
     val commit1OidStr = commit1OidStr.ifBlank { Cons.allZeroOid.toString() }
     val commit2OidStr = commit2OidStr.ifBlank { Cons.allZeroOid.toString() }
-    val repoId = remember(repoId) { derivedStateOf { if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId } }.value
+    val repoId = remember(repoId) { derivedStateOf {
+        val curRepoId = if(repoId.isBlank()) curRepoFromParentPage.value.id else repoId
+        repoIdState.value = curRepoId
+        curRepoId
+    } }.value  // must call .value, else derived block may not execting
 
     val isDiffToLocal = fromTo == Cons.gitDiffFromIndexToWorktree || commit1OidStr==Cons.gitLocalWorktreeCommitHash || commit2OidStr==Cons.gitLocalWorktreeCommitHash
     val isWorktreePage = fromTo == Cons.gitDiffFromIndexToWorktree
@@ -3305,6 +3310,18 @@ fun ChangeListInnerPage(
                 commitForQueryParents=commitForQueryParents,
                 rebaseCurOfAll=rebaseCurOfAll,
                 credentialList=credentialList,
+                repoChanged = {
+                    // debug start (test passed)
+//                    val repoChanged = repoId != repoIdState.value
+//                    if(repoChanged) {
+//                        println("仓库变了！old:$repoId, new: ${repoIdState.value}")
+//                    }
+//                    repoChanged
+                    // debug end
+
+                    // production
+                    repoId != repoIdState.value
+                }
 
 //        isDiffToHead=isDiffToHead,
 //        headCommitHash=headCommitHash
@@ -3354,6 +3371,7 @@ private fun changeListInit(
     commitForQueryParents:String,
     rebaseCurOfAll: MutableState<String>?,
     credentialList: CustomStateListSaveable<CredentialEntity>,
+    repoChanged:()->Boolean
 //    isDiffToHead:MutableState<Boolean>?,
 //    headCommitHash:MutableState<String>
 //    scope:CoroutineScope
@@ -3450,6 +3468,10 @@ private fun changeListInit(
                             Libgit2Helper.getTreeToTreeChangeList(repo, repoId, tree1, null, reverse=false, treeToWorkTree = true)
                         }
 
+                        if(repoChanged()) {
+                            return@launch
+                        }
+
                         itemList.value.addAll(cl)
 
                         //和local比较不需要parents list
@@ -3468,6 +3490,11 @@ private fun changeListInit(
                             return@launch
                         }
                         val treeToTreeChangeList = Libgit2Helper.getTreeToTreeChangeList(repo, repoId, tree1, tree2);
+
+                        if(repoChanged()) {
+                            return@launch
+                        }
+
                         itemList.value.addAll(treeToTreeChangeList)
 
                         //只有和parents比较时才需要查询parents（目前20240807只通过点击commit item触发）；其他情况（手动输入两个commit、长按commit条目出现的diff to local）都不需要查询commit，这时把commitForQueryParents直接传空字符串就行
@@ -3588,6 +3615,10 @@ private fun changeListInit(
 //                                MyLog.d(TAG,"#getInit(): requeried repo index is empty or not, now changeListPageHasIndexItem = "+changeListPageHasIndexItem.value)
 //                            }
 
+                            if(repoChanged()) {
+                                return@launch
+                            }
+
                             //清空条目列表
                             itemList.value.clear()
 
@@ -3617,6 +3648,11 @@ private fun changeListInit(
                     //检查是否存在staged条目，用来在worktree条目为空时，决定是否显示index有条目的提示
                     //这个列表可以考虑传给index页面，不过要在index页面设置成如果没传参就查询，有参则用参的形式，但即使有参，也可通过index的刷新按钮刷新页面状态
                     val (indexIsEmpty, indexList) = Libgit2Helper.checkIndexIsEmptyAndGetIndexList(gitRepository, curRepoFromParentPage.value.id, onlyCheckEmpty = false)
+
+                    if(repoChanged()) {
+                        return@launch
+                    }
+
                     changeListPageHasIndexItem.value = !indexIsEmpty
                     MyLog.d(TAG,"#$funName(): changeListPageHasIndexItem = "+changeListPageHasIndexItem.value)
                     //只有在index页面，才需要更新条目列表，否则这个列表由worktree页面来更新
@@ -3647,10 +3683,20 @@ private fun changeListInit(
                 val credentialDb = AppModel.singleInstanceHolder.dbContainer.credentialRepository
                 val credentialListFromDb = credentialDb.getAll(includeNone = true, includeMatchByDomain = true)
                 if(credentialListFromDb.isNotEmpty()) {
+
+                    if(repoChanged()) {
+                        return@launch
+                    }
+
                     credentialList.value.addAll(credentialListFromDb)
                 }
 
 
+            }
+
+
+            if(repoChanged()) {
+                return@launch
             }
 
             //如果是选择模式，检查当前选中条目是否依然有效，如果不是，直接清空选中条目
@@ -3664,6 +3710,11 @@ private fun changeListInit(
                         effectionSelectedList.add(it)
                     }
                 }
+
+                if(repoChanged()) {
+                    return@launch
+                }
+
                 //这个操作不兼容SnapshotList，而且，我不太确定这样会不会影响页面刷新，所以不这么写了
 //            selectedItemList.value = effectionSelectedList
                 selectedItemList.value.clear()

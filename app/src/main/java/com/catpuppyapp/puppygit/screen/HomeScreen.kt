@@ -306,6 +306,7 @@ fun HomeScreen(
     val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changeListPageItemListState = rememberLazyListState()
     val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
+    val changelistRepoIdState = rememberSaveable { mutableStateOf("") }
 
     val changeListPageDropDownMenuItemOnClick={item:RepoEntity->
         //如果切换仓库，清空选中项列表
@@ -982,6 +983,7 @@ fun HomeScreen(
                     changeListRepoList= changeListRepoList,
                     goToChangeListPage=goToChangeListPage,
                     needReQueryRepoList = needReQueryRepoListForChangeListTitle,
+                    repoIdState = changelistRepoIdState
                     // index..worktree, need not pass params, because `fromTo` already implicit `indexToWorktree` or `headToIndex`
 //                    commit1OidStr = Cons.gitIndexCommitHash,
 //                    commit2OidStr = Cons.gitLocalWorktreeCommitHash
