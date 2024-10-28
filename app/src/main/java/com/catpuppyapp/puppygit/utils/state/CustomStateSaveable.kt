@@ -67,6 +67,14 @@ fun <T> mutableCustomStateOf(keyTag:String, keyName:String, initValue: T): Custo
     return CustomStateSaveable(stateHolder)
 }
 
+@Composable
+fun <T> mutableCustomStateOf(keyTag:String, keyName:String, getInitValue: ()->T): CustomStateSaveable<T> {
+    val stateHolder = rememberSaveable(saver = getSaver()) {
+        getHolder(keyTag, keyName, data= mutableStateOf<T>(getInitValue()))
+    }
+    return CustomStateSaveable(stateHolder)
+}
+
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun <T> mutableCustomStateListOf(keyTag:String, keyName:String, initValue: List<T>): CustomStateListSaveable<T> {

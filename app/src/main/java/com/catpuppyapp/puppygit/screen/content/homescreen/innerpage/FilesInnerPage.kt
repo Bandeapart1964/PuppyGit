@@ -167,7 +167,11 @@ fun FilesInnerPage(
     val activity = ActivityUtil.getCurrentActivity()
 
 
-    val settingsSnapshot = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
+    val settingsSnapshot = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "settingsSnapshot") {
+        val s = SettingsUtil.getSettingsSnapshot()
+        filesPageScrolled.value = s.showNaviButtons
+        s
+    }
 
 
 

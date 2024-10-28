@@ -190,6 +190,12 @@ fun ChangeListInnerPage(
     val dbContainer = AppModel.singleInstanceHolder.dbContainer
     val navController = AppModel.singleInstanceHolder.navController
 
+    val settings = remember {
+        val s = SettingsUtil.getSettingsSnapshot()
+        changelistPageScrolled.value = s.showNaviButtons
+        s
+    }
+
 //    val headCommitHash = rememberSaveable { mutableStateOf("")   //只有tree to tree页面需要查这个
 
     val filterList = mutableCustomStateListOf(

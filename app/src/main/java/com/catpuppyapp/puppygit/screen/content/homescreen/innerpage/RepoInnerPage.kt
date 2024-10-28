@@ -73,6 +73,7 @@ import com.catpuppyapp.puppygit.dev.tagsTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.Upstream
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
@@ -144,6 +145,13 @@ fun RepoInnerPage(
     val exitApp = AppModel.singleInstanceHolder.exitApp;
     val navController = AppModel.singleInstanceHolder.navController;
     val scope = rememberCoroutineScope()
+
+    val settings = remember {
+        val s = SettingsUtil.getSettingsSnapshot()
+        repoPageScrolled.value = s.showNaviButtons
+        s
+    }
+
 
     val clipboardManager = LocalClipboardManager.current
 
