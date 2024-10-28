@@ -531,12 +531,12 @@ fun DiffContent(
                         loading.value=false
                     }catch (e:Exception) {
                         val errMsg = errorStrRes + ":" + e.localizedMessage
-                        createAndInsertError(repoId, errMsg)
-                        Msg.requireShowLongDuration(errMsg)
 
                         errMsgState.value = errMsg
                         loading.value = false
 
+//                        Msg.requireShowLongDuration(errMsg)
+                        createAndInsertError(repoId, errMsg)
                         MyLog.e(TAG, "#LaunchedEffect err:"+e.stackTraceToString())
                     }
 
