@@ -718,30 +718,31 @@ fun CommitListScreen(
 //    ) { // onScrollDown
 //        scrollingDown.value = true
 //    }
-    val lastAt = remember { mutableIntStateOf(0) }
-    val lastIsScrollDown = remember { mutableStateOf(false) }
-    val forUpdateScrollState = remember {
-        derivedStateOf {
-            val nowAt = if(enableFilterState.value) {
-                filterListState.firstVisibleItemIndex
-            } else {
-                listState.firstVisibleItemIndex
-            }
-
-            val scrolledDown = nowAt > lastAt.intValue  // scroll down
-//            val scrolledUp = nowAt < lastAt.intValue
-
-            val scrolled = nowAt != lastAt.intValue  // scrolled
-            lastAt.intValue = nowAt
-
-            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
-            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
-                pageScrolled.value = true
-            }
-
-            lastIsScrollDown.value = scrolledDown
-        }
-    }.value
+//
+//    val lastAt = remember { mutableIntStateOf(0) }
+//    val lastIsScrollDown = remember { mutableStateOf(false) }
+//    val forUpdateScrollState = remember {
+//        derivedStateOf {
+//            val nowAt = if(enableFilterState.value) {
+//                filterListState.firstVisibleItemIndex
+//            } else {
+//                listState.firstVisibleItemIndex
+//            }
+//
+//            val scrolledDown = nowAt > lastAt.intValue  // scroll down
+////            val scrolledUp = nowAt < lastAt.intValue
+//
+//            val scrolled = nowAt != lastAt.intValue  // scrolled
+//            lastAt.intValue = nowAt
+//
+//            // only update state when this scroll down and last is not scroll down, or this is scroll up and last is not scroll up
+//            if(scrolled && ((lastIsScrollDown.value && !scrolledDown) || (!lastIsScrollDown.value && scrolledDown))) {
+//                pageScrolled.value = true
+//            }
+//
+//            lastIsScrollDown.value = scrolledDown
+//        }
+//    }.value
     // 向下滚动监听，结束
 
 
