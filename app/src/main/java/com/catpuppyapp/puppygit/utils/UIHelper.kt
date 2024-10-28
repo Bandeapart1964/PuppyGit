@@ -4,8 +4,12 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ToggleOff
+import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -275,4 +279,9 @@ object UIHelper {
         return retColor
 
     }
+
+    fun getIconForSwitcher(state: MutableState<Boolean>) = if (state.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff
+
+    fun getColorForSwitcher(state: MutableState<Boolean>) = if (state.value) Color(0xFF0090FF) else if(Theme.inDarkTheme) Color.LightGray else Color.Gray
+
 }

@@ -14,13 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ToggleOff
-import androidx.compose.material.icons.filled.ToggleOn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +46,7 @@ import com.catpuppyapp.puppygit.utils.LanguageUtil
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.PrefMan
+import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.fileopenhistory.FileOpenHistoryMan
 import com.catpuppyapp.puppygit.utils.getStoragePermission
@@ -311,9 +307,9 @@ fun SettingsInnerPage(
 
             Icon(
                 modifier = Modifier.size(switcherIconSize),
-                imageVector = if(showNaviButtons.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                imageVector = UIHelper.getIconForSwitcher(showNaviButtons),
                 contentDescription = if(showNaviButtons.value) stringResource(R.string.enable) else stringResource(R.string.disable),
-                tint = if(showNaviButtons.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = UIHelper.getColorForSwitcher(showNaviButtons),
             )
         }
 
@@ -342,9 +338,9 @@ fun SettingsInnerPage(
 
             Icon(
                 modifier = Modifier.size(switcherIconSize),
-                imageVector = if(enableEditCache.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                imageVector = UIHelper.getIconForSwitcher(enableEditCache),
                 contentDescription = if(enableEditCache.value) stringResource(R.string.enable) else stringResource(R.string.disable),
-                tint = if(enableEditCache.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = UIHelper.getColorForSwitcher(enableEditCache),
             )
         }
 
@@ -366,9 +362,9 @@ fun SettingsInnerPage(
 
             Icon(
                 modifier = Modifier.size(switcherIconSize),
-                imageVector = if(enableSnapshot_File.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                imageVector = UIHelper.getIconForSwitcher(enableSnapshot_File),
                 contentDescription = if(enableSnapshot_File.value) stringResource(R.string.enable) else stringResource(R.string.disable),
-                tint = if(enableSnapshot_File.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = UIHelper.getColorForSwitcher(enableSnapshot_File),
 
             )
         }
@@ -390,9 +386,9 @@ fun SettingsInnerPage(
 
             Icon(
                 modifier = Modifier.size(switcherIconSize),
-                imageVector = if(enableSnapshot_Content.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                imageVector = UIHelper.getIconForSwitcher(enableSnapshot_Content),
                 contentDescription = if(enableSnapshot_Content.value) stringResource(R.string.enable) else stringResource(R.string.disable),
-                tint = if(enableSnapshot_Content.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = UIHelper.getColorForSwitcher(enableSnapshot_Content),
 
             )
         }
@@ -416,9 +412,9 @@ fun SettingsInnerPage(
 
             Icon(
                 modifier = Modifier.size(switcherIconSize),
-                imageVector = if(groupContentByLineNum.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                imageVector = UIHelper.getIconForSwitcher(groupContentByLineNum),
                 contentDescription = if(groupContentByLineNum.value) stringResource(R.string.enable) else stringResource(R.string.disable),
-                tint = if(groupContentByLineNum.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                tint = UIHelper.getColorForSwitcher(groupContentByLineNum),
 
             )
         }
@@ -452,8 +448,9 @@ fun SettingsInnerPage(
     }
 }
 
+
 @Composable
-fun SettingsTitle(text:String){
+private fun SettingsTitle(text:String){
     val inDarkTheme = Theme.inDarkTheme
     Row(modifier = Modifier
         .background(color = if (inDarkTheme) Color.DarkGray else Color.LightGray)
@@ -467,7 +464,7 @@ fun SettingsTitle(text:String){
 }
 
 @Composable
-fun SettingsContent(onClick:(()->Unit)?=null, content:@Composable ()->Unit) {
+private fun SettingsContent(onClick:(()->Unit)?=null, content:@Composable ()->Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
