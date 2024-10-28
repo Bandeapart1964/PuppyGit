@@ -968,6 +968,7 @@
     <string name="will_accept_theirs_and_delete_lines_line_indexs">将接受对方, 并删除行：ph_a3f241dc_1, ph_a3f241dc_2-ph_a3f241dc_3</string>
     <string name="will_accept_both_and_delete_lines_line_indexs">将接受双方，并删除行：ph_a3f241dc_1, ph_a3f241dc_2, ph_a3f241dc_3</string>
     <string name="will_reject_both_and_delete_lines_line_indexs">接拒绝双方，并删除行：ph_a3f241dc_1-ph_a3f241dc_2</string>
+    <string name="n_items_will_be_deleted">ph_a3f241dc_1 个条目将会被删除</string>
 
 
 </resources>

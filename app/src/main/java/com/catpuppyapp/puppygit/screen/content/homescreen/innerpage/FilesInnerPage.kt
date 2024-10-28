@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content.homescreen.innerpage
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
@@ -1283,10 +1282,24 @@ fun FilesInnerPage(
     }
 
     val showDelFileDialog = rememberSaveable { mutableStateOf(false)}
+    val allCountForDelDialog = rememberSaveable { mutableStateOf(0)}
+//    val fileCountForDelDialog = rememberSaveable { mutableStateOf(0)}
+//    val folderCountForDelDialog = rememberSaveable { mutableStateOf(0)}
+    val initDelFileDialog = {
+//        val list = selectedItems.value
+//        allCountForDelDialog.value = list.size
+//        folderCountForDelDialog.value = list.count { it.isDir }
+//        fileCountForDelDialog.value = allCountForDelDialog.value - folderCountForDelDialog.value
+
+        allCountForDelDialog.value = selectedItems.value.size
+
+        showDelFileDialog.value=true
+    }
     if(showDelFileDialog.value) {
-        ConfirmDialog(
+        ConfirmDialog2(
             title = stringResource(id = R.string.delete),
-            text = stringResource(R.string.will_delete_selected_items_are_u_sure),
+            text = replaceStringResList(stringResource(R.string.n_items_will_be_deleted), listOf(""+allCountForDelDialog.value)),
+            okTextColor = MyStyleKt.TextColor.danger,
             onCancel = { showDelFileDialog.value=false }
         ) {
             //关闭弹窗
@@ -1619,7 +1632,7 @@ fun FilesInnerPage(
         )
         val selectionModeIconOnClickList = listOf<()->Unit>(
             delete@{
-                showDelFileDialog.value = true
+                initDelFileDialog()
             },
             move@{
                 setPasteModeThenShowPasteBar(pasteMode_Move)

@@ -977,5 +977,7 @@
     <string name="will_accept_both_and_delete_lines_line_indexs">will accept both, and delete lines: ph_a3f241dc_1, ph_a3f241dc_2, ph_a3f241dc_3</string>
     <!--    e.g. "will reject both, and delete lines: 1-10"-->
     <string name="will_reject_both_and_delete_lines_line_indexs">will reject both, and delete lines: ph_a3f241dc_1-ph_a3f241dc_2</string>
+    <!--    e.g. "2 item(s) will be deleted"-->
+    <string name="n_items_will_be_deleted">ph_a3f241dc_1 item(s) will be deleted</string>
 
 </resources>
