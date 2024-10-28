@@ -1,12 +1,8 @@
 package com.catpuppyapp.puppygit.screen
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.HideSource
-import androidx.compose.material.icons.filled.VerticalAlignBottom
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -27,10 +23,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import com.catpuppyapp.puppygit.compose.ConfirmDialog
 import com.catpuppyapp.puppygit.compose.CopyableDialog
+import com.catpuppyapp.puppygit.compose.GoToTopAndGoToBottomFab
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.compose.MySelectionContainer
 import com.catpuppyapp.puppygit.compose.OpenAsDialog
-import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
@@ -40,10 +36,8 @@ import com.catpuppyapp.puppygit.screen.content.DiffContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.DiffPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.DiffScreenTitle
 import com.catpuppyapp.puppygit.settings.SettingsUtil
-import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Msg
-import com.catpuppyapp.puppygit.utils.UIHelper
 import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.getFileNameFromCanonicalPath
@@ -226,9 +220,6 @@ fun DiffScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            //TODO 这个东西也要根据选择哪个抽屉菜单条目而变化
-            //TODO 要能在向上滚动时，隐藏这个topbar，向下滚动时，显示出来
-            //TODO Editor时，在右隐藏侧栏显示文件名怎么样？
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -271,33 +262,11 @@ fun DiffScreen(
         },
         floatingActionButton = {
             if(pageScrolled.value) {
-                Column(modifier = MyStyleKt.Fab.getFabModifier()) {
-                    //show go to top
-                    SmallFab(
-                        icon = Icons.Filled.VerticalAlignTop, iconDesc = stringResource(id = R.string.go_to_top)
-                    ) {
-                        UIHelper.scrollTo(scope, listState, 0)
-
-                        // hide fab after scrolled
-//                        pageScrolled.value = false
-                    }
-
-                    // temporary hide fab
-                    SmallFab(
-                        icon = Icons.Filled.HideSource, iconDesc = stringResource(id = R.string.hide)
-                    ) {
-                        pageScrolled.value = false
-                    }
-
-                    // go to bottom
-                    SmallFab(
-                        icon = Icons.Filled.VerticalAlignBottom, iconDesc = stringResource(id = R.string.go_to_bottom)
-                    ) {
-                        UIHelper.scrollTo(scope, listState, Int.MAX_VALUE)
-
-//                        pageScrolled.value = false
-                    }
-                }
+                GoToTopAndGoToBottomFab(
+                    scope = scope,
+                    listState = listState,
+                    showFab = pageScrolled
+                )
             }
         }
     ) { contentPadding ->

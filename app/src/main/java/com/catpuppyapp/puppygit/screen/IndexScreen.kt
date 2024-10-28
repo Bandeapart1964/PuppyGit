@@ -191,11 +191,11 @@ fun IndexScreen(
         floatingActionButton = {
             if(changelistPageScrolled.value) {
                 GoToTopAndGoToBottomFab(
-                    filterModeOn = changeListPageFilterModeOn,
+                    filterModeOn = changeListPageFilterModeOn.value,
                     scope = scope,
                     filterListState = changelistFilterListState,
                     listState = changeListPageItemListState,
-                    pageScrolled = changelistPageScrolled
+                    showFab = changelistPageScrolled
                 )
 
             }

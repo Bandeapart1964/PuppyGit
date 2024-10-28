@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen
 
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,8 +29,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,7 +55,6 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.RemoteItem
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SetBranchForRemoteDialog
-import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.compose.UnLinkCredentialAndRemoteDialogForRemoteListPage
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.constants.SpecialCredential
@@ -768,11 +763,11 @@ fun RemoteListScreen(
             if(pageScrolled.value) {
 
                 GoToTopAndGoToBottomFab(
-                    filterModeOn = enableFilterState,
+                    filterModeOn = enableFilterState.value,
                     scope = scope,
                     filterListState = filterListState,
                     listState = lazyListState,
-                    pageScrolled = pageScrolled
+                    showFab = pageScrolled
                 )
 
             }

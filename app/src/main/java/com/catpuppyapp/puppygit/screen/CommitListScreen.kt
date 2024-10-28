@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen
 
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MoveToInbox
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.VerticalAlignTop
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +36,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,7 +77,6 @@ import com.catpuppyapp.puppygit.compose.MyLazyColumn
 import com.catpuppyapp.puppygit.compose.ResetDialog
 import com.catpuppyapp.puppygit.compose.ScrollableColumn
 import com.catpuppyapp.puppygit.compose.SingleSelectList
-import com.catpuppyapp.puppygit.compose.SmallFab
 import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.RepoEntity
 import com.catpuppyapp.puppygit.dev.cherrypickTestPassed
@@ -1326,11 +1322,11 @@ fun CommitListScreen(
             if(pageScrolled.value) {
 
                 GoToTopAndGoToBottomFab(
-                    filterModeOn = enableFilterState,
+                    filterModeOn = enableFilterState.value,
                     scope = scope,
                     filterListState = filterListState,
                     listState = listState,
-                    pageScrolled = pageScrolled
+                    showFab = pageScrolled
                 )
 
             }

@@ -184,9 +184,6 @@ fun TreeToTreeChangeListScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(homeTopBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            //TODO 这个东西也要根据选择哪个抽屉菜单条目而变化
-            //TODO 要能在向上滚动时，隐藏这个topbar，向下滚动时，显示出来
-            //TODO Editor时，在右隐藏侧栏显示文件名怎么样？
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -339,11 +336,11 @@ fun TreeToTreeChangeListScreen(
         floatingActionButton = {
             if(changelistPageScrolled.value) {
                 GoToTopAndGoToBottomFab(
-                    filterModeOn = changeListPageFilterModeOn,
+                    filterModeOn = changeListPageFilterModeOn.value,
                     scope = scope,
                     filterListState = changelistFilterListState,
                     listState = changeListPageItemListState,
-                    pageScrolled = changelistPageScrolled
+                    showFab = changelistPageScrolled
                 )
             }
         }

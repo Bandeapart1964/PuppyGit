@@ -26,8 +26,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -347,11 +345,11 @@ fun CredentialRemoteListScreen(
             if(pageScrolled.value) {
 
                 GoToTopAndGoToBottomFab(
-                    filterModeOn = enableFilterState,
+                    filterModeOn = enableFilterState.value,
                     scope = scope,
                     filterListState = filterListState,
                     listState = listState,
-                    pageScrolled = pageScrolled
+                    showFab = pageScrolled
                 )
 
             }

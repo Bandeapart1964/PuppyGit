@@ -801,29 +801,29 @@ fun HomeScreen(
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_ChangeList && changelistPageScrolled.value) {
 
                     GoToTopAndGoToBottomFab(
-                        filterModeOn = changeListPageFilterModeOn,
+                        filterModeOn = changeListPageFilterModeOn.value,
                         scope = scope,
                         filterListState = changelistFilterListState,
                         listState = changeListPageItemListState,
-                        pageScrolled = changelistPageScrolled
+                        showFab = changelistPageScrolled
                     )
 
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_Repos && repoPageScrolled.value) {
                     GoToTopAndGoToBottomFab(
-                        filterModeOn = repoPageFilterModeOn,
+                        filterModeOn = repoPageFilterModeOn.value,
                         scope = scope,
                         filterListState = repoFilterListState,
                         listState = repoPageListState,
-                        pageScrolled = repoPageScrolled
+                        showFab = repoPageScrolled
                     )
 
                 }else if(currentHomeScreen.intValue == Cons.selectedItem_Files && filesPageScrolled.value) {
                     GoToTopAndGoToBottomFab(
-                        filterModeOn = filesPageSimpleFilterOn,
+                        filterModeOn = filesPageSimpleFilterOn.value,
                         scope = scope,
                         filterListState = filesFilterListState,
                         listState = filesPageListState.value,
-                        pageScrolled = filesPageScrolled
+                        showFab = filesPageScrolled
                     )
                 }
             }
