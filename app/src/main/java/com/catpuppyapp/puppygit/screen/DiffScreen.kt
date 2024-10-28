@@ -39,6 +39,7 @@ import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.screen.content.DiffContent
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions.DiffPageActions
 import com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title.DiffScreenTitle
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Msg
@@ -77,6 +78,7 @@ fun DiffScreen(
     val appContext = AppModel.singleInstanceHolder.appContext
 
     val scope = rememberCoroutineScope()
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
 
     val clipboardManager = LocalClipboardManager.current
 
@@ -179,7 +181,7 @@ fun DiffScreen(
     }
 
     // 向下滚动监听，开始
-    val pageScrolled = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 //    val firstVisible = remember { derivedStateOf { listState.value } }
 //    ScrollListener(
 //        nowAt = firstVisible.value,

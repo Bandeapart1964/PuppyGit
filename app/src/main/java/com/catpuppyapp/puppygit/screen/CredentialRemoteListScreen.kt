@@ -49,6 +49,7 @@ import com.catpuppyapp.puppygit.constants.Cons
 import com.catpuppyapp.puppygit.data.entity.CredentialEntity
 import com.catpuppyapp.puppygit.dto.RemoteDtoForCredential
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Msg
@@ -77,6 +78,7 @@ fun CredentialRemoteListScreen(
     val navController = AppModel.singleInstanceHolder.navController
     val appContext = AppModel.singleInstanceHolder.appContext
     val scope = rememberCoroutineScope()
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
 
     //这个页面的滚动状态不用记住，每次点开重置也无所谓
     val listState = rememberLazyListState()
@@ -185,7 +187,7 @@ fun CredentialRemoteListScreen(
 
 
     // 向下滚动监听，开始
-    val pageScrolled = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 
     val filterListState = rememberLazyListState()
 //    val filterListState = mutableCustomStateOf(

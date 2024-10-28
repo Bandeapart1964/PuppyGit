@@ -45,6 +45,7 @@ import com.catpuppyapp.puppygit.dev.dev_EnableUnTestedFeature
 import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.screen.content.homescreen.innerpage.ChangeListInnerPage
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -108,6 +109,7 @@ fun TreeToTreeChangeListScreen(
 
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir
     val appContext = AppModel.singleInstanceHolder.appContext
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
 
     //取出title desc，存到状态变量里，与页面共存亡就行
     val titleDesc = rememberSaveable { mutableStateOf((Cache.getByTypeThenDel<String>(titleDescKey))?:"") }
@@ -164,7 +166,7 @@ fun TreeToTreeChangeListScreen(
     val changeListPageItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageItemList", initValue = listOf<StatusTypeEntrySaver>())
     val changeListPageItemListState = rememberLazyListState()
     val changeListPageSelectedItemList = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "changeListPageSelectedItemList", initValue = listOf<StatusTypeEntrySaver>())
-    val changelistPageScrolled = remember { mutableStateOf(false) }
+    val changelistPageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 
     val changeListPageFilterKeyWord = mutableCustomStateOf(
         keyTag = stateKeyTag,

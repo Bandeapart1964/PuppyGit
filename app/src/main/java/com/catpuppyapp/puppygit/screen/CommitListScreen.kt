@@ -704,7 +704,7 @@ fun CommitListScreen(
     }
 
     // 向下滚动监听，开始
-    val pageScrolled = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 
     val requireBlinkIdx = rememberSaveable{mutableIntStateOf(-1)}
 

@@ -71,6 +71,7 @@ import com.catpuppyapp.puppygit.dev.proFeatureEnabled
 import com.catpuppyapp.puppygit.dev.shallowAndSingleBranchTestPassed
 import com.catpuppyapp.puppygit.dto.RemoteDto
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.user.UserUtil
 import com.catpuppyapp.puppygit.utils.AppModel
@@ -108,6 +109,7 @@ fun RemoteListScreen(
     val navController = AppModel.singleInstanceHolder.navController
     val dbContainer = AppModel.singleInstanceHolder.dbContainer
     val scope = rememberCoroutineScope()
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
 
     //获取假数据
 //    val list = MockData.getErrorList(repoId,1,100);
@@ -615,7 +617,7 @@ fun RemoteListScreen(
 
 
     // 向下滚动监听，开始
-    val pageScrolled = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 
     val filterListState = rememberLazyListState()
 //    val filterListState = mutableCustomStateOf(

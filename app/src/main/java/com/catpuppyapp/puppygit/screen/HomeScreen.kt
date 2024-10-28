@@ -130,6 +130,8 @@ fun HomeScreen(
     val appContext = LocalContext.current  //这个能获取到
     val activity = ActivityUtil.getCurrentActivity()
 
+//    val settingsTmp = remember { SettingsUtil.getSettingsSnapshot() }   //避免状态变量里的设置项过旧，重新获取一个
+
     val allRepoParentDir = AppModel.singleInstanceHolder.allRepoParentDir
 
     val settingsSnapshot = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "settingsSnapshot", initValue = SettingsUtil.getSettingsSnapshot())
@@ -252,7 +254,7 @@ fun HomeScreen(
         changeStateTriggerRefreshPage(needRefreshFilesPage)  //刷新页面
     }
 
-    val filesPageScrolled = rememberSaveable { mutableStateOf(false)}
+    val filesPageScrolled = rememberSaveable { mutableStateOf(settingsSnapshot.value.showNaviButtons)}
     val filesPageListState = mutableCustomStateOf(stateKeyTag, "filesPageListState", initValue = LazyListState(0,0))
 
     val filesPageSimpleFilterOn = rememberSaveable { mutableStateOf(false)}
@@ -364,11 +366,10 @@ fun HomeScreen(
     val editorPageMergeMode = remember{mutableStateOf(false)}
     val editorReadOnlyMode = remember{mutableStateOf(false)}
 
-    val settingsTmp = remember { SettingsUtil.getSettingsSnapshot() }   //避免状态变量里的设置项过旧，重新获取一个
-    val editorShowLineNum = remember{mutableStateOf(settingsTmp.editor.showLineNum)}
-    val editorLineNumFontSize = remember { mutableIntStateOf( settingsTmp.editor.lineNumFontSize)}
+    val editorShowLineNum = remember{mutableStateOf(settingsSnapshot.value.editor.showLineNum)}
+    val editorLineNumFontSize = remember { mutableIntStateOf( settingsSnapshot.value.editor.lineNumFontSize)}
     val editorLastSavedLineNumFontSize = remember { mutableIntStateOf( editorLineNumFontSize.intValue) } //用来检查，如果没变，就不执行保存，避免写入硬盘
-    val editorFontSize = remember { mutableIntStateOf( settingsTmp.editor.fontSize)}
+    val editorFontSize = remember { mutableIntStateOf( settingsSnapshot.value.editor.fontSize)}
     val editorLastSavedFontSize = remember { mutableIntStateOf( editorFontSize.intValue)}
     val editorAdjustFontSizeMode = remember{mutableStateOf(false)}
     val editorAdjustLineNumFontSizeMode = remember{mutableStateOf(false)}
@@ -432,8 +433,8 @@ fun HomeScreen(
 
 
 
-    val changelistPageScrolled = remember { mutableStateOf(false) }
-    val repoPageScrolled = remember { mutableStateOf(false) }
+    val changelistPageScrolled = remember { mutableStateOf(settingsSnapshot.value.showNaviButtons) }
+    val repoPageScrolled = remember { mutableStateOf(settingsSnapshot.value.showNaviButtons) }
 
     // two usages: 1. re query repo list when click title;  2. after imported submodules at ChangeList page
     val needReQueryRepoListForChangeListTitle = rememberSaveable { mutableStateOf("")}

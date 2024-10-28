@@ -83,6 +83,7 @@ import com.catpuppyapp.puppygit.dev.resetByHashTestPassed
 import com.catpuppyapp.puppygit.etc.Ret
 import com.catpuppyapp.puppygit.git.BranchNameAndTypeDto
 import com.catpuppyapp.puppygit.play.pro.R
+import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.user.UserUtil
@@ -127,6 +128,8 @@ fun BranchListScreen(
     val scope = rememberCoroutineScope()
 
     val inDarkTheme = Theme.inDarkTheme
+
+    val settings = remember { SettingsUtil.getSettingsSnapshot() }
 
     //获取假数据
     val list = mutableCustomStateListOf(keyTag = stateKeyTag, keyName = "list", initValue = listOf<BranchNameAndTypeDto>())
@@ -978,7 +981,7 @@ fun BranchListScreen(
     //filter相关，结束
 
     // 向下滚动监听，开始
-    val pageScrolled = remember { mutableStateOf(false) }
+    val pageScrolled = remember { mutableStateOf(settings.showNaviButtons) }
 
 //    val filterListState = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "filterListState", LazyListState(0,0))
     val filterListState = rememberLazyListState()
