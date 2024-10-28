@@ -1,4 +1,5 @@
 next version:
+- Optimize page scroll performance
 - Editor, resolve conflict optimize: 
   - ours/theirs now has background color
   - add accept ours/theirs buttons
