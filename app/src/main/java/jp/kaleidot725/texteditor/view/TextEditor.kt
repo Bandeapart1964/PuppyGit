@@ -126,11 +126,20 @@ typealias DecorationBoxComposable = @Composable (
 ) -> Unit
 
 //光标handle和选中文本颜色设置
-val customTextSelectionColors = MyStyleKt.TextSelectionColor.customTextSelectionColors
-val customTextSelectionColors_darkMode = MyStyleKt.TextSelectionColor.customTextSelectionColors_darkMode
+private val customTextSelectionColors = MyStyleKt.TextSelectionColor.customTextSelectionColors
+private val customTextSelectionColors_darkMode = MyStyleKt.TextSelectionColor.customTextSelectionColors_darkMode
 
 //隐藏光标，没选中文本时使用这个
-val customTextSelectionColors_hideCursorHandle = MyStyleKt.TextSelectionColor.customTextSelectionColors_hideCursorHandle
+private val customTextSelectionColors_hideCursorHandle = MyStyleKt.TextSelectionColor.customTextSelectionColors_hideCursorHandle
+
+
+private val conflictOursBlockBgColor = UIHelper.getConflictOursBlockBgColor()
+private val conflictTheirsBlockBgColor = UIHelper.getConflictTheirsBlockBgColor()
+private val conflictStartLineBgColor = UIHelper.getConflictStartLineBgColor()
+private val conflictSplitLineBgColor = UIHelper.getConflictSplitLineBgColor()
+private val conflictEndLineBgColor = UIHelper.getConflictEndLineBgColor()
+
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -173,11 +182,6 @@ fun TextEditor(
     val conflictKeyword = remember { mutableStateOf(settings.editor.conflictStartStr) }
 
 
-    val conflictOursBlockBgColor = remember {UIHelper.getConflictOursBlockBgColor()}
-    val conflictTheirsBlockBgColor = remember{UIHelper.getConflictTheirsBlockBgColor()}
-    val conflictStartLineBgColor = remember{UIHelper.getConflictStartLineBgColor()}
-    val conflictSplitLineBgColor = remember{UIHelper.getConflictSplitLineBgColor()}
-    val conflictEndLineBgColor = remember{UIHelper.getConflictEndLineBgColor()}
 
 
     //最后显示屏幕范围的第一行的索引

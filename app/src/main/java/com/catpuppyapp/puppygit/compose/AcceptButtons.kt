@@ -1,20 +1,33 @@
 package com.catpuppyapp.puppygit.compose
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowCircleLeft
-import androidx.compose.material.icons.outlined.ArrowCircleRight
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.CodeOff
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.UIHelper
+
+
+private val iconShape = RoundedCornerShape(8.dp)
+private val borderWidth = 2.dp
+
+private val oursColor = UIHelper.getAcceptOursIconColor()
+private val theirsColor = UIHelper.getAcceptTheirsIconColor()
+private val acceptBothColor = UIHelper.getAcceptBothIconColor()
+private val rejectBothColor = UIHelper.getRejectBothIconColor()
 
 
 @Composable
@@ -58,9 +71,10 @@ private fun AcceptButtons_LongPressedIcon(
     Row {
         LongPressAbleIconBtn(
             tooltipText = stringResource(R.string.accept_ours),
-            icon = Icons.Outlined.ArrowCircleLeft,
+            icon = Icons.Filled.ChevronLeft,
             iconContentDesc = stringResource(R.string.accept_ours),
-            iconColor = UIHelper.getAcceptOursIconColor()
+            iconColor = oursColor,
+            iconModifier = Modifier.border(width = borderWidth, color = oursColor, shape = iconShape)
         ) {
             prepareAcceptBlock(true, false, lineIndex, lineText)
         }
@@ -68,9 +82,10 @@ private fun AcceptButtons_LongPressedIcon(
 
         LongPressAbleIconBtn(
             tooltipText = stringResource(R.string.accept_theirs),
-            icon = Icons.Outlined.ArrowCircleRight,
+            icon = Icons.Filled.ChevronRight,
             iconContentDesc = stringResource(R.string.accept_theirs),
-            iconColor = UIHelper.getAcceptTheirsIconColor()
+            iconColor = theirsColor,
+            iconModifier = Modifier.border(width = borderWidth, color = theirsColor, shape = iconShape)
         ) {
             prepareAcceptBlock(false, true, lineIndex, lineText)
         }
@@ -78,9 +93,10 @@ private fun AcceptButtons_LongPressedIcon(
 
         LongPressAbleIconBtn(
             tooltipText = stringResource(R.string.accept_both),
-            icon = Icons.Outlined.CheckCircle,
+            icon = Icons.Filled.Code,
             iconContentDesc = stringResource(R.string.accept_both),
-            iconColor = UIHelper.getAcceptBothIconColor()
+            iconColor = acceptBothColor,
+            iconModifier = Modifier.border(width = borderWidth, color = acceptBothColor, shape = iconShape)
         ) {
             prepareAcceptBlock(true, true, lineIndex, lineText)
         }
@@ -88,9 +104,10 @@ private fun AcceptButtons_LongPressedIcon(
 
         LongPressAbleIconBtn(
             tooltipText = stringResource(R.string.reject_both),
-            icon = Icons.Outlined.RemoveCircleOutline,
+            icon = Icons.Filled.CodeOff,
             iconContentDesc = stringResource(R.string.reject_both),
-            iconColor = UIHelper.getRejectBothIconColor()
+            iconColor = rejectBothColor,
+            iconModifier = Modifier.border(width = borderWidth, color = rejectBothColor, shape = iconShape)
         ) {
             prepareAcceptBlock(false, false, lineIndex, lineText)
         }
