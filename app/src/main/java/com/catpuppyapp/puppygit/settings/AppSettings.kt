@@ -78,4 +78,8 @@ data class AppSettings(
     @Deprecated("instead by `PrefMan.Key` same name field")
     var logKeepDays:Int = 3,
 
+    /**
+     * show/hide go to top/bottom buttons
+     */
+    var showNaviButtons:Boolean = false,
 )

@@ -84,6 +84,7 @@ fun SettingsInnerPage(
     val selectedLogLevel = rememberSaveable { mutableStateOf(MyLog.getCurrentLogLevel()) }
 
     val enableEditCache = rememberSaveable { mutableStateOf(settingsState.value.editor.editCacheEnable) }
+    val showNaviButtons = rememberSaveable { mutableStateOf(settingsState.value.showNaviButtons) }
     val enableSnapshot_File = rememberSaveable { mutableStateOf(settingsState.value.editor.enableFileSnapshot) }
     val enableSnapshot_Content = rememberSaveable { mutableStateOf(settingsState.value.editor.enableContentSnapshot) }
 
@@ -290,6 +291,30 @@ fun SettingsInnerPage(
                     }
                 )
             }
+        }
+
+
+        SettingsContent(onClick = {
+            val newValue = !showNaviButtons.value
+
+            //save
+            showNaviButtons.value = newValue
+            SettingsUtil.update {
+                it.showNaviButtons = newValue
+            }
+        }) {
+            Column(modifier = Modifier.fillMaxWidth(itemLeftWidthForSwitcher)) {
+                Text(stringResource(R.string.show_navi_buttons), fontSize = itemFontSize)
+                Text(stringResource(R.string.go_to_top_bottom_buttons), fontSize = itemDescFontSize, fontWeight = FontWeight.Light)
+                Text(stringResource(R.string.require_restart_app), fontSize = itemDescFontSize, fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
+            }
+
+            Icon(
+                modifier = Modifier.size(switcherIconSize),
+                imageVector = if(showNaviButtons.value) Icons.Filled.ToggleOn else Icons.Filled.ToggleOff,
+                contentDescription = if(showNaviButtons.value) stringResource(R.string.enable) else stringResource(R.string.disable),
+                tint = if(showNaviButtons.value) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+            )
         }
 
         SettingsContent(onClick = {

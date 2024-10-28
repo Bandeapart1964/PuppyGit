@@ -979,5 +979,7 @@
     <string name="will_reject_both_and_delete_lines_line_indexs">will reject both, and delete lines: ph_a3f241dc_1-ph_a3f241dc_2</string>
     <!--    e.g. "2 item(s) will be deleted"-->
     <string name="n_items_will_be_deleted">ph_a3f241dc_1 item(s) will be deleted</string>
+    <string name="show_navi_buttons">Show Navi Buttons</string>
+    <string name="go_to_top_bottom_buttons">Go to Top/Bottom Buttons</string>
 
 </resources>
