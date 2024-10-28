@@ -466,8 +466,11 @@ fun DiffContent(
                     val channelForThisJob = loadChannel.value
 
                     try {
+                        // init
+                        submoduleIsDirty.value = false
                         errMsgState.value = ""
                         loading.value=true
+
 
                         //从数据库查询repo，记得用会自动调用close()的use代码块
                         val repoDb = dbContainer.repoRepository
@@ -533,10 +536,8 @@ fun DiffContent(
 
 
                             // only when compare to work tree need check submodule is or is not dirty. because only non-dirty(clean) submodule can be stage to index, and can be commit to log.
-                            if(isDiffToLocal) {
-                                if(isSubmodule) {
-                                    submoduleIsDirty.value = Libgit2Helper.submoduleIsDirty(parentRepo = repo, submoduleName = relativePathUnderRepoDecoded)
-                                }
+                            if(isDiffToLocal && isSubmodule) {
+                                submoduleIsDirty.value = Libgit2Helper.submoduleIsDirty(parentRepo = repo, submoduleName = relativePathUnderRepoDecoded)
                             }
 
                         }
