@@ -950,13 +950,7 @@ fun TextEditor(
                     }
 
 
-                    // show button for start/split/end line, a little bit ugly, but handy,
-                    // e.g. when scroll to end, checked ours/theirs blocks, then want to accept one, no need go back start to find accept button
-                    if(curLineText.startsWith(settings.editor.conflictStartStr)
-//                        || curLineText.startsWith(settings.editor.conflictSplitStr)
-//                        || curLineText.startsWith(settings.editor.conflictEndStr)
-                    ) {
-//                    if(curLineText.startsWith(settings.editor.conflictStartStr)) {  // only show button on start line
+                    if(mergeMode && curLineText.startsWith(settings.editor.conflictStartStr)) {
                         item {
                             AcceptButtons(
                                 lineIndex = index,
@@ -1131,7 +1125,7 @@ fun TextEditor(
                         }
                     }
 
-                    if(curLineText.startsWith(settings.editor.conflictEndStr)) {
+                    if(mergeMode && curLineText.startsWith(settings.editor.conflictEndStr)) {
                         item {
                             AcceptButtons(
                                 lineIndex = index,
