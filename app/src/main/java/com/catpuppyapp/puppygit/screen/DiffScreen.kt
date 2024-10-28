@@ -279,7 +279,7 @@ fun DiffScreen(
                         UIHelper.scrollTo(scope, listState, 0)
 
                         // hide fab after scrolled
-                        pageScrolled.value = false
+//                        pageScrolled.value = false
                     }
 
                     // temporary hide fab
@@ -295,7 +295,7 @@ fun DiffScreen(
                     ) {
                         UIHelper.scrollTo(scope, listState, Int.MAX_VALUE)
 
-                        pageScrolled.value = false
+//                        pageScrolled.value = false
                     }
                 }
             }

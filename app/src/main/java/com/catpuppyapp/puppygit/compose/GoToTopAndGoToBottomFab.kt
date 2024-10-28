@@ -35,7 +35,7 @@ fun GoToTopAndGoToBottomFab(
             }
 
             // hide fab after scrolled
-            pageScrolled.value = false
+//            pageScrolled.value = false
         }
 
         // temporary hide fab
@@ -55,7 +55,7 @@ fun GoToTopAndGoToBottomFab(
                 UIHelper.scrollToItem(scope, listState, Int.MAX_VALUE)
             }
 
-            pageScrolled.value = false
+//            pageScrolled.value = false
         }
     }
 }
