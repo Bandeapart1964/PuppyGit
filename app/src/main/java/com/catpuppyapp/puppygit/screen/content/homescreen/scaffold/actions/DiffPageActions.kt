@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.actions
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Compare
@@ -36,7 +35,7 @@ fun DiffPageActions(
     changeType: String,
     relativePathUnderRepoState: MutableState<String>,
     refreshPage: () -> Unit,
-    listState: ScrollState,
+//    listState: ScrollState,
     scope: CoroutineScope,
     request:MutableState<String>,
     fileFullPath:String,

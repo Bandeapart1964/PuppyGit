@@ -43,6 +43,26 @@ fun GoToTopAndGoToBottomFab(
 @Composable
 fun GoToTopAndGoToBottomFab(
     scope: CoroutineScope,
+    listState: LazyListState,
+    showFab: MutableState<Boolean>
+) {
+    val goToTop = {UIHelper.scrollToItem(scope, listState, 0)}
+    val goToBottom = {UIHelper.scrollToItem(scope, listState, Int.MAX_VALUE)}
+    val hideButton = {showFab.value = false}
+
+    GoToTopAndGoToBottomFab_Internal(
+        filterModeOn = false,
+        scrollToTop = goToTop,
+        scrollToTopForFilterState = {},
+        scrollToBottom = goToBottom,
+        scrollToBottomForFilterState = {},
+        hideButton = hideButton
+    )
+}
+
+@Composable
+fun GoToTopAndGoToBottomFab(
+    scope: CoroutineScope,
     listState: ScrollState,
     showFab: MutableState<Boolean>
 ) {
@@ -59,7 +79,6 @@ fun GoToTopAndGoToBottomFab(
         hideButton = hideButton
     )
 }
-
 
 
 @Composable

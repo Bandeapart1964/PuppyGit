@@ -1,6 +1,6 @@
 package com.catpuppyapp.puppygit.screen
 
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -104,7 +104,7 @@ fun DiffScreen(
 
     val request = rememberSaveable { mutableStateOf("")}
 
-    val listState = rememberScrollState()
+    val listState = rememberLazyListState()
     val fileFullPath = remember{ derivedStateOf{curRepo.value.fullSavePath + File.separator + relativePathUnderRepoState.value}}
 
     val showBackFromExternalAppAskReloadDialog = rememberSaveable { mutableStateOf(false)}
@@ -249,7 +249,7 @@ fun DiffScreen(
                 actions = {
                     DiffPageActions(curRepo, fromTo = fromTo, changeType=changeType.value,
                         relativePathUnderRepoState, { changeStateTriggerRefreshPage(needRefresh) },
-                        listState,
+//                        listState,
                         scope,
                         request,
                         fileFullPath.value,

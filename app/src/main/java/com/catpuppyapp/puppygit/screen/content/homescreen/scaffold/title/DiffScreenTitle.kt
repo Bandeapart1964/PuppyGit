@@ -1,12 +1,12 @@
 package com.catpuppyapp.puppygit.screen.content.homescreen.scaffold.title
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +20,6 @@ import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.UIHelper
-import com.catpuppyapp.puppygit.utils.state.StateUtil
 import kotlinx.coroutines.CoroutineScope
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -29,7 +28,7 @@ fun DiffScreenTitle(
     fileName:String,
     filePath:String,
     fileRelativePathUnderRepoState: MutableState<String>,
-    listState: ScrollState,
+    listState: LazyListState,
     scope: CoroutineScope,
     request:MutableState<String>,
 ) {
@@ -39,7 +38,7 @@ fun DiffScreenTitle(
         Column(modifier = Modifier.widthIn(min=MyStyleKt.Title.clickableTitleMinWidth)
             .combinedClickable(
                 //double click go to top of list
-                onDoubleClick = { UIHelper.scrollTo(scope,listState, 0) },
+                onDoubleClick = { UIHelper.scrollToItem(scope, listState, 0) },
             ) {  //onClick
                 //show details , include file name and path
                 request.value = PageRequest.showDetails

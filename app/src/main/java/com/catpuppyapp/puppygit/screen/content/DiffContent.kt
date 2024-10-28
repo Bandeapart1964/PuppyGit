@@ -1,6 +1,5 @@
 package com.catpuppyapp.puppygit.screen.content
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -44,7 +45,6 @@ import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
-import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.compare.SimilarCompare
 import com.catpuppyapp.puppygit.utils.compare.param.StringCompareParam
@@ -75,7 +75,7 @@ fun DiffContent(
     treeOid1Str:String,
     treeOid2Str:String,
     needRefresh:MutableState<String>,
-    listState: ScrollState,
+    listState: LazyListState,
     curRepo:CustomStateSaveable<RepoEntity>,
     requireBetterMatchingForCompare:MutableState<Boolean>,
     fileFullPath:String,
@@ -188,24 +188,32 @@ fun DiffContent(
             }
 
 
-            Spacer(Modifier.height(50.dp))
+            Spacer(Modifier.height(100.dp))
             NaviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
 
+            Spacer(Modifier.height(100.dp))
         }
     }else {  //文本类型且没超过大小且文件修改过，正常显示diff信息
-        Column(
-            modifier = Modifier
-                //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
-                .fillMaxSize()
-                .verticalScroll(listState)
-                .padding(contentPadding)
+        val lastIndex = diffItem.value.hunks.size - 1
 
-                //底部padding，把页面顶起来，观感更舒适（我感觉）
-                .padding(bottom = 150.dp),
-
-        ) {
+//        Column(
+//            modifier = Modifier
+//                //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
+//                .fillMaxSize()
+//                .verticalScroll(listState)
+//                .padding(contentPadding)
+//
+//                //底部padding，把页面顶起来，观感更舒适（我感觉）
+//                .padding(bottom = 150.dp),
+//
+//        ) {
+        LazyColumn(modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding,
+            state = listState
+        ){
                 // show a notice make user know submodule has uncommitted changes
-                if(submoduleIsDirty.value) {
+            if(submoduleIsDirty.value) {
+                item {
                     Row(modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
@@ -214,12 +222,12 @@ fun DiffContent(
                         Text(stringResource(R.string.submodule_is_dirty_note_short), fontWeight = FontWeight.Light, fontStyle = FontStyle.Italic)
                     }
                 }
+            }
 
-                val lastIndex = diffItem.value.hunks.size - 1
 
-                //数据结构是一个hunk header N 个行
-                diffItem.value.hunks.forEachIndexed { index, hunkAndLines: PuppyHunkAndLines ->
-
+            //数据结构是一个hunk header N 个行
+            diffItem.value.hunks.forEachIndexed { index, hunkAndLines: PuppyHunkAndLines ->
+                item{
                     if(fileChangeTypeIsModified && proFeatureEnabled(detailsDiffTestPassed)) {  //增量diff
                         if(!settings.diff.groupDiffContentByLineNum || FlagFileName.flagFileExist(FlagFileName.disableGroupDiffContentByLineNum)) {
                             //this method need use some caches, clear them before iterate lines
@@ -425,9 +433,13 @@ fun DiffContent(
                         thickness = 3.dp
                     )
                 }
+            }
 
-            Spacer(Modifier.height(50.dp))
-            NaviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+            item {
+                Spacer(Modifier.height(50.dp))
+                NaviButton(diffableItemList = diffableItemList, curItemIndex = curItemIndex, switchItem = closeChannelThenSwitchItem)
+                Spacer(Modifier.height(100.dp))
+            }
 
         }
     }
@@ -512,7 +524,8 @@ fun DiffContent(
                                     loadChannel = channelForThisJob,
                                     checkChannelLinesLimit = settings.diff.loadDiffContentCheckAbortSignalLines,
                                     checkChannelSizeLimit = settings.diff.loadDiffContentCheckAbortSignalSize,
-                                    )
+                                )
+
                                 if(!channelForThisJob.tryReceive().isClosed) {
                                     diffItem.value = diffItemSaver
                                 }
@@ -586,7 +599,8 @@ private fun NaviButton(
         ) {
             switchItem(diffableItemList[nextIndex], nextIndex)
         }
-        Spacer(Modifier.height(150.dp))
+
+//        Spacer(Modifier.height(150.dp))
 
     }
 }
