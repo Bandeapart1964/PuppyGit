@@ -174,7 +174,8 @@ object UIHelper {
      * 应用场景：在列表定位某个条目后，短暂高亮那个条目以便用户发现
      */
     fun getHighlightingTimeInMills(): Long {
-        return 2000L  //注：1000等于1秒
+//        return 2000L  //注：1000等于1秒
+        return 800L
     }
 
     @Composable
