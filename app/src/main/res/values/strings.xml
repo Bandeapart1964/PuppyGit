@@ -123,7 +123,7 @@
 <!--    <string name="query_repo_for_changelist_err">ChangeList Error When Querying Repo</string>-->
 
     <!--    diff时，不知道文件是modification还是new还是delete-->
-    <string name="error_unknown_change_type">Error:unknown change type</string>
+    <string name="unknown_change_type">Unknown change type</string>
     <!--    diff line type-->
     <string name="diff_line_type_add">Add</string>
     <string name="diff_line_type_del">Del</string>

@@ -21,7 +21,6 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,6 +42,7 @@ import com.catpuppyapp.puppygit.git.PuppyLine
 import com.catpuppyapp.puppygit.git.StatusTypeEntrySaver
 import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.settings.SettingsUtil
+import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.utils.Libgit2Helper
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.MyLog
@@ -102,11 +102,12 @@ fun DiffContent(
 
     val diffItem = mutableCustomStateOf(keyTag = stateKeyTag, keyName = "diffItem", initValue = DiffItemSaver())
 
-    val submoduleIsDirty = rememberSaveable { mutableStateOf(false)}
+    val submoduleIsDirty = remember { mutableStateOf(false)}
+    val errMsgState = remember { mutableStateOf("")}
 
 //    val oldLineAt = stringResource(R.string.old_line_at)
 //    val newLineAt = stringResource(R.string.new_line_at)
-    val errOpenFileFailed = stringResource(R.string.open_file_failed)
+    val errorStrRes = stringResource(R.string.error)
 
     //判断是否是支持预览的修改类型
     // 注意：冲突条目不能diff，会提示unmodified！所以支持预览冲突条目没意义，若支持的话，在当前判断条件后追加后面的代码即可: `|| changeType == Cons.gitStatusConflict`
@@ -154,7 +155,7 @@ fun DiffContent(
 //        return
 //    }
     //不支持预览二进制文件、超出限制大小、文件未修改
-    if (!isSupportedChangeType || loading.value || diffItem.value.flags.contains(Diff.FlagT.BINARY) || diffItem.value.isContentSizeOverLimit || !diffItem.value.isFileModified) {
+    if ((loading.value.not() && errMsgState.value.isNotBlank()) || !isSupportedChangeType || loading.value || diffItem.value.flags.contains(Diff.FlagT.BINARY) || diffItem.value.isContentSizeOverLimit || !diffItem.value.isFileModified) {
         Column(
             modifier = Modifier
                 //fillMaxSize 必须在最上面！要不然，文字不会显示在中间！
@@ -167,8 +168,10 @@ fun DiffContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row {
-                if(!isSupportedChangeType){
-                    Text(text = stringResource(R.string.error_unknown_change_type))
+                if(loading.value.not() && errMsgState.value.isNotBlank()) {
+                    Text(text = errMsgState.value, color = MyStyleKt.TextColor.error)
+                } else if(!isSupportedChangeType){
+                    Text(text = stringResource(R.string.unknown_change_type))
                 }else if(loading.value) {
                     Text(stringResource(R.string.loading))
                 }else if(diffItem.value.flags.contains(Diff.FlagT.BINARY)) {
@@ -451,6 +454,7 @@ fun DiffContent(
                     val channelForThisJob = loadChannel.value
 
                     try {
+                        errMsgState.value = ""
                         loading.value=true
 
                         //从数据库查询repo，记得用会自动调用close()的use代码块
@@ -526,9 +530,13 @@ fun DiffContent(
 
                         loading.value=false
                     }catch (e:Exception) {
-                        val errMsg = errOpenFileFailed + ":" + e.localizedMessage
+                        val errMsg = errorStrRes + ":" + e.localizedMessage
                         createAndInsertError(repoId, errMsg)
                         Msg.requireShowLongDuration(errMsg)
+
+                        errMsgState.value = errMsg
+                        loading.value = false
+
                         MyLog.e(TAG, "#LaunchedEffect err:"+e.stackTraceToString())
                     }
 
