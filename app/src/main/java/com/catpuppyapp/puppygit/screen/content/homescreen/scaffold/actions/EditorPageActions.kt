@@ -41,7 +41,7 @@ import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.FsUtils
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.state.StateUtil
-import jp.kaleidot725.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
 
 @Composable
 fun EditorPageActions(

@@ -1,4 +1,4 @@
-package jp.kaleidot725.texteditor.controller
+package com.catpuppyapp.puppygit.fileeditor.texteditor.controller
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -11,10 +11,10 @@ import com.catpuppyapp.puppygit.utils.MyLog
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
 import com.catpuppyapp.puppygit.utils.isGoodIndexForStr
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.state.TextFieldState
-import jp.kaleidot725.texteditor.view.SearchPos
-import jp.kaleidot725.texteditor.view.SearchPosResult
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextFieldState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.SearchPos
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.SearchPosResult
 import java.security.InvalidParameterException
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -61,7 +61,7 @@ class EditorController(
          缺陷：不支持查找包含换行符的关键字
      * @return SearchPos : if not found, will return SearchPos(-1,-1)
       */
-    fun doSearch(keyword:String, toNext:Boolean, startPos:SearchPos):SearchPosResult{
+    fun doSearch(keyword:String, toNext:Boolean, startPos: SearchPos): SearchPosResult {
         val funName="doSearch"
 
         fun getCurTextOfIndex(idx:Int, list:List<TextFieldState>):String{
@@ -624,7 +624,7 @@ class EditorController(
         var retPair = Pair(-1, "")
 
         try {
-            val range = if(direction==FindDirection.UP) {
+            val range = if(direction== FindDirection.UP) {
                 val endIndex = if(includeStartIndex) startIndex else (startIndex-1)
                 if(!isGoodIndexForList(endIndex, list)) {
                     throw RuntimeException("bad index range")

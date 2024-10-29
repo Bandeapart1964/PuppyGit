@@ -1,4 +1,4 @@
-package jp.kaleidot725.texteditor.view
+package com.catpuppyapp.puppygit.fileeditor.texteditor.view
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -74,9 +74,9 @@ import com.catpuppyapp.puppygit.utils.getHumanReadableSizeStr
 import com.catpuppyapp.puppygit.utils.getSystemDefaultTimeZoneOffset
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
-import jp.kaleidot725.texteditor.controller.EditorController
-import jp.kaleidot725.texteditor.controller.FindDirection
-import jp.kaleidot725.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.controller.EditorController
+import com.catpuppyapp.puppygit.fileeditor.texteditor.controller.FindDirection
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
 import java.io.File
 import java.util.Date
 
@@ -221,7 +221,7 @@ fun TextEditor(
 //        lastSearchPos.value = SearchPos(lazyColumnState.firstVisibleItemIndex, 0)
 
         //从上次编辑位置开始搜索
-        if(!searchMode.value || lastFoundPos.value==SearchPos.NotFound  //没开搜索模式，或没匹配到关键字，一律使用上次编辑行+列
+        if(!searchMode.value || lastFoundPos.value== SearchPos.NotFound  //没开搜索模式，或没匹配到关键字，一律使用上次编辑行+列
             || lastFoundPos.value.lineIndex!=lastEditedLineIndexState.intValue  //搜索并匹配后，用户点了其他行
             || lastFoundPos.value.columnIndex!=lastEditedColumnIndexState.intValue  //搜索并匹配后，用户点了其他列
         ) {
@@ -236,7 +236,7 @@ fun TextEditor(
             goColumn = goColumn, columnStartIndexInclusive = columnStartIndex, columnEndIndexExclusive = columnEndIndexExclusive)
     }
 
-    suspend fun doSearch(key:String, toNext:Boolean, startPos:SearchPos) {
+    suspend fun doSearch(key:String, toNext:Boolean, startPos: SearchPos) {
         val keyLen = key.length
 
         val posResult = editableController.doSearch(key.lowercase(), toNext = toNext, startPos = startPos)
@@ -941,9 +941,9 @@ fun TextEditor(
                             expectConflictStrDto = expectConflictStrDto.value,
                             oursBgColor = conflictOursBlockBgColor,
                             theirsBgColor = conflictTheirsBlockBgColor,
-                            startLineBgColor=conflictStartLineBgColor,
-                            splitLineBgColor=conflictSplitLineBgColor,
-                            endLineBgColor=conflictEndLineBgColor
+                            startLineBgColor= conflictStartLineBgColor,
+                            splitLineBgColor= conflictSplitLineBgColor,
+                            endLineBgColor= conflictEndLineBgColor
                         )
                     } else {
                         Color.Unspecified
@@ -1208,7 +1208,7 @@ data class SearchPos(var lineIndex:Int=-1, var columnIndex:Int=-1) {
     }
 }
 
-data class SearchPosResult(val foundPos:SearchPos=SearchPos.NotFound, val nextPos:SearchPos=SearchPos.NotFound) {
+data class SearchPosResult(val foundPos: SearchPos = SearchPos.NotFound, val nextPos: SearchPos = SearchPos.NotFound) {
     companion object{
         val NotFound = SearchPosResult(foundPos = SearchPos.NotFound, nextPos = SearchPos.NotFound)
     }

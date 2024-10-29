@@ -1,4 +1,4 @@
-package jp.kaleidot725.texteditor.view
+package com.catpuppyapp.puppygit.fileeditor.texteditor.view
 
 import android.view.KeyEvent.KEYCODE_DEL
 import android.view.KeyEvent.KEYCODE_DPAD_DOWN
@@ -32,7 +32,7 @@ import com.catpuppyapp.puppygit.dev.bug_Editor_WrongUpdateEditColumnIdx_Fixed
 import com.catpuppyapp.puppygit.settings.SettingsUtil
 import com.catpuppyapp.puppygit.ui.theme.Theme
 import com.catpuppyapp.puppygit.utils.UIHelper
-import jp.kaleidot725.texteditor.state.TextFieldState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextFieldState
 
 @Composable
 internal fun TextField(

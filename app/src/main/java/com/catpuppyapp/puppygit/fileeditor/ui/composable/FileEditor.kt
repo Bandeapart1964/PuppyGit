@@ -1,4 +1,4 @@
-package jp.kaleidot725.sample.ui.composable
+package com.catpuppyapp.puppygit.fileeditor.ui.composable
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -49,17 +49,17 @@ import com.catpuppyapp.puppygit.utils.AppModel
 import com.catpuppyapp.puppygit.utils.Msg
 import com.catpuppyapp.puppygit.utils.replaceStringResList
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import jp.kaleidot725.sample.ui.composable.editor.EditorMenus
-import jp.kaleidot725.sample.ui.composable.editor.FieldIcon
-import jp.kaleidot725.sample.ui.extension.createCancelledState
-import jp.kaleidot725.sample.ui.extension.createCopiedState
-import jp.kaleidot725.sample.ui.extension.createDeletedState
-import jp.kaleidot725.sample.ui.extension.createMultipleSelectionModeState
-import jp.kaleidot725.sample.ui.extension.createSelectAllState
-import jp.kaleidot725.texteditor.controller.rememberTextEditorController
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.view.ScrollEvent
-import jp.kaleidot725.texteditor.view.TextEditor
+import com.catpuppyapp.puppygit.fileeditor.ui.composable.editor.EditorMenus
+import com.catpuppyapp.puppygit.fileeditor.ui.composable.editor.FieldIcon
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createCancelledState
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createCopiedState
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createDeletedState
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createMultipleSelectionModeState
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createSelectAllState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.controller.rememberTextEditorController
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.ScrollEvent
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.TextEditor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

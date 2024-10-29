@@ -97,8 +97,8 @@ import com.catpuppyapp.puppygit.utils.changeStateTriggerRefreshPage
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateListOf
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
 import com.github.git24j.core.Repository.StateT
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.view.ScrollEvent
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.ScrollEvent
 import kotlinx.coroutines.launch
 
 
@@ -286,7 +286,7 @@ fun HomeScreen(
     val editorPageTextEditorState = mutableCustomStateOf(
         keyTag = stateKeyTag,
         keyName = "editorPageTextEditorState",
-        initValue =TextEditorState.create("")
+        initValue = TextEditorState.create("")
     )
 //    val editorPageShowSaveDoneToast = rememberSaveable { mutableStateOf(false)}
 //    val needRefreshEditorPage = rememberSaveable { mutableStateOf(false) }

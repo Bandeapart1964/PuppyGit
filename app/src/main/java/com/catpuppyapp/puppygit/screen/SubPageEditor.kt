@@ -44,8 +44,8 @@ import com.catpuppyapp.puppygit.utils.cache.Cache
 import com.catpuppyapp.puppygit.utils.doJobThenOffLoading
 import com.catpuppyapp.puppygit.utils.state.StateUtil
 import com.catpuppyapp.puppygit.utils.state.mutableCustomStateOf
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.view.ScrollEvent
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.ScrollEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

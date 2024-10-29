@@ -64,10 +64,10 @@ import com.catpuppyapp.puppygit.utils.snapshot.SnapshotFileFlag
 import com.catpuppyapp.puppygit.utils.snapshot.SnapshotUtil
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
 import com.catpuppyapp.puppygit.utils.withMainContext
-import jp.kaleidot725.sample.ui.composable.FileEditor
-import jp.kaleidot725.sample.ui.extension.createCancelledState
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.view.ScrollEvent
+import com.catpuppyapp.puppygit.fileeditor.ui.composable.FileEditor
+import com.catpuppyapp.puppygit.fileeditor.ui.extension.createCancelledState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.ScrollEvent
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File

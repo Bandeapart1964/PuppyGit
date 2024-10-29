@@ -1,8 +1,8 @@
-package jp.kaleidot725.sample.ui.extension
+package com.catpuppyapp.puppygit.fileeditor.ui.extension
 
 import com.catpuppyapp.puppygit.utils.isGoodIndexForList
-import jp.kaleidot725.texteditor.state.TextEditorState
-import jp.kaleidot725.texteditor.state.TextFieldState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextFieldState
 
 /**
  * 注：若index为无效索引，初始不会选择任何行
@@ -78,7 +78,7 @@ fun TextEditorState.createDeletedState(): TextEditorState {
 
 fun TextEditorState.createCancelledState(): TextEditorState {
     return TextEditorState.create(
-        fields = fields.map { TextFieldState(it.id, it.value, isSelected = false)},
+        fields = fields.map { TextFieldState(it.id, it.value, isSelected = false) },
         selectedIndices = emptyList(),
         isMultipleSelectionMode = false,
     )

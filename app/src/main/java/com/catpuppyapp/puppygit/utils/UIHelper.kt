@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.catpuppyapp.puppygit.settings.AppSettings
 import com.catpuppyapp.puppygit.style.MyStyleKt
 import com.catpuppyapp.puppygit.ui.theme.Theme
-import jp.kaleidot725.texteditor.view.ExpectConflictStrDto
+import com.catpuppyapp.puppygit.fileeditor.texteditor.view.ExpectConflictStrDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -230,7 +230,7 @@ object UIHelper {
     fun getBackgroundColorForMergeConflictSplitText(
         text: String,
         settings: AppSettings,
-        expectConflictStrDto:ExpectConflictStrDto,
+        expectConflictStrDto: ExpectConflictStrDto,
 
         oursBgColor:Color,
         theirsBgColor:Color,

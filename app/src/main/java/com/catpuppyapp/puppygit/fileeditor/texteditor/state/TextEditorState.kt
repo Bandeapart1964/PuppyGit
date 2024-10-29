@@ -1,8 +1,8 @@
-package jp.kaleidot725.texteditor.state
+package com.catpuppyapp.puppygit.fileeditor.texteditor.state
 
 import androidx.compose.runtime.Immutable
 import com.catpuppyapp.puppygit.utils.doActIfIndexGood
-import jp.kaleidot725.texteditor.controller.EditorController.Companion.createInitTextFieldStates
+import com.catpuppyapp.puppygit.fileeditor.texteditor.controller.EditorController.Companion.createInitTextFieldStates
 
 @Immutable
 data class TextEditorState(
@@ -69,7 +69,7 @@ data class TextEditorState(
             )
         }
 
-        fun create(fields: List<TextFieldState>, selectedIndices: List<Int>, isMultipleSelectionMode: Boolean):TextEditorState {
+        fun create(fields: List<TextFieldState>, selectedIndices: List<Int>, isMultipleSelectionMode: Boolean): TextEditorState {
             return TextEditorState(
                 fields = fields,
                 selectedIndices = selectedIndices,

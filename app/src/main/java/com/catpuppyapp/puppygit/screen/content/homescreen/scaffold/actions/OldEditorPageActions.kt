@@ -13,7 +13,7 @@ import com.catpuppyapp.puppygit.play.pro.R
 import com.catpuppyapp.puppygit.compose.LongPressAbleIconBtn
 import com.catpuppyapp.puppygit.constants.PageRequest
 import com.catpuppyapp.puppygit.utils.state.CustomStateSaveable
-import jp.kaleidot725.texteditor.state.TextEditorState
+import com.catpuppyapp.puppygit.fileeditor.texteditor.state.TextEditorState
 
 @Composable
 fun OldEditorPageActions(

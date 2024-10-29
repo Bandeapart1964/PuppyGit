@@ -1,4 +1,4 @@
-package jp.kaleidot725.sample.ui.composable.editor
+package com.catpuppyapp.puppygit.fileeditor.ui.composable.editor
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
