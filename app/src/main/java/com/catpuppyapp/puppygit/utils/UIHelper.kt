@@ -220,7 +220,7 @@ object UIHelper {
         return if(Theme.inDarkTheme) Color.Magenta.copy(.4f) else Color.Magenta.copy(.8f)
     }
     fun getAcceptBothIconColor():Color {
-        return if(Theme.inDarkTheme) Theme.darkLightBlue else Color.Blue.copy(.8f)
+        return if(Theme.inDarkTheme) Theme.darkLightBlue.copy(alpha = 0.6f) else Color.Blue.copy(.8f)
     }
     fun getRejectBothIconColor():Color {
         return if(Theme.inDarkTheme) Color.Red.copy(.4f) else Color.Red.copy(.8f)
