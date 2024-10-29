@@ -24,9 +24,9 @@ PuppyGit made by Bandeapart1964 of catpuppyapp
 
 
 ## The Difference Of PuppyGit Pro and Non-Pro
-TLDR; just old name and new name, no difference of features, all features are free to use for everyone<br>
+TLDR; just old name and new name, no difference of features, all features are free to use for everyone<br><br>
 Long:<br>
-The "PuppyGit Pro" was an old name, but the icon's "Pro" text, I have no plan to remove it for now, but maybe I will update the icon in future though.<br>
+The "PuppyGit Pro" was an old name, but the icon's "Pro" text, I have no plan to remove it for now, but maybe I will update the icon in future though.<br><br>
 More details if you want to know all about the story: in end of 2023, I was plan to create 2 apps, Pro for paid, another for free, but google play just broken my plan, the pro app, goole play staffs let me update the privacy policy in 1month, I done it with few days, then submit, but censoring was over 1month, then my app got banned, reason is no update the privacy policy(I updated, but the google censor too slow, so...), after few days, google staff tell me "Congratulation! your app privacy file now passed, but due to your app banned, so can't make your app passed the censoring", how stupid..., then I send appeal email to google, but google reject my unban request. and, my free version app got banned too, just because I used the Git icon, google play staffs tell me I have no right use it and I am mislead people think my app is create by git official, then banned my free app too, ok, well, then even I removed the Git logo from PuppyGit icon, and re-submit a new version, still no one response till now, after 2 apps banned, then my google developer account got banned by too much apps banned, so google think I am a bad developer(wtf), then I appeal, but google play keep it's decision, finally, I give up talk to google play, I make the app free and open source, but I accept donations.
 
 
@@ -74,17 +74,16 @@ Idk how support ssh on Android, so PuppyGit only support https for now, if you k
 ## Build
 import project to Android Studio, then build, that's all. (android NDK is required)
 <br><br>
-if you want to build libs by your self:<br>
+### if you want to build libs by your self:<br>
 require:<br>
 - jdk 1.8 or later (oracle or openjdk or adoptjdk, should all worked as expect)
 - <a href=https://github.com/android/ndk/wiki/Changelog-r26#r26b>android ndk r26b</a>, and target abi is 'android21'
-<br>
 <br>
 Then you can build every lib from source code, the source code of the libs, see [Libs](#Libs)
 
 
 ## Security
-For reduce risk of password leak, Your passwords of git repos(e.g. github) are encrypted saved in PuppyGit's database on your device, the password of password encryptor is not open source for security reason, if you want build PuppyGit by yourself, you should update the password and version properly:
+For reduce risk of password leak, Your passwords of git repos(e.g. github) are encrypted saved in PuppyGit's database on your device, the password of password encryptor is not in this open source repo for security reason, if you want build PuppyGit by yourself, you better update the password and version to yours and dont share it for more safe (just better, not enforce and necessary):
 - update `EncryptorImpl.kt`, set your password encryptor, or simple use default encryptor
 - set your encryptor version and password in `PassEncryptHelper.kt`, the password must enough to long and better don't make it be public
 
