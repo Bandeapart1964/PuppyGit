@@ -74,13 +74,12 @@ Idk how support ssh on Android, so PuppyGit only support https for now, if you k
 ## Build
 import project to Android Studio, then build, that's all. (android NDK is required)
 <br><br>
-### if you want to build libs by your self:<br>
+### if you want to build libs by your self
 require:<br>
 - jdk 1.8 or later (oracle or openjdk or adoptjdk, should all worked as expect)
 - <a href=https://github.com/android/ndk/wiki/Changelog-r26#r26b>android ndk r26b</a>, and target abi is 'android21'
 <br>
-Then you can build every lib from source code, the source code of the libs, see [Libs](#Libs)
-
+Then you can build every lib from source code, the source code of the libs, see <a href=https://github.com/Bandeapart1964/PuppyGit?tab=readme-ov-file#libs>Libs</a>
 
 ## Security
 For reduce risk of password leak, Your passwords of git repos(e.g. github) are encrypted saved in PuppyGit's database on your device, the password of password encryptor is not in this open source repo for security reason, if you want build PuppyGit by yourself, you better update the password and version to yours and dont share it for more safe (just better, not enforce and necessary):
