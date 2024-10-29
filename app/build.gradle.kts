@@ -157,7 +157,7 @@ dependencies {
 // 像使用git命令一样使用jgit，而这个包是用jgit的各种api实现的，若想了解jgit如何实现git的各种命令，这个包很有参考价值，
 // 不过不知道里面的类是否能直接用？比如我想用clone命令，可不可以直接调用这里的Clone类？
 //    implementation("org.eclipse.jgit:org.eclipse.jgit.pgm:6.8.0.202311291450-r")
-    implementation(files("libs/git24j-1.0.2.20240423.jar"))
+    implementation(files("libs/git24j-1.0.3.20241022.jar"))
     implementation("androidx.navigation:navigation-compose:2.8.2")
 
     //查询支付状态的api，如果前端取消订单后不久就过期，就不需要这个了，否则需要
